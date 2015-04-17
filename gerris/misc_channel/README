@@ -1,0 +1,7 @@
+Partition
+
+gerris2D -b 2 -m mc.gfs > parallel.gfs
+
+Run in parallel
+
+openmpirun -np 2 gerris2D parallel.gfs

@@ -1,0 +1,158 @@
+Define  Re     500.0
+Define  Sc     100.0
+Define  m      10.0
+Define  MU(c)  exp(CLAMP(c,0,1)*log(m))
+
+10 9 GfsSimulation GfsBox GfsGEdge {} {
+   GfsTime { end = 20.0 dtmax = 1.0e-3 }
+   GfsRefine 6
+
+   VariableTracer {} c
+   SourceViscosity  (MU(c)/Re)
+   SourceDiffusion c  (1.0/(Re*Sc))
+
+   Init {} { c = 1.0 }
+
+   #AdaptVorticity { istep = 1 } { maxlevel = 8 cmax = 1e-2 }
+   AdaptGradient { istep = 1 } { maxlevel = 8 cmax = 1e-1 } c
+
+   GfsOutputTime { istep = 10 } stdout
+   GfsOutputBalance { istep = 10 } stdout
+   GfsOutputSimulation { istep = 250 } mc-%ld.plt { 
+      format = Tecplot
+      variables = c
+   }
+}
+GfsBox { left = GfsBoundary {
+                  GfsBcDirichlet U { return 6.0*(0.5+y)*(0.5-y); }
+                  GfsBcDirichlet V 0
+                  GfsBcDirichlet c 0
+                  }
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann   c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+       }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox {
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+   }
+GfsBox { right = GfsBoundaryOutflow 
+         top = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+         bottom = GfsBoundary {
+            GfsBcDirichlet U 0
+            GfsBcDirichlet V 0
+            GfsBcNeumann c 0.0
+         }
+}
+1 2  right
+2 3  right
+3 4  right
+4 5  right
+5 6  right
+6 7  right
+7 8  right
+8 9  right
+9 10 right
