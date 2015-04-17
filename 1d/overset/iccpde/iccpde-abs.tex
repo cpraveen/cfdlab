@@ -1,0 +1,24 @@
+
+\documentclass[12pt]{article}
+\usepackage{geometry} % see geometry.pdf on how to lay out the page. There's lots.
+\geometry{a4paper} % or letter or a5paper or ... etc
+% \geometry{landscape} % rotated page geometry
+
+% See the ``Article customise'' template for come common customisations
+
+\title{Hybrid finite volume/meshless method for compressible flows}
+\author{Praveen Chandrashekar\footnote{TIFR-CAM, Post Bag No, 6503, Bangalore 560065, India}, Karthik Duraisamy\footnote{Dept. of Aerospace Engg., Univ of Glasgow, Glasgow G12 8QQ, Scotland}}
+\date{} % delete this line to display the current date
+
+%%% BEGIN DOCUMENT
+\begin{document}
+
+\maketitle
+
+We present a hybrid numerical method by combining finite volume schemes with a meshless method for solving compressible flows. The Finite volume method on structured grids is one of the most accurate methods available for solving the equations of fluid dynamics. For complex domains, and problems with moving boundaries, the overset grid approach using finite volumes and structured grids has emerged as a powerful alternative. In the overset method, however, it is necessary to interpolate the solution between overlapping meshes since the stencil is incomplete at the outer boundary of the individual grids. This is a source of inaccuracy as it does not guarantee a solution that is consistent with the underlying partial differential equation (PDE). Meshless methods do not require any specific mesh topology and can be used on an arbitrary distribution of points. In this work, we present a hybrid overset approach, wherein the interpolation step is replaced with a high order accurate meshless update that is consistent with the PDE and provides a strong local coupling between the overlapping grids. We show that the hybrid scheme is stable and accurate. The proposed methodology is applied to model conservation laws and to 
+compressible flows governed by the multi-dimensional unsteady Euler equations.\\
+
+\noindent
+{\bf Keywords:} Finite volume method, meshless method, compressible flows, conservation laws
+
+\end{document}

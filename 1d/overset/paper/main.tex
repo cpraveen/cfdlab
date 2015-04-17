@@ -1,0 +1,168 @@
+\documentclass[11pt]{amsart}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage[english]{babel}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\newcommand{\df}[2]{\frac{ \partial #1 }{ \partial #2 }}
+\newcommand{\ud}{\textrm{d}}
+\newcommand{\dd}[2]{\frac{ \ud #1 }{ \ud #2 }}
+
+\title{Hybrid finite-volume/meshless method for hyperbolic conservation laws}
+\author{Praveen Chandrashekar and Karthik Duraisamy}
+%\date{}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+Consider the scalar conservation law
+\begin{equation}
+\df{v}{t} + \df{f}{x} = 0
+\end{equation}
+where $v$ is a conserved quantity and $f=f(v)$ is the flux.
+
+%------------------------------------------------------------------------------
+\section{Finite volume method}
+
+Let $u$ denote the numerical solution of the conservation law. The finite volume semi-discretization of the conservation law is
+\begin{equation}
+\dd{u_i}{t} + \frac{F_{i+1/2} - F_{i-1/2}}{h_i} = 0
+\end{equation}
+where $F_{i+1/2} = F(u_i, u_{i+1})$ is a numerical flux function and the above equation is solved using a time stepping scheme like Runge-Kutta method. We assume that the numerical flux function is an E-flux, i.e.,
+\begin{equation}
+\textrm{sign}(u_{j+1} - u_j) ( F_{i+1/2} - f(u)) \le 0, \quad \textrm{for all $u$ between } u_j, u_{j+1}
+\end{equation}
+For the linear advection equation $f=au$, the above scheme is stable under the CFL condition
+\begin{equation}
+\frac{|a| \Delta t}{h_i} \le 1
+\label{eq:fvcfl}
+\end{equation}
+The second order scheme is obtained using the numerical flux $F_{i+1/2} = F(u^-_{i+1/2}, u^+_{i+1/2})$. The interface values $u^\pm_{i+1/2}$ are obtained by reconstruction
+\begin{equation}
+u^-_{i+1/2} = u_i + \frac{1}{2} \Delta(u_{i-1}, u_i, u_{i+1}), \quad
+u^+_{i+1/2} = u_{i+1} - \frac{1}{2} \Delta(u_{i}, u_{i+1}, u_{i+2}), \quad
+\end{equation}
+
+%------------------------------------------------------------------------------
+\section{Interpolation scheme}
+
+Let point $p$ be a point of a grid which cannot be updated using the finite volume method. The solution at $p$ can be obtained by interpolating the solution from a donar grid.
+
+\subsection{Linear interpolation}
+Locate two points $j$, $j+1$ in the donar grid such that $x_j \le x_p \le x_{j+1}$. Then the linear interpolation is given by
+\begin{equation}
+u_p = \alpha u_j + (1-\alpha) u_{j+1}, \quad \alpha = \frac{x_{j+1} - x_p}{x_{j+1} - x_j}
+\end{equation}
+
+\subsection{Quadratic interpolation}
+As in the case of linear interpolation, locate two points $j$, $j+1$ from the donar grid. Then choose a third point which could either be $j-1$ or $j+2$ depending on which one is close to $p$. The quadratic interpolant can be obtained by fitting a polynomial $P(x) = p_o + p_1(x-x_p) + p_2(x-x_p)^2$ or using Lagrange interpolation formula.
+
+\subsection{Cubic interpolation}
+As in the case of linear interpolation, locate two points $j$, $j+1$ from the donar grid. The stencil for interpolation consists of $(j-1, j, j+1, j+2)$. The cubic interpolant can be obtained by fitting a polynomial $P(x) = p_o + p_1(x-x_p) + p_2(x-x_p)^2 + p_3(x-x_p)^3$ or using Lagrange interpolation formula.
+%------------------------------------------------------------------------------
+\section{Meshless method}
+
+We use a meshless method based on least squares for estimating the partial derivatives arising in the conservation law. Let point $p$ be a boundary point which must be updated using interpolation. Instead we apply meshless method to this point. We select a point to the left  $j$ and right $k$ of node $p$ from a donar grid. The solution at $p$ will be updated using the stencil $(j,p,k)$. The semi-discrete meshless method is
+\begin{equation}
+\dd{u_p}{t} + 2 \frac{ w_{jp} (F_{jp} - f_p)(x_j - x_p) + w_{pk} (F_{pk} - f_p)(x_k - x_p) }{[ w_{jp} (x_j - x_p)^2 + w_{pk} (x_k - x_p)^2] } = 0
+\label{eq:semid}
+\end{equation}
+where $f_p = f(u_p)$ and $F_{jp}$ is a numerical flux function evaluated at the middle of the interval $[x_j, x_p]$ and $w$ is a positive weight function which is usually of the form $w_{jp} = |x_p - x_j|^{-s}$, $s\ge 0$. The same numerical flux function can be used in both the finite volume method and the meshless method.
+
+\subsection{Stability analysis}
+Since the numerical flux is an E-flux, we have
+\begin{equation}
+a_{jp} = \frac{ F_{jp} - f_p }{u_p - u_j} \le 0, \quad a_{pk} = \frac{ F_{pk} - f_p }{u_k - u_p} \le 0
+\end{equation}
+Equation (\ref{eq:semid}) can be re-written as
+\begin{equation}
+\dd{u_p}{t} = A_{jp} (u_j - u_p) + B_{pk} (u_k - u_p)
+\label{eq:semid2}
+\end{equation}
+where
+\begin{eqnarray*}
+A_{jp} = - \frac{2 w_{jp} a_{jp} (x_p - x_j)}{ w_{jp} (x_j - x_p)^2 + w_{pk} (x_k - x_p)^2 } \ge 0 \\
+B_{jp} = - \frac{2 w_{pk} a_{pk} (x_k - x_p)}{ w_{jp} (x_j - x_p)^2 + w_{pk} (x_k - x_p)^2 } \ge 0
+\end{eqnarray*}
+The semi-discrete scheme is local extremum diminishing in the sense of Jameson, i.e., local minima do not decrease and local maxima do not increase. Using explicit time integration scheme
+\begin{equation*}
+u^{n+1}_p = [1 - \Delta (A_{jp} + B_{pk})] u^n_p + \Delta t A_{jp} u^n_j + \Delta t B_{pk} u^n_k
+\end{equation*}
+The above is stable in the maximum norm if the following time-step condition is satisfied
+\begin{equation}
+\Delta t \le \frac{1}{A_{jp} + B_{pk}}
+\end{equation}
+
+In the case of linear advection equation $a_{jp} = -a^+ = -\max(0,a)$ and $a_{pk} = a^- = \min(0,a)$. Let $h$ be the grid spacing of the donar grid.
+
+\subsubsection{Stencil $(i,p,i+1)$}
+Let the stencil be $(x_j, x_p, x_k) = (x_i, x_p, x_{i+1})$.  Let $x_p - x_j = \alpha h$ and $x_k - x_p = (1-\alpha)h$ so that $\alpha \in [0,1]$.  Specializing to the case of linear advection $f(u) = au$, we obtain the following restriction on the time-step
+\begin{equation}
+\Delta t \le \frac{[  \alpha^{2-p} + (1-\alpha)^{2-p} ] h}{ 2[\alpha^{1-p} a^+ - (1-\alpha)^{1-p} a^-]}
+\end{equation}
+Taking the case $a > 0$, we obtain the CFL condition
+\begin{equation}
+\frac{a \Delta t}{h} \le \frac{[  \alpha^{2-p} + (1-\alpha)^{2-p} ] }{2 \alpha^{1-p} }
+\end{equation}
+Let us look at this condition for different values of the weight power $s$ which is shown in table (\ref{tab:cfl}). The weights $s=0$ and $s=1$ leads to a non-zero CFL condition for all values of $\alpha$, while for $s >1$, the CFL number can become very small, leading to very small time-steps. 
+\begin{table}[htdp]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+$s$ & CFL condition & $\alpha \rightarrow 0$ & $\alpha \rightarrow 1$ & Min CFL \\
+\hline
+0 & $\frac{a\Delta t}{h} \le \frac{[\alpha^2 + (1-\alpha)^2]}{2\alpha}$ & $\infty$ & 0.5 & 0.4142 \\
+\hline
+1 & $\frac{a\Delta t}{h} \le 0.5$ & 0.5 & 0.5 & 0.5 \\
+\hline
+2 & $\frac{a\Delta t}{h} \le \alpha$ & 0 & 1 & 0 \\
+\hline
+3 & $\frac{a\Delta t}{h} \le \frac{\alpha}{2(1-\alpha)}$ & 0 & $\infty$ & 0\\
+\hline
+\end{tabular}
+\end{center}
+\caption{CFL condition for linear advection equation for different weights}
+\label{tab:cfl}
+\end{table}%
+
+\subsubsection{Enlarged stencil}
+Assume that $x_i \le x_p < x_{i+1}$ and $0 \le \alpha \le 1/2$. We choose the stencil $(i-1, p, i+1)$ which leads to the time-step condition,
+\begin{equation}
+\Delta t \le \frac{[  (1+\alpha)^{2-p} + (1-\alpha)^{2-p} ] h}{ 2[(1+\alpha)^{1-p} a^+ - (1-\alpha)^{1-p} a^-]}
+\end{equation}
+The CFL condition and minimum CFL number are shown in table (\ref{tab:cfle}). We see that with $s=0$ and $s=1$, the minimum CFL number is close to unity; in fact with $s=1$ the scheme is stable under the same condition as the finite volume method.
+
+\begin{table}[htdp]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+$s$ & CFL condition & Min CFL & CFL condition & Min CFL\\
+\hline
+0 & $\frac{a\Delta t}{h} \le \frac{[(1+\alpha)^2 + (1-\alpha)^2]}{2(1+\alpha)}$ & 0.8284 & $\frac{a\Delta t}{h} \le \frac{[(1+\alpha)^2 + (1-\alpha)^2]}{2(1-\alpha)}$ & 1\\
+\hline
+1 & $\frac{a\Delta t}{h} \le 1$ & 1 & $\frac{a\Delta t}{h} \le 1$ & 1\\
+\hline
+2 & $\frac{a\Delta t}{h} \le 1+\alpha$ & 1 & $\frac{a\Delta t}{h} \le 1-\alpha$ & 0.5\\
+\hline
+\end{tabular}
+\end{center}
+\caption{CFL condition for linear advection equation for different weights using enlarged stencil}
+\label{tab:cfle}
+\end{table}%
+%------------------------------------------------------------------------------
+\section{Test cases}
+
+\subsection{Linear advection equation}
+In this case the flux is linear, $f(v) = av$, and we take $a=1$. The exact solution is obtained by advecting the initial condition at speed $a$.
+
+\subsection{Burgers equation}
+In this case the flux is quadratic, $f(v) = v^2/2$.
+
+
+
+\end{document}  
