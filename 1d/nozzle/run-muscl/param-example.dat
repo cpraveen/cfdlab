@@ -1,0 +1,6 @@
+         50         No of iterations  
+  0.8000000         CFL number
+      200000        Max number of iterations
+           4  4     Flux for primal and adjoint (1=AUSM,2=KFVS,3=LF,4=Roe)
+           1        First (0) order or muscl (1=Koren)
+           3        Nozzle type (3=diverging)

@@ -1,0 +1,6 @@
+Exact solution for steady, quasi-1d nozzle problem
+
+q1dnoz.m : Main file
+Set inflow condition, pressure ration here
+
+nozarea.m : Define nozzle area variation here
