@@ -30,19 +30,24 @@ c--------------------------------------------------------------------
 c     Set to itvd or iweno
       recon_scheme = iweno
 
-c     cfl number
-      if(recon_scheme.eq.itvd) cfl = 0.45
-      if(recon_scheme.eq.iweno) cfl = 1.0/12.0
-
       dx   = (xmax - xmin)/nc
 
+c     Find maximum wave speed
       maxspeed = 0.0
       do i=1,nc
          x(i) = 0.5*dx + (i-1)*dx
          maxspeed = max(maxspeed, abs(a1(x(i)-0.5*dx)))
          maxspeed = max(maxspeed, abs(a2(x(i)-0.5*dx)))
       enddo
-      dt = cfl * dx / maxspeed
+
+c     Compute time step
+      if(recon_scheme.eq.itvd)then
+         cfl = 0.45
+         dt = min(1.0/mu, cfl * dx / maxspeed)
+      else if(recon_scheme.eq.iweno)then
+         cfl = 1.0/12.0
+         dt = min(1.0/mu, cfl * dx / (maxspeed + cfl*mu*dx))
+      endif
 
       print*,"Maximum speed =", maxspeed
       print*,"Time Step     =", dt
