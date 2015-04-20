@@ -2,6 +2,10 @@ c--------------------------------------------------------------------
 c Solve linear convection equation with periodic bc
 c Author: Praveen. C, http://praveen.tifrbng.res.in
 c
+c Test case from
+c Annunziato & Borzi: Euro. Jnl. of Applied Mathematics (2014)
+c vol. 25, pp. 1-15
+c
 c     f1_t + (a1(x) f1)_x = -mu*f1 + mu*f2
 c     f2_t + (a2(x) f2)_x =  mu*f1 - mu*f2
 c
@@ -10,13 +14,14 @@ c  a1(x) and a2(x) can be set in the functions below
 c  For initial condition, edit subroutine set_initial_condition
 c  Solution is saved into file sol.dat; plot in gnuplot using
 c     bash$ gnuplot plot.gnu
-c     bash$ gv sol.eps
+c     bash$ python plot.py
+c     bash$ xpdf sol.pdf
 c--------------------------------------------------------------------
       program main
       implicit none
       include 'common.inc'
       integer nc
-      parameter(nc=100)
+      parameter(nc=500)
       real    f1(nc), f1old(nc), res1(nc)
       real    f2(nc), f2old(nc), res2(nc)
       real    xmin, xmax, dx, x(nc), tf, cfl, dt
@@ -25,9 +30,9 @@ c--------------------------------------------------------------------
       real    f1min, f1max, f1tot
       real    f2min, f2max, f2tot
 
-      xmin = 0.0  ! Left end of domain
-      xmax = 1.0  ! Right end of domain
-      tf   = 1.0  ! Final time
+      xmin =-2.0  ! Left end of domain
+      xmax = 2.0  ! Right end of domain
+      tf   = 10.0 ! Final time
 
 c     Set to itvd or iweno
       recon_scheme = iweno
@@ -37,7 +42,7 @@ c     Set to itvd or iweno
 c     Find maximum wave speed
       maxspeed = 0.0
       do i=1,nc
-         x(i) = 0.5*dx + (i-1)*dx
+         x(i) = xmin + 0.5*dx + (i-1)*dx
          maxspeed = max(maxspeed, abs(a1(x(i)-0.5*dx)))
          maxspeed = max(maxspeed, abs(a2(x(i)-0.5*dx)))
       enddo
@@ -99,16 +104,22 @@ c---------------------------------------------------------------------
       integer i
       real    pi
       parameter(pi=4.0*atan(1.0))
+      real    c, m, sigma2
+
+      m = 0.0
+      sigma2 = 1.0e-2
+      c = 1.0/(2.0*sqrt(2.0*pi*sigma2))
 
       do i=1,nc
-         f1(i) = sin(2.0*pi*x(i))**2
-         f2(i) = cos(2.0*pi*x(i))**2
+         f1(i) = c * exp(-(x(i)-m)**2/(2.0*sigma2))
+         f2(i) = c * exp(-(x(i)-m)**2/(2.0*sigma2))
       enddo
 
       return
       end
 c---------------------------------------------------------------------
 c Compute residual in the equation
+c TODO: Remove periodic bc
 c---------------------------------------------------------------------
       subroutine compute_residual (ieqn, nc, dx, x, f1, res1, f0)
       implicit none
@@ -165,7 +176,7 @@ c     Apply positivity limiter
             pstar = (f1(i) - w1*f1r(i) - w1*f1l(i+1))/(1.0 - 2*w1)
             mini = min(pstar, min(f1r(i), f1l(i+1)))
             maxi = max(pstar, max(f1r(i), f1l(i+1)))
-            theta1 = abs(1.0-f1(i))/(abs(maxi-f1(i))+1.0e-14)
+            theta1 = 1.0 !abs(1.0-f1(i))/(abs(maxi-f1(i))+1.0e-14)
             theta2 = abs(0.0-f1(i))/(abs(mini-f1(i))+1.0e-14)
             theta  = min(1.0, min(theta1, theta2))
             f1r(i) = theta*(f1r(i) - f1(i)) + f1(i)
@@ -285,7 +296,7 @@ c---------------------------------------------------------------------
       implicit none
       real x
 
-      a1 = 1.0
+      a1 = 1.0 - x
 
       return
       end
@@ -296,7 +307,7 @@ c---------------------------------------------------------------------
       implicit none
       real x
 
-      a2 = 1.0
+      a2 = -(1.0 + x)
 
       return
       end
@@ -307,7 +318,8 @@ c---------------------------------------------------------------------
       implicit none
       integer ieqn
       real    x, ul, ur, flux
-      real    a1, a2, a
+      real    a1, a2, a, ep
+      parameter(ep=0.1)
 
       if(ieqn.eq.1)then
          a = a1(x)
@@ -315,7 +327,7 @@ c---------------------------------------------------------------------
          a = a2(x)
       endif
 
-      if(a.gt.ul)then
+      if(a.gt.0.0)then
          flux = a * ul
       else
          flux = a * ur
@@ -331,12 +343,15 @@ c---------------------------------------------------------------------
       integer nc, irk
       real    f1(nc), f1old(nc), res1(nc), dt
 
+c     Dont update first 3 and last 3 cells
       if(irk.eq.1)then
-         f1 = f1old - dt * res1
+         f1(4:nc-3) = f1old(4:nc-3) - dt * res1(4:nc-3)
       else if(irk.eq.2)then
-         f1 = (3.0/4.0)*f1old + (1.0/4.0)*(f1 - dt * res1)
+         f1(4:nc-3) = (3.0/4.0)*f1old(4:nc-3) + (1.0/4.0)*(f1(4:nc-3) -
+     1   dt * res1(4:nc-3))
       else if(irk.eq.3)then
-         f1 = (1.0/3.0)*f1old + (2.0/3.0)*(f1 - dt * res1)
+         f1(4:nc-3) = (1.0/3.0)*f1old(4:nc-3) + (2.0/3.0)*(f1(4:nc-3) - 
+     1   dt * res1(4:nc-3))
       endif
 
       return

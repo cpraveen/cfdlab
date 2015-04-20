@@ -3,4 +3,4 @@
       common/scheme/recon_scheme
 
       real    mu
-      parameter(mu=1.0)
+      parameter(mu=2.0)
