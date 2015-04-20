@@ -8,7 +8,9 @@ c
 c  mu is set in common.inc
 c  a1(x) and a2(x) can be set in the functions below
 c  For initial condition, edit subroutine set_initial_condition
-c  Solution is saved into file sol.dat
+c  Solution is saved into file sol.dat; plot in gnuplot using
+c     bash$ gnuplot plot.gnu
+c     bash$ gv sol.eps
 c--------------------------------------------------------------------
       program main
       implicit none
