@@ -265,7 +265,7 @@ c---------------------------------------------------------------------
 
       a = speed(x)
 
-      if(a.gt.ul)then
+      if(a.gt.0.0)then
          flux = a * ul
       else
          flux = a * ur
