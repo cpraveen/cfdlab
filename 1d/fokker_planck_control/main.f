@@ -44,6 +44,7 @@ c     Make grid
 
       call set_initial_condition(nc, x, f1, f2)
       call f_target (nc, tend, x, f1t, f2t)
+      cost = 0.0
       call cost_function(u, tf, nc, dx, x, f1, f2, f1t, f2t, cost)
 
       stop
@@ -60,7 +61,6 @@ c---------------------------------------------------------------------
 c     Solve forward problem
       call forward(u, tf, nc, dx, x, f1, f2)
 
-      cost = 0.0
       do i=1,nc
          cost = cost + 0.5*dx*((f1(i)-f1t(i))**2 + (f2(i)-f2t(i))**2)
       enddo
@@ -180,15 +180,15 @@ c---------------------------------------------------------------------
 c     Compute interface values
 
 c     First face
-      call reconstruct(f1(nc-2), f1(nc-1), f1(nc), f1(1), f1(2), f1l(1))
-      call reconstruct(f1(3),  f1(2),  f1(1),  f1(nc), f1(nc-1), f1r(1))
+      f1l(1) = 0.0
+      call reconstruct(f1(3),  f1(2),  f1(1),  0.0, 0.0, f1r(1))
 
 c     Second face
-      call reconstruct(f1(nc-1), f1(nc), f1(1), f1(2), f1(3), f1l(2))
-      call reconstruct(f1(4),  f1(3),  f1(2),  f1(1), f1(nc), f1r(2))
+      call reconstruct(0.0, 0.0, f1(1), f1(2), f1(3), f1l(2))
+      call reconstruct(f1(4),  f1(3),  f1(2),  f1(1), 0.0, f1r(2))
 
 c     Third face
-      call reconstruct(f1(nc), f1(1), f1(2), f1(3), f1(4), f1l(3))
+      call reconstruct(0.0, f1(1), f1(2), f1(3), f1(4), f1l(3))
       call reconstruct(f1(5),  f1(4),  f1(3),  f1(2), f1(1), f1r(3))
 
       do i=3,nc-3
@@ -201,17 +201,18 @@ c     Third face
 c     Third face from end
       call reconstruct(f1(nc-4),f1(nc-3),f1(nc-2),f1(nc-1),f1(nc),
      1                 f1l(nc-1))
-      call reconstruct(f1(1), f1(nc), f1(nc-1), f1(nc-2),
+      call reconstruct(0.0, f1(nc), f1(nc-1), f1(nc-2),
      1                 f1(nc-3),f1r(nc-1))
 
 c     penultimate face
       call reconstruct(f1(nc-3), f1(nc-2), f1(nc-1), f1(nc),
-     1                 f1(1),f1l(nc))
-      call reconstruct(f1(2), f1(1), f1(nc), f1(nc-1), f1(nc-2),f1r(nc))
+     1                 0.0, f1l(nc))
+      call reconstruct(0.0, 0.0, f1(nc), f1(nc-1), f1(nc-2), f1r(nc))
 
 c     Last face
-      f1l(nc+1) = f1l(1)
-      f1r(nc+1) = f1r(1)
+      call reconstruct(f1(nc-2), f1(nc-1), f1(nc), 0.0,
+     1                 0.0, f1l(nc+1))
+      f1r(nc+1) = 0.0
 
 c     Apply positivity limiter
       if(recon_scheme.eq.iweno)then
@@ -227,15 +228,10 @@ c     Apply positivity limiter
          enddo
       endif
 
-c     Left state of first face and right state of last face
-      f1l(1) = f1l(nc+1)
-      f1r(nc+1) = f1r(1)
-
 c     Compute fluxes
 
 c     First face
       call num_flux(ieqn, u, x(1)-0.5*dx, f1l(1), f1r(1), flux1)
-      res1(nc) = res1(nc) + flux1
       res1(1)  = res1(1)  - flux1
 
       do i=1,nc-1
@@ -244,6 +240,10 @@ c     First face
          res1(i)   = res1(i)   + flux1
          res1(i+1) = res1(i+1) - flux1
       enddo
+
+c     Last face
+      call num_flux(ieqn, u, x(nc)+0.5*dx, f1l(nc+1), f1r(nc+1), flux1)
+      res1(nc)  = res1(nc) + flux1
 
       if(ieqn.eq.1)then
          res1 = res1 - (-mu*f1 + mu*f0)*dx
@@ -362,8 +362,7 @@ c---------------------------------------------------------------------
       implicit none
       integer ieqn
       real    u(2), x, ul, ur, flux
-      real    a1, a2, a, ep
-      parameter(ep=0.1)
+      real    a1, a2, a
 
       if(ieqn.eq.1)then
          a = a1(x, u(ieqn))
@@ -389,13 +388,11 @@ c---------------------------------------------------------------------
 
 c     Dont update first 3 and last 3 cells
       if(irk.eq.1)then
-         f1(4:nc-3) = f1old(4:nc-3) - dt * res1(4:nc-3)
+         f1 = f1old - dt * res1
       else if(irk.eq.2)then
-         f1(4:nc-3) = (3.0/4.0)*f1old(4:nc-3) + (1.0/4.0)*(f1(4:nc-3) -
-     1   dt * res1(4:nc-3))
+         f1 = (3.0/4.0)*f1old + (1.0/4.0)*(f1 - dt * res1)
       else if(irk.eq.3)then
-         f1(4:nc-3) = (1.0/3.0)*f1old(4:nc-3) + (2.0/3.0)*(f1(4:nc-3) - 
-     1   dt * res1(4:nc-3))
+         f1 = (1.0/3.0)*f1old + (2.0/3.0)*(f1 - dt * res1)
       endif
 
       return
@@ -429,7 +426,7 @@ c---------------------------------------------------------------------
 
       fid = 10
       open(fid,file="sol.dat")
-      write(fid,'(3e24.12)')(x(i),f1(i),f2(i),i=1,nc)
+      write(fid,'(3es24.12e3)')(x(i),f1(i),f2(i),i=1,nc)
       close(fid)
 
       return
