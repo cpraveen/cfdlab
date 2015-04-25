@@ -42,7 +42,7 @@ c     Solve forward problem
       do i=1,nc
          cost = cost + 0.5*dx*((f1(i)-f1t(i))**2 + (f2(i)-f2t(i))**2)
       enddo
-      cost = cost + 0.5 * nu_reg * (u(1)**2 + u(2)**2) * tf
+      cost = cost + 0.5 * nu_reg * (u(1)**2 + u(2)**2)
 
       return
       end

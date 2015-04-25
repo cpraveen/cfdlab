@@ -12,7 +12,7 @@
       parameter(xmin=-2.0, xmax=2.0)
 
       real nu_reg
-      parameter(nu_reg=0.25)
+      parameter(nu_reg=0.1)
 
       integer initc
       common/init/initc
