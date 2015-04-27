@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import scipy.optimize as sop
 
@@ -31,13 +32,22 @@ def cost_gradient(u):
     g = np.loadtxt('gradient.dat')
     return g
 
+nint  = 10
+T     = 5.0
 u     = np.array([0.0, 0.0])  # Initial control
 initc = 0                     # Set initial condition internally
-#c     = cost_value(u)
-#print c
 
-nint = 10
-T = 5.0
+# Run without optimization
+if len(sys.argv) > 1:
+    if sys.argv[1]=="nocontrol":
+        print "Running uncontrolled case ..."
+        tstart, tend = 0.0, T
+        c     = cost_value(u)
+        os.system("cp sol.dat sol_nocontrol.dat")
+        print "Cost = ", c
+        exit()
+
+print "Running optimization ..."
 t = np.linspace(0.0, T, nint+1, True)
 
 u_all = np.zeros((nint,2))
@@ -56,6 +66,9 @@ for i in range(nint):
     os.system("cp sol.dat init.dat")
     initc = 1 # From now on, read initial cond from file
     print "----------------------------------------------"
+
+# Save final solution
+os.system("cp sol.dat sol_control.dat")
 
 # Save history to file
 f = open('opt.dat','w')
