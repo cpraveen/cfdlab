@@ -14,6 +14,8 @@ c  a1(x) and a2(x) can be set in the functions below
 c  For initial condition, edit subroutine set_initial_condition
 c  Solution is saved into file sol.dat; plot in gnuplot using
 c     bash$ gnuplot plot.gnu
+c     bash$ gv sol.eps
+c  or with python
 c     bash$ python plot.py
 c     bash$ xpdf sol.pdf
 c--------------------------------------------------------------------
@@ -48,7 +50,10 @@ c     Find maximum wave speed
       enddo
 
 c     Compute time step
-      if(recon_scheme.eq.itvd)then
+      if(recon_scheme.eq.ifirst)then
+         cfl = 0.90
+         dt = min(1.0/mu, cfl * dx / maxspeed)
+      else if(recon_scheme.eq.itvd)then
          cfl = 0.45
          dt = min(1.0/mu, cfl * dx / maxspeed)
       else if(recon_scheme.eq.iweno)then
@@ -129,24 +134,24 @@ c---------------------------------------------------------------------
 
       integer i
       real    f1l(nc+1), f1r(nc+1), flux1
-      real    pstar, mini, maxi, theta1, theta2, theta, w1
-      parameter(w1=1.0/12.0)
+      real    pstar, mini, maxi, minf, maxf, theta1, theta2, theta, w1
+      parameter(minf=0.0, maxf=1.0e20, w1=1.0/12.0)
 
       res1(:) = 0.0
 
 c     Compute interface values
 
 c     First face
-      call reconstruct(f1(nc-2), f1(nc-1), f1(nc), f1(1), f1(2), f1l(1))
-      call reconstruct(f1(3),  f1(2),  f1(1),  f1(nc), f1(nc-1), f1r(1))
+      f1l(1) = 0.0
+      call reconstruct(f1(3),  f1(2),  f1(1), 0.0, 0.0, f1r(1))
 
 c     Second face
-      call reconstruct(f1(nc-1), f1(nc), f1(1), f1(2), f1(3), f1l(2))
-      call reconstruct(f1(4),  f1(3),  f1(2),  f1(1), f1(nc), f1r(2))
+      call reconstruct(0.0, 0.0, f1(1), f1(2), f1(3), f1l(2))
+      call reconstruct(f1(4),  f1(3),  f1(2),  f1(1), 0.0, f1r(2))
 
 c     Third face
-      call reconstruct(f1(nc), f1(1), f1(2), f1(3), f1(4), f1l(3))
-      call reconstruct(f1(5),  f1(4),  f1(3),  f1(2), f1(1), f1r(3))
+      call reconstruct(0.0, f1(1), f1(2), f1(3), f1(4), f1l(3))
+      call reconstruct(f1(5), f1(4), f1(3), f1(2), f1(1), f1r(3))
 
       do i=3,nc-3
          call reconstruct(f1(i-2), f1(i-1), f1(i), f1(i+1),
@@ -167,8 +172,9 @@ c     penultimate face
       call reconstruct(f1(2), f1(1), f1(nc), f1(nc-1), f1(nc-2),f1r(nc))
 
 c     Last face
-      f1l(nc+1) = f1l(1)
-      f1r(nc+1) = f1r(1)
+      call reconstruct(f1(nc-2), f1(nc-1), f1(nc), 0.0,
+     1                 0.0, f1l(nc+1))
+      f1r(nc+1) = 0.0
 
 c     Apply positivity limiter
       if(recon_scheme.eq.iweno)then
@@ -176,23 +182,18 @@ c     Apply positivity limiter
             pstar = (f1(i) - w1*f1r(i) - w1*f1l(i+1))/(1.0 - 2*w1)
             mini = min(pstar, min(f1r(i), f1l(i+1)))
             maxi = max(pstar, max(f1r(i), f1l(i+1)))
-            theta1 = 1.0 !abs(1.0-f1(i))/(abs(maxi-f1(i))+1.0e-14)
-            theta2 = abs(0.0-f1(i))/(abs(mini-f1(i))+1.0e-14)
+            theta1 = abs(maxf-f1(i))/(abs(maxi-f1(i))+1.0e-14)
+            theta2 = abs(minf-f1(i))/(abs(mini-f1(i))+1.0e-14)
             theta  = min(1.0, min(theta1, theta2))
             f1r(i) = theta*(f1r(i) - f1(i)) + f1(i)
             f1l(i+1) = theta*(f1l(i+1) - f1(i)) + f1(i)
          enddo
       endif
 
-c     Left state of first face and right state of last face
-      f1l(1) = f1l(nc+1)
-      f1r(nc+1) = f1r(1)
-
 c     Compute fluxes
 
 c     First face
       call num_flux(ieqn, x(1)-0.5*dx, f1l(1), f1r(1), flux1)
-      res1(nc) = res1(nc) + flux1
       res1(1)  = res1(1)  - flux1
 
       do i=1,nc-1
@@ -200,6 +201,10 @@ c     First face
          res1(i)   = res1(i)   + flux1
          res1(i+1) = res1(i+1) - flux1
       enddo
+
+c     Last face
+      call num_flux(ieqn, x(nc)+0.5*dx, f1l(nc+1), f1r(nc+1), flux1)
+      res1(nc)  = res1(nc) + flux1
 
       if(ieqn.eq.1)then
          res1 = res1 - (-mu*f1 + mu*f0)*dx
@@ -278,7 +283,9 @@ c---------------------------------------------------------------------
       include 'common.inc'
       real um2, um1, u0, up1, up2, u
 
-      if(recon_scheme.eq.itvd)then
+      if(recon_scheme.eq.ifirst)then
+         u = u0
+      else if(recon_scheme.eq.itvd)then
          call tvd(um2,um1,u0,up1,up2,u)
       else if(recon_scheme.eq.iweno)then
          call weno5(um2,um1,u0,up1,up2,u)
@@ -345,13 +352,11 @@ c---------------------------------------------------------------------
 
 c     Dont update first 3 and last 3 cells
       if(irk.eq.1)then
-         f1(4:nc-3) = f1old(4:nc-3) - dt * res1(4:nc-3)
+         f1 = f1old - dt * res1
       else if(irk.eq.2)then
-         f1(4:nc-3) = (3.0/4.0)*f1old(4:nc-3) + (1.0/4.0)*(f1(4:nc-3) -
-     1   dt * res1(4:nc-3))
+         f1 = (3.0/4.0)*f1old + (1.0/4.0)*(f1 - dt * res1)
       else if(irk.eq.3)then
-         f1(4:nc-3) = (1.0/3.0)*f1old(4:nc-3) + (2.0/3.0)*(f1(4:nc-3) - 
-     1   dt * res1(4:nc-3))
+         f1 = (1.0/3.0)*f1old + (2.0/3.0)*(f1 - dt * res1)
       endif
 
       return
@@ -385,7 +390,7 @@ c---------------------------------------------------------------------
 
       fid = 10
       open(fid,file="sol.dat")
-      write(fid,'(3e24.12)')(x(i),f1(i),f2(i),i=1,nc)
+      write(fid,'(3es24.12e3)')(x(i),f1(i),f2(i),i=1,nc)
       close(fid)
 
       return
