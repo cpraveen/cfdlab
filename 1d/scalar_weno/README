@@ -4,11 +4,11 @@ Solves
 
 f_t + (a(x) f)_x = 0
 
-Available schemes: TVD and WENO
+Available schemes: TVD, WENO3, WENO5
 Boundary condition: periodic
 
 Set parameters in main.f file. For scheme, set variable "recon_scheme"
- to "itvd" or "iweno"
+ to "itvd" or "iweno3" or "iweno5"
 
 To set wave speed a(x), modify the function "speed"
 

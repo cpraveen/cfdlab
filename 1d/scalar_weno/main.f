@@ -17,11 +17,13 @@ c--------------------------------------------------------------------
       tf   = 1.0  ! Final time
 
 c     Set to itvd or iweno
-      recon_scheme = iweno
+      recon_scheme = iweno5
 
 c     cfl number
       if(recon_scheme.eq.itvd) cfl = 0.45
-      if(recon_scheme.eq.iweno) cfl = 1.0/12.0
+      if(recon_scheme.eq.iweno3) cfl = 1.0/6.0
+      if(recon_scheme.eq.iweno5) cfl = 1.0/12.0
+      w1 = cfl
 
       dx   = (xmax - xmin)/nc
 
@@ -90,8 +92,7 @@ c---------------------------------------------------------------------
 
       integer i
       real    f1l(nc+1), f1r(nc+1), flux1
-      real    pstar, mini, maxi, theta1, theta2, theta, w1
-      parameter(w1=1.0/12.0)
+      real    pstar, mini, maxi, theta1, theta2, theta
 
       res1(:) = 0.0
 
@@ -132,7 +133,7 @@ c     Last face
       f1r(nc+1) = f1r(1)
 
 c     Apply positivity limiter
-      if(recon_scheme.eq.iweno)then
+      if(recon_scheme.eq.iweno3.or.recon_scheme.eq.iweno5)then
          do i=1,nc
             pstar = (f1(i) - w1*f1r(i) - w1*f1l(i+1))/(1.0 - 2*w1)
             mini = min(pstar, min(f1r(i), f1l(i+1)))
@@ -163,6 +164,31 @@ c     First face
       enddo
 
       res1 = res1/dx
+
+      return
+      end
+c---------------------------------------------------------------------
+c Third order weno
+c---------------------------------------------------------------------
+      subroutine weno3(um1,u0,up1,u)
+      implicit none
+      real um1, u0, up1, u
+      real eps, gamma1, gamma2
+      parameter(eps = 1.0e-6, gamma1=1.0/3.0, gamma2=2.0/3.0)
+      real beta1, beta2
+      real u1, u2;
+      real w1, w2;
+
+      beta1 = (um1 - u0)**2
+      beta2 = (up1 - u0)**2
+
+      w1 = gamma1 / (eps+beta1)**2
+      w2 = gamma2 / (eps+beta2)**2
+
+      u1 = (3.0/2.0)*u0 - (1.0/2.0)*um1
+      u2 = (u0 + up1)/2.0
+
+      u = (w1 * u1 + w2 * u2)/(w1 + w2)
 
       return
       end
@@ -235,7 +261,9 @@ c---------------------------------------------------------------------
 
       if(recon_scheme.eq.itvd)then
          call tvd(um2,um1,u0,up1,up2,u)
-      else if(recon_scheme.eq.iweno)then
+      else if(recon_scheme.eq.iweno3)then
+         call weno3(um1,u0,up1,u)
+      else if(recon_scheme.eq.iweno5)then
          call weno5(um2,um1,u0,up1,up2,u)
       else
          print*,"Unknown reconstruction scheme"
