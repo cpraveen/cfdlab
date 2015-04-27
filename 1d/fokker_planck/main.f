@@ -48,6 +48,8 @@ c     Find maximum wave speed
          maxspeed = max(maxspeed, abs(a1(x(i)-0.5*dx)))
          maxspeed = max(maxspeed, abs(a2(x(i)-0.5*dx)))
       enddo
+      maxspeed = max(maxspeed, abs(a1(x(nc)+0.5*dx)))
+      maxspeed = max(maxspeed, abs(a2(x(nc)+0.5*dx)))
 
 c     Compute time step
       if(recon_scheme.eq.ifirst)then
