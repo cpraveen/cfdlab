@@ -4,3 +4,6 @@
 
       real w1
       common/poslim/w1
+
+      real ark(3), brk(3)
+      common/ssprk/ark,brk

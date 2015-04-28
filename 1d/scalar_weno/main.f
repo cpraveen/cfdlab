@@ -9,7 +9,7 @@ c--------------------------------------------------------------------
       parameter(nc=100)
       real    f1(nc), f1old(nc), res1(nc)
       real    xmin, xmax, dx, x(nc), tf, cfl, dt
-      integer i,irk, iter
+      integer i, nrk, irk, iter
       real    speed, maxspeed, t, f1min, f1max, f1tot
 
       xmin = 0.0  ! Left end of domain
@@ -20,10 +20,29 @@ c     Set to ifirst/itvd/iweno3/iweno5
       recon_scheme = iweno5
 
 c     cfl number
-      if(recon_scheme.eq.ifirst) cfl = 0.9
-      if(recon_scheme.eq.itvd) cfl = 0.45
-      if(recon_scheme.eq.iweno3) cfl = 1.0/6.0
-      if(recon_scheme.eq.iweno5) cfl = 1.0/12.0
+      if(recon_scheme.eq.ifirst)then
+         cfl    = 0.9
+         nrk    = 1
+         ark(1) = 0.0
+      else if(recon_scheme.eq.itvd)then
+         cfl    = 0.45
+         nrk    = 2
+         ark(1) = 0.0
+         ark(2) = 0.5
+      else if(recon_scheme.eq.iweno3)then
+         cfl    = 1.0/6.0
+         nrk    = 3
+         ark(1) = 0.0
+         ark(2) = 3.0/4.0
+         ark(3) = 1.0/3.0
+      else if(recon_scheme.eq.iweno5)then
+         cfl    = 1.0/12.0
+         nrk    = 3
+         ark(1) = 0.0
+         ark(2) = 3.0/4.0
+         ark(3) = 1.0/3.0
+      endif
+      brk(1:nrk) = 1.0 - ark(1:nrk)
       w1 = cfl
 
       dx   = (xmax - xmin)/nc
@@ -50,7 +69,7 @@ c     set initial condition
       do while(t.lt.tf)
          if(t+dt.gt.tf) dt = tf - t
          f1old = f1
-         do irk=1,3
+         do irk=1,nrk
             call compute_residual (nc, dx, x, f1, res1)
             call update_solution (nc, f1, f1old, res1, irk, dt)
          enddo
@@ -309,16 +328,11 @@ c 3-stage 3-order SSP-RK scheme
 c---------------------------------------------------------------------
       subroutine update_solution (nc, f1, f1old, res1, irk, dt)
       implicit none
+      include 'common.inc'
       integer nc, irk
       real    f1(nc), f1old(nc), res1(nc), dt
 
-      if(irk.eq.1)then
-         f1 = f1old - dt * res1
-      else if(irk.eq.2)then
-         f1 = (3.0/4.0)*f1old + (1.0/4.0)*(f1 - dt * res1)
-      else if(irk.eq.3)then
-         f1 = (1.0/3.0)*f1old + (2.0/3.0)*(f1 - dt * res1)
-      endif
+      f1 = ark(irk)*f1old + brk(irk)*(f1 - dt * res1)
 
       return
       end
