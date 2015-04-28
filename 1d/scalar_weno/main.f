@@ -14,12 +14,13 @@ c--------------------------------------------------------------------
 
       xmin = 0.0  ! Left end of domain
       xmax = 1.0  ! Right end of domain
-      tf   = 1.0  ! Final time
+      tf   = 5.0  ! Final time
 
-c     Set to itvd or iweno
+c     Set to ifirst/itvd/iweno3/iweno5
       recon_scheme = iweno5
 
 c     cfl number
+      if(recon_scheme.eq.ifirst) cfl = 0.9
       if(recon_scheme.eq.itvd) cfl = 0.45
       if(recon_scheme.eq.iweno3) cfl = 1.0/6.0
       if(recon_scheme.eq.iweno5) cfl = 1.0/12.0
@@ -259,7 +260,9 @@ c---------------------------------------------------------------------
       include 'common.inc'
       real um2, um1, u0, up1, up2, u
 
-      if(recon_scheme.eq.itvd)then
+      if(recon_scheme.eq.ifirst)then
+         u = u0
+      else if(recon_scheme.eq.itvd)then
          call tvd(um2,um1,u0,up1,up2,u)
       else if(recon_scheme.eq.iweno3)then
          call weno3(um1,u0,up1,u)
