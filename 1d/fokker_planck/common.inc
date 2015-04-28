@@ -4,3 +4,6 @@
 
       real    mu
       parameter(mu=2.0)
+
+      real ark(3), brk(3)
+      common/ssprk/ark,brk
