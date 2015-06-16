@@ -5,6 +5,9 @@
 
 using namespace std;
 
+bool debug;
+
+
 Vector gresho(const Vector p)
 {
    double r = p.norm();
@@ -147,8 +150,11 @@ void Grid::save()
 
 int main(int argc, char* argv[])
 {
+   debug = false;
+
    Grid grid;
    grid.read_gmsh("square.msh");
+   grid.preproc();
    grid.save();
 
    double dt = 0.01;

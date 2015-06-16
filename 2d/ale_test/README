@@ -1,0 +1,11 @@
+Cell = a triangle
+Three vertices in ccw order = vertex[0], vertex[1], vertex[2]
+Three edges forming triangle = face[0], face[1], face[2] (What is the order ?)
+
+Face = an edge
+Vertices forming edge = vertex[0], vertex[1]
+When you go from vertex[0] to vertex[1], 
+   triangle to your left  = lcell
+   vertex to your left    = lvertex
+   triangle to your right = rcell
+   vertex to your right   = rvertex
