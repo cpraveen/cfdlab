@@ -1,0 +1,119 @@
+#!/usr/bin/ruby
+# Use "svnci test" to test the consistency of CHANGELOG file without actually
+# committing.
+# Use "svnci status" to check the status of local files with those on the svn
+# repository. This requires network access. Always check the status before
+# committing to avoid conflicts.
+
+#How many command line arguments do we have ?
+if ARGV.length == 0
+   puts "Usage:"
+   puts "   svnci test"
+   puts "   svnci status"
+   puts "   svnci ci"
+   abort
+end
+
+#How many command line arguments do we have ?
+if ARGV.length > 1
+   puts "Only 0 or 1 arguments allowed"
+   abort
+end
+
+#Read the CHANGELOG file
+CLOG=IO.readlines("CHANGELOG")
+
+if CLOG.length < 4
+   puts "Nothing to be done or CHANGELOG is empty/incomplete"
+   abort
+end
+
+#Check first and last line of CHANGELOG
+nlines = CLOG.length
+if CLOG[0] != "==\n" or CLOG[nlines-1] != "==\n"
+   puts "CHANGELOG file should begin and end with =="
+   abort
+end
+
+#Read files and messages
+ibeg=-1
+iend=-1
+count=0
+file=[]
+mess=[]
+exstr=[]
+for i in 0...CLOG.length
+   if CLOG[i] == "==\n" and ibeg==-1
+      ibeg = i + 1
+   end
+   if CLOG[i] == "==\n" and ibeg!=-1 and iend==-1
+      iend = i - 1
+   end
+   if ibeg != -1 and iend != -1
+      if iend <= ibeg
+         puts "CHANGELOG file is incorrect"
+         puts "Check near line number ",ibeg
+         abort
+      end
+      #Generate list of files
+      thisfile = ""
+      ibeg2    = ibeg
+      for ii in ibeg...iend
+         break if CLOG[ii] == "\n"
+         thisfile = thisfile + " " + CLOG[ii].sub(/\n/,'')
+         ibeg2    = ibeg2 + 1
+      end
+      if ibeg2 == iend
+         puts "Missing empty line between files and log message"
+         puts "or log message might be missing"
+         abort
+      end
+      file[count] = thisfile.sub(/\n/,'')
+      #Get log message for these files
+      thismess = ""
+      for j in (ibeg2+1)...(iend+1)
+         thismess = thismess + CLOG[j]
+      end
+      mess[count]  = thismess
+      exstr[count] = "svn ci " + file[count] + " -F /tmp/message"
+      count = count + 1
+      ibeg  = iend + 2
+      iend  = -1
+   end
+end
+
+#Perform test
+if ARGV.length == 1 and ARGV[0] == "test"
+   for i in 0...count
+      puts "---"
+      puts exstr[i]
+      puts mess[i]
+   end
+   abort
+#Check status with files on repository
+elsif ARGV.length == 1 and ARGV[0] == "status"
+   allfiles=" "
+   for i in 0...count
+      allfiles = allfiles + file[i] + " "
+   end
+   statstr = "svn status -u " + allfiles
+   system(statstr)
+   abort
+#Now commit changes
+elsif ARGV.length == 1 and ARGV[0] == "ci"
+   for i in 0...count
+      fpt = File.new("/tmp/message","w")
+      fpt.write(mess[i])
+      fpt.close
+      puts "---"
+      puts exstr[i]
+      system(exstr[i])
+   end
+
+   #Clear contents of CHANGELOG
+   system("rm -f CHANGELOG && touch CHANGELOG")
+#Unknown command line argument
+elsif ARGV.length == 1
+   puts "What do you want to do ?"
+   abort
+end

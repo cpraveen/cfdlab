@@ -1,0 +1,25 @@
+#!/bin/bash
+# Delete files which are not under version control
+# Does not detect object files
+
+files=`svn status | grep "?" | awk '{print $2}'`
+
+answer="no"
+
+if [ "x$files" = "x" ]; then
+
+   echo "Nothing to clean"
+
+else
+
+   echo "Following files/directories will be deleted"
+   echo $files
+   echo -n "Do you want to continue ? (yes/no) : "
+   read answer
+
+   if [ "$answer" == "yes" ]; then
+      echo "Deleting files"
+      rm -rf $files
+   fi
+
+fi

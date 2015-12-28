@@ -1,0 +1,22 @@
+#!/bin/bash
+
+program=`basename $0`
+if [ -z "$1" ]
+then
+   echo "Usage: $program sol"
+   echo "       This converts all files sol*.plt to binary and overwrites them"
+   exit 1
+fi
+
+files=`ls $1*.plt`
+
+for file in $files
+do
+   istext=`file $file | grep text`
+   if [ "$istext"xxx != "xxx" ]; then
+      echo "Converting " $file
+      preplot $file /tmp/tecbin.plt
+      cp /tmp/tecbin.plt $file
+      rm /tmp/tecbin.plt
+   fi
+done

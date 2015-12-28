@@ -1,0 +1,32 @@
+#!/bin/bash
+
+program=`basename $0`
+if [ -z "$1" ]
+then
+   echo "Usage: $program <filename>"
+   exit 1
+fi
+
+# Check if file exists
+if [ ! -f $1 ]
+then
+   echo "File $1 does not exist"
+   exit 1
+fi
+
+dir=`dirname $1`
+fil=`basename $1`
+basefil=$dir/.svn/text-base/$fil.svn-base
+
+if [ ! -f $basefil ]
+then
+   echo "$1 is not under version control"
+   exit 1
+fi
+
+if [ "`/usr/bin/diff -q $basefil $1`" ]
+then
+   opendiff $basefil $1
+else
+   echo "File is not changed"
+fi

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+files=`ls *.ps *.eps`
+
+for f in $files
+do
+   echo "Converting " $f
+   ps2pdf $f
+done

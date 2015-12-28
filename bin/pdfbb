@@ -1,0 +1,42 @@
+#!/bin/sh
+# Removes bounding box pdf file.
+# 06 August, 2009
+
+PN=`basename "$0"`
+
+usage () {
+   echo >&2 "usage: $PN <pdf file>
+
+   Fix bounding box for a pdf file. Give file name(s).
+   example: $PN foo.pdf
+            $PN foo1.pdf foo2.pdf
+   To crop all pdf files in a directory, use
+            $PN \"*.pdf\"
+
+   WARNING: THIS PROGRAM OVERWRITES THE PDF FILE !!!"
+
+    exit 1
+}
+
+if [ $# -lt 1 ]
+then
+	usage
+fi
+
+for pdf in "$@"
+do
+   if [ -f $pdf ]
+   then
+      #base=`echo $pdf | cut -d'.' -f1`
+      # Number of chars in filename
+      nc=`echo $pdf | wc -c`
+      # chop off .pdf part, need to subtract 5, why
+      ((nc = (nc - 5) ))
+      base=`echo $pdf | cut -c 1-$nc`
+      echo "Clipping file $pdf"
+      pdfcrop --clip $base.pdf > /dev/null
+      mv $base-crop.pdf $base.pdf
+   else
+      echo "File $pdf does not exist !"
+   fi
+done
