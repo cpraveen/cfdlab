@@ -1,0 +1,9 @@
+n_cell      100
+xmin        0.0
+xmax        1.0
+xmid        0.25
+u_left      1.0
+u_right     0.5
+cfl         0.8
+final_time  0.50
+flux_scheme roe
