@@ -9,7 +9,7 @@ from dolfin import *
 def Boundary(x, on_boundary):
    return on_boundary
 
-mesh = UnitSquare(20,20)
+mesh = UnitSquareMesh(20,20)
 
 V = FunctionSpace(mesh, 'CG', 1)
 

@@ -23,7 +23,7 @@ class Top(SubDomain):
     def inside(self, x, on_boundary):
         return near(x[1], 1.0)
 
-mesh = UnitSquare(20,20)
+mesh = UnitSquareMesh(20,20)
 
 boundaries = FacetFunction("uint", mesh)
 boundaries.set_all(0)

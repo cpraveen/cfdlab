@@ -14,7 +14,7 @@ np = [20, 40, 80, 160, 320]
 conv = []
 file = File('sol.pvd')
 for n in np:
-   mesh = UnitSquare(n,n)
+   mesh = UnitSquareMesh(n,n)
 
    V = FunctionSpace(mesh, 'CG', 1)
 
@@ -38,8 +38,8 @@ for n in np:
    solve(a == L, w, bc)
    file << w
 
-   error_L2 = errornorm(g, w, norm_type='L2', degree=3)
-   error_H1 = errornorm(g, w, norm_type='H1', degree=3)
+   error_L2 = errornorm(g, w, norm_type='L2', degree_rise=3)
+   error_H1 = errornorm(g, w, norm_type='H1', degree_rise=3)
    print "n = ", n, " h =", mesh.hmax(), " error = ", error_L2, error_H1
    conv.append([n, mesh.hmax(), error_L2, error_H1])
 

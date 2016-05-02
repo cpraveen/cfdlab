@@ -22,7 +22,7 @@ ue = Expression('(1.0/pi) * atan2(x[1], x[0])')
 
 # Initial mesh
 n = 10
-mesh = Rectangle(-0.5, 0, +0.5, 1.0, n, n)
+mesh = RectangleMesh(Point(-0.5, 0), Point(+0.5, 1.0), n, n)
 
 # Number of refinement steps
 nstep= 5
@@ -31,7 +31,7 @@ nstep= 5
 REFINE_FRACTION=0.1
 
 # Refinement type: 'uniform' or 'adaptive'
-refine_type = 'uniform'
+refine_type = 'adaptive'
 
 conv = []
 file = File('sol.pvd')
@@ -58,9 +58,10 @@ for j in range(nstep):
    solve(a == L, u, bc)
 
    file << u
-   ferr << project(u-ue, V)
-   error_L2 = errornorm(ue, u, norm_type='L2', degree=3)
-   error_H1 = errornorm(ue, u, norm_type='H1', degree=3)
+   err = project(u-ue, V); err.rename("Error","Error")
+   ferr << err
+   error_L2 = errornorm(ue, u, norm_type='L2', degree_rise=3)
+   error_H1 = errornorm(ue, u, norm_type='H1', degree_rise=3)
    conv.append([V.dim(), mesh.hmax(), error_L2, error_H1])
 
    n = FacetNormal(mesh)

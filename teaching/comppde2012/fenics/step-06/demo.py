@@ -47,8 +47,9 @@ for j in range(nstep):
 
    solve(a == L, w, bc)
 
+   w.rename("sol","sol")
    file << w
-   error_L2 = errornorm(ue, w, norm_type='L2', degree=3)
+   error_L2 = errornorm(ue, w, norm_type='L2', degree_rise=3)
    conv.append([mesh.hmax(), error_L2])
 
    # refine the mesh
