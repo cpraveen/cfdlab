@@ -90,7 +90,7 @@ dmax1_bq.o:	routines.f
 		       -head       dmax1             \
 		       -vars       "a b"             \
 		       -outvars    "dmax1"           \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c dmax1_bq.f;
 #-----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ dmin1_bq.o:	routines.f
 		       -head       dmin1             \
 		       -vars       "a b"             \
 		       -outvars    "dmin1"           \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c dmin1_bq.f;
 #-----------------------------------------------------------------------------
@@ -109,7 +109,7 @@ errf_bq.o:	routines.f
 		       -head       errf              \
 		       -vars       "x"               \
 		       -outvars    "x errf"          \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c errf_bq.f;
 #-----------------------------------------------------------------------------
@@ -118,7 +118,7 @@ nozzle_ba.o:	routines.f
 		       -head       nozzle            \
 		       -vars       "c d"             \
 		       -outvars    "nozzle"          \
-		       -difffuncname "_ba"           \
+		       -adjfuncname "_ba"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c nozzle_ba.f;
 #-----------------------------------------------------------------------------
@@ -127,7 +127,7 @@ nozzle_x.o:	routines.f
 		       -head       nozzle            \
 		       -vars       "x"               \
 		       -outvars    "nozzle"          \
-		       -difffuncname "_x"            \
+		       -adjfuncname "_x"            \
 		        routines.f;
 		${FC} ${FFLAGS} -c nozzle_x.f;
 #-----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ flux_%_bq.o:	routines.f
 		       -head       flux_$*           \
 		       -vars       "ql qr resl resr" \
 		       -outvars    "ql qr resl resr" \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_$*_bq.f
 
@@ -149,7 +149,7 @@ flux_%_ba.o:	routines.f
 		       -head       flux_$*       \
 		       -vars       "a resl resr" \
 		       -outvars    "a resl resr" \
-		       -difffuncname "_ba"       \
+		       -adjfuncname "_ba"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_$*_ba.f;
 
@@ -160,7 +160,7 @@ flux_in_bq.o:	routines.f
 		       -head       flux_in   \
 		       -vars       "res"   \
 		       -outvars    "res"   \
-		       -difffuncname "_bq"   \
+		       -adjfuncname "_bq"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_in_bq.f;
 
@@ -169,7 +169,7 @@ flux_in_ba.o:	routines.f
 		       -head       flux_in   \
 		       -vars       "a res"   \
 		       -outvars    "a res"   \
-		       -difffuncname "_ba"   \
+		       -adjfuncname "_ba"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_in_ba.f;
 
@@ -180,7 +180,7 @@ flux_in_steger_bq.o:	routines.f
 		       -head       flux_in_steger   \
 		       -vars       "q res"   \
 		       -outvars    "q res"   \
-		       -difffuncname "_bq"   \
+		       -adjfuncname "_bq"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_in_steger_bq.f;
 
@@ -190,7 +190,7 @@ flux_in_steger_bmach.o:	routines.f
 		       -head       flux_in_steger   \
 		       -vars       "minf res"   \
 		       -outvars    "res"   \
-		       -difffuncname "_bmach"   \
+		       -adjfuncname "_bmach"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_in_steger_bmach.f;
 
@@ -201,7 +201,7 @@ flux_out_bq.o:	routines.f
 		       -head       flux_out      \
 		       -vars       "ql qll res"  \
 		       -outvars    "ql qll res"  \
-		       -difffuncname "_bq"       \
+		       -adjfuncname "_bq"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_out_bq.f;
 
@@ -210,7 +210,7 @@ flux_out_ba.o:	routines.f
 		       -head       flux_out      \
 		       -vars       "a res"       \
 		       -outvars    "a res"       \
-		       -difffuncname "_ba"       \
+		       -adjfuncname "_ba"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_out_ba.f;
 
@@ -219,7 +219,7 @@ flux_out2_bq.o:	routines.f
 		       -head       flux_out2     \
 		       -vars       "ql res"  \
 		       -outvars    "ql res"  \
-		       -difffuncname "_bq"       \
+		       -adjfuncname "_bq"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_out2_bq.f;
 
@@ -228,7 +228,7 @@ flux_out2_ba.o:	routines.f
 		       -head       flux_out2     \
 		       -vars       "a res"       \
 		       -outvars    "a res"       \
-		       -difffuncname "_ba"       \
+		       -adjfuncname "_ba"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_out2_ba.f;
 
@@ -238,7 +238,7 @@ source_term_bq.o:	routines.f
 		       -head       source_term   \
 		       -vars       "q res"       \
 		       -outvars    "q res"       \
-		       -difffuncname "_bq"       \
+		       -adjfuncname "_bq"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c source_term_bq.f;
 
@@ -247,7 +247,7 @@ source_term_ba.o:	routines.f
 		       -head       source_term   \
 		       -vars       "al ar res"   \
 		       -outvars    "al ar res"   \
-		       -difffuncname "_ba"       \
+		       -adjfuncname "_ba"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c source_term_ba.f;
 
@@ -257,7 +257,7 @@ costfunc_bq.o:	routines.f
 		       -head       costfunc  \
 		       -vars       "q cost"  \
 		       -outvars    "q cost"  \
-		       -difffuncname "_bq"   \
+		       -adjfuncname "_bq"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c costfunc_bq.f;
 
@@ -267,7 +267,7 @@ costfunc2_bq.o:	routines.f
 				 -head       costfunc2 \
 				 -vars       "q cost"  \
 				 -outvars    "q cost"  \
-				 -difffuncname "_bq"   \
+				 -adjfuncname "_bq"   \
 				  routines.f;
 		${FC} ${FFLAGS} -c costfunc2_bq.f;
 
@@ -277,7 +277,7 @@ muscl_bq.o:	routines.f
 				 -head       muscl     \
 				 -vars       "qjm1 qj qjp1 qjph"  \
 				 -outvars    "qjm1 qj qjp1 qjph"  \
-				 -difffuncname "_bq"   \
+				 -adjfuncname "_bq"   \
 				  routines.f;
 		${FC} ${FFLAGS} -c muscl_bq.f;
 
@@ -288,7 +288,7 @@ InterpolateFlux_x.o:	InterpolateFlux.f
 		       -head       InterpolateFlux   \
 		       -vars       "xgauss"          \
 				 -outvars    "flux"            \
-		       -difffuncname "_x"           \
+		       -adjfuncname "_x"           \
 		        InterpolateFlux.f;
 		${FC} ${FFLAGS} -c InterpolateFlux_x.f;
 #-----------------------------------------------------------------------------
@@ -298,7 +298,7 @@ residu_bq.o:	residu.f
 		       -head       residu   \
 		       -vars       "q res"   \
 		       -outvars    "q res"   \
-		       -difffuncname "_bq"   \
+		       -adjfuncname "_bq"   \
 				 -output residu \
 		        residu.f;
 		${FC} ${FFLAGS} -c residu_bq.f;

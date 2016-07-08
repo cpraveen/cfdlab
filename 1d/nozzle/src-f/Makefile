@@ -80,7 +80,7 @@ dmax1_bq.o:	routines.f
 		       -head       dmax1             \
 		       -vars       "a b"             \
 		       -outvars    "dmax1"           \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c dmax1_bq.f;
 #-----------------------------------------------------------------------------
@@ -89,7 +89,7 @@ dmin1_bq.o:	routines.f
 		       -head       dmin1             \
 		       -vars       "a b"             \
 		       -outvars    "dmin1"           \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c dmin1_bq.f;
 #-----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ errf_bq.o:	routines.f
 		       -head       errf              \
 		       -vars       "x"               \
 		       -outvars    "x errf"          \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c errf_bq.f;
 #-----------------------------------------------------------------------------
@@ -108,7 +108,7 @@ nozzle_ba.o:	routines.f
 		       -head       nozzle            \
 		       -vars       "c d"             \
 		       -outvars    "nozzle"          \
-		       -difffuncname "_ba"           \
+		       -adjfuncname "_ba"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c nozzle_ba.f;
 #-----------------------------------------------------------------------------
@@ -121,7 +121,7 @@ flux_%_bq.o:	routines.f
 		       -head       flux_$*           \
 		       -vars       "ql qr resl resr" \
 		       -outvars    "ql qr resl resr" \
-		       -difffuncname "_bq"           \
+		       -adjfuncname "_bq"           \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_$*_bq.f
 
@@ -130,7 +130,7 @@ flux_%_ba.o:	routines.f
 		       -head       flux_$*       \
 		       -vars       "a resl resr" \
 		       -outvars    "a resl resr" \
-		       -difffuncname "_ba"       \
+		       -adjfuncname "_ba"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_$*_ba.f;
 
@@ -141,7 +141,7 @@ flux_in_bq.o:	routines.f
 		       -head       flux_in   \
 		       -vars       "res"   \
 		       -outvars    "res"   \
-		       -difffuncname "_bq"   \
+		       -adjfuncname "_bq"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_in_bq.f;
 
@@ -150,7 +150,7 @@ flux_in_ba.o:	routines.f
 		       -head       flux_in   \
 		       -vars       "a res"   \
 		       -outvars    "a res"   \
-		       -difffuncname "_ba"   \
+		       -adjfuncname "_ba"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_in_ba.f;
 
@@ -161,7 +161,7 @@ flux_out_bq.o:	routines.f
 		       -head       flux_out      \
 		       -vars       "ql qll res"  \
 		       -outvars    "ql qll res"  \
-		       -difffuncname "_bq"       \
+		       -adjfuncname "_bq"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_out_bq.f;
 
@@ -170,7 +170,7 @@ flux_out_ba.o:	routines.f
 		       -head       flux_out      \
 		       -vars       "a res"       \
 		       -outvars    "a res"       \
-		       -difffuncname "_ba"       \
+		       -adjfuncname "_ba"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c flux_out_ba.f;
 
@@ -180,7 +180,7 @@ source_term_bq.o:	routines.f
 		       -head       source_term   \
 		       -vars       "q res"       \
 		       -outvars    "q res"       \
-		       -difffuncname "_bq"       \
+		       -adjfuncname "_bq"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c source_term_bq.f;
 
@@ -189,7 +189,7 @@ source_term_ba.o:	routines.f
 		       -head       source_term   \
 		       -vars       "al ar res"   \
 		       -outvars    "al ar res"   \
-		       -difffuncname "_ba"       \
+		       -adjfuncname "_ba"       \
 		        routines.f;
 		${FC} ${FFLAGS} -c source_term_ba.f;
 
@@ -199,7 +199,7 @@ costfunc_bq.o:	routines.f
 		       -head       costfunc  \
 		       -vars       "q cost"  \
 		       -outvars    "q cost"  \
-		       -difffuncname "_bq"   \
+		       -adjfuncname "_bq"   \
 		        routines.f;
 		${FC} ${FFLAGS} -c costfunc_bq.f;
 
