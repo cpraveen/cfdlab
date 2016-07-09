@@ -109,6 +109,7 @@ C Time step loop
       close(10)
 
       print*,'Number of adjoint iterations =',iter
+      print*,'Final residue norm        =',residue
 
 C Computation of contribution of shape perturbation
          do i=1,nf

@@ -1,6 +1,7 @@
 
 
 C Flux for inflow face
+C Use inflow conditions to compute flux
       subroutine flux_in(a, res)
       implicit none
       include 'param.inc'
@@ -22,6 +23,7 @@ C Flux for inflow face
       end
 
 C Flux for inflow face
+C Use rho and p from inflow, velocity from inside
       subroutine flux_in2(a, q, res)
       implicit none
       include 'param.inc'
@@ -317,6 +319,8 @@ c     Negative flux
       end
 
 C Flux for outflow face
+C Linear extrapolation from last two cells to the outflow face
+C Pressure taken from pout
       subroutine flux_out(a, ql, qll, res)
       implicit none
       include 'param.inc'

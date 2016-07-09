@@ -163,6 +163,7 @@ c              resb(j,i) = resbold(j,i) - dt*qb(j,i)/dx/ar
       close(10)
 
       print*,'Number of adjoint iterations =',iter
+      print*,'Final residue norm           =',residue
 
 c derivative wrt inflow mach number
       call flux_in_steger_bmach(a(1), q(1,1),

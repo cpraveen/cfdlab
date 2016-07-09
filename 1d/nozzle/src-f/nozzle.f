@@ -54,6 +54,7 @@ C Time step loop
       close(10)
 
       print*,'Number of flow iterations =',iter
+      print*,'Final residue norm        =',residue
 
 C Read target pressure from a file
       pf = 12
