@@ -1,0 +1,14 @@
+convect.c
+
+Solves linear advection eqn using upwind finite volume scheme, weno5 reconstruction and periodic bc.
+
+We use PETSc vectors to manage parallelization but there is no matrix that is being solved.
+
+To run:
+
+make
+mpirun -np 4 ./convect
+
+Then plot solution in gnuplot
+
+gnuplot> p "sol.dat" w lp
