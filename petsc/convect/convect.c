@@ -1,4 +1,4 @@
-static char help[] = "Solves a tridiagonal linear system with KSP.\n\n";
+static char help[] = "Solves u_t + u_x = 0.\n\n";
 
 #include <petscsys.h>
 #include <petscdm.h>
@@ -6,6 +6,22 @@ static char help[] = "Solves a tridiagonal linear system with KSP.\n\n";
 #include <petscvec.h>
 
 const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
+const double xmin = -1.0;
+const double xmax = +1.0;
+
+double initcond(double x)
+{
+   if(x >= -0.8 && x <= -0.6)
+      return exp(-log(2)*pow(x+0.7,2)/0.0009);
+   else if(x >= -0.4 && x <= -0.2)
+      return 1.0;
+   else if(x >= 0.0 && x <= 0.2)
+      return 1.0 - fabs(10*(x-0.1));
+   else if(x>= 0.4 && x <= 0.6)
+      return sqrt(1 - 100*pow(x-0.5,2));
+   else
+      return 0.0;
+}
 
 //------------------------------------------------------------------------------
 // Weno reconstruction
@@ -38,15 +54,58 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
 }
 
 //------------------------------------------------------------------------------
+// Save solution to file
+//------------------------------------------------------------------------------
+PetscErrorCode savesol(int nx, double dx, Vec ug)
+{
+   int i, rank;
+   static int count = 0;
+   PetscErrorCode ierr;
+
+   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
+
+   // Gather entire solution on rank=0 process. This is bad thing to do
+   // in a real application.
+   VecScatter ctx;
+   Vec        uall;
+   ierr = VecScatterCreateToZero(ug,&ctx,&uall); CHKERRQ(ierr);
+   // scatter as many times as you need
+   ierr = VecScatterBegin(ctx,ug,uall,INSERT_VALUES,SCATTER_FORWARD); CHKERRQ(ierr);
+   ierr = VecScatterEnd(ctx,ug,uall,INSERT_VALUES,SCATTER_FORWARD); CHKERRQ(ierr);
+   // destroy scatter context and local vector when no longer needed
+   ierr = VecScatterDestroy(&ctx); CHKERRQ(ierr);
+   if(rank==0)
+   {
+      PetscScalar *uarray;
+      ierr = VecGetArray(uall, &uarray); CHKERRQ(ierr);
+      FILE *f;
+      f = fopen("sol.dat","w");
+      for(i=0; i<nx; ++i)
+         fprintf(f, "%e %e\n", xmin+i*dx, uarray[i]);
+      fclose(f);
+      printf("Wrote solution into sol.dat\n");
+      ierr = VecRestoreArray(uall, &uarray); CHKERRQ(ierr);
+      if(count==0)
+      {
+         // Initial solution is copied to sol0.dat
+         system("cp sol.dat sol0.dat");
+         count = 1;
+      }
+   }
+   ierr = VecDestroy(&uall); CHKERRQ(ierr);
+   return(0);
+}
+
+//------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
    PetscErrorCode ierr;
    DM       da;
    Vec      ug, ul;
-   PetscInt i, ibeg, nloc, nx=100;
+   PetscInt i, ibeg, nloc, nx=200;
    const PetscInt sw = 3, ndof = 1; // stencil width
    PetscMPIInt rank, size;
-   double cfl = 1.0;
+   double cfl = 0.4;
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
@@ -59,16 +118,18 @@ int main(int argc, char *argv[])
 
    ierr = DMDAGetCorners(da, &ibeg, 0, 0, &nloc, 0, 0); CHKERRQ(ierr);
    ierr = DMDAGetInfo(da,0,&nx,0,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
-   PetscReal dx = 1.0 / (PetscReal)(nx);
+   PetscReal dx = (xmax - xmin) / (PetscReal)(nx);
    PetscPrintf(PETSC_COMM_WORLD,"nx = %d, dx = %e\n", nx, dx);
    for(i=ibeg; i<ibeg+nloc; ++i)
    {
-      PetscReal x = i*dx;
-      PetscReal v = sin(2.0*PETSC_PI*x);
+      PetscReal x = xmin + i*dx;
+      PetscReal v = initcond(x);
       ierr = VecSetValues(ug,1,&i,&v,INSERT_VALUES); CHKERRQ(ierr);
    }
    ierr = VecAssemblyBegin(ug);  CHKERRQ(ierr);
    ierr = VecAssemblyEnd(ug);    CHKERRQ(ierr);
+
+   savesol(nx, dx, ug);
 
    // Get local view
    ierr = DMCreateLocalVector(da, &ul); CHKERRQ(ierr);
@@ -80,7 +141,7 @@ int main(int argc, char *argv[])
    double dt = cfl * dx;
    double lam= dt/dx;
 
-   double tfinal = 0.5, t = 0.0;
+   double tfinal = 2.0, t = 0.0;
 
    while(t < tfinal)
    {
@@ -139,29 +200,7 @@ int main(int argc, char *argv[])
       PetscPrintf(PETSC_COMM_WORLD,"t = %f\n", t);
    }
 
-   // Gather entire solution on rank=0 process. This is bad thing to do
-   // in a real application.
-   VecScatter ctx;
-   Vec        uall;
-   ierr = VecScatterCreateToZero(ug,&ctx,&uall); CHKERRQ(ierr);
-   // scatter as many times as you need
-   ierr = VecScatterBegin(ctx,ug,uall,INSERT_VALUES,SCATTER_FORWARD); CHKERRQ(ierr);
-   ierr = VecScatterEnd(ctx,ug,uall,INSERT_VALUES,SCATTER_FORWARD); CHKERRQ(ierr);
-   // destroy scatter context and local vector when no longer needed
-   ierr = VecScatterDestroy(&ctx); CHKERRQ(ierr);
-   if(rank==0)
-   {
-      PetscScalar *uarray;
-      ierr = VecGetArray(uall, &uarray); CHKERRQ(ierr);
-      FILE *f;
-      f = fopen("sol.dat","w");
-      for(i=0; i<nx; ++i)
-         fprintf(f, "%e %e\n", i*dx, uarray[i]);
-      fclose(f);
-      printf("Wrote solution into sol.dat\n");
-      ierr = VecRestoreArray(uall, &uarray); CHKERRQ(ierr);
-   }
-   ierr = VecDestroy(&uall); CHKERRQ(ierr);
+   savesol(nx, dx, ug);
 
    // Destroy everything before finishing
    ierr = DMDestroy(&da); CHKERRQ(ierr);

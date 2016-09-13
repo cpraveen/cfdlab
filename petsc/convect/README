@@ -11,4 +11,10 @@ mpirun -np 4 ./convect
 
 Then plot solution in gnuplot
 
-gnuplot> p "sol.dat" w lp
+gnuplot> p "sol0.dat" w l,"sol.dat" w p
+
+or run the python script plt.py
+
+By default, the code uses 200 grid points. To specify number of grid points,
+
+mpirun -np 4 ./convect -da_grid_x 1000
