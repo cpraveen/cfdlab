@@ -74,9 +74,9 @@ proc savesol(t : real, u : [?D] real, c : int) : int
   fw.writeln("TITLE = \"u_t + u_x + u_y = 0\"");
   fw.writeln("VARIABLES = x, y, sol");
   fw.writeln("ZONE STRANDID=1, SOLUTIONTIME=",t,", I=",n,", J=",n,", DATAPACKING=POINT");
-  for j in {1..n}
+  for j in 1..n
   {
-    for i in {1..n}
+    for i in 1..n
     {
       var x = xmin + (i-1)*dx + 0.5*dx;
       var y = ymin + (j-1)*dy + 0.5*dy;
