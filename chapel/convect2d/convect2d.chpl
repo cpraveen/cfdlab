@@ -1,9 +1,11 @@
-/* Solver u_t + u_x + u_y = 0 using finite volume scheme, 
+/* Solves u_t + u_x + u_y = 0 using finite volume scheme, 
    weno5 reconstruction and periodic boundary conditions. 
    You need to use StencilDist which will be available in v1.14
    of Chapel. You can specify some command line options, e.g.,
       ./a.out --n=100 --Tf=5.0 --cfl=0.4 --si=100
-   See below for explanation of n, Tf, cfl, si.
+   See below for explanation of n, Tf, cfl, si. 
+   Solution is saved in Tecplot format which can also be opened
+   in VisIt.
 */
 use StencilDist;
 
@@ -69,7 +71,7 @@ proc savesol(t : real, u : [?D] real, c : int) : int
   }
 
   var fw = open(filename, iomode.cw).writer();
-  fw.writeln("TITLE = \"vortex flow\"");
+  fw.writeln("TITLE = \"u_t + u_x + u_y = 0\"");
   fw.writeln("VARIABLES = x, y, sol");
   fw.writeln("ZONE STRANDID=1, SOLUTIONTIME=",t,", I=",n,", J=",n,", DATAPACKING=POINT");
   for j in {1..n}
