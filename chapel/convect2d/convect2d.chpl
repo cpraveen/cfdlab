@@ -61,6 +61,7 @@ proc savesol(t : real, u : [?D] real, c : int) : int
           y = ymin + (j-1)*dy + 0.5*dy;
     fw.writeln(x,"  ",y,"  ",u[i,j]);
   }
+  fw.close();
   return c+1;
 }
 
