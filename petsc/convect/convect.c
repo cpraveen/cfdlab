@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
    savesol(nx, dx, ug);
 
    // Get local view
-   ierr = DMCreateLocalVector(da, &ul); CHKERRQ(ierr);
+   ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
 
    PetscInt il, nl;
    ierr = DMDAGetGhostCorners(da,&il,0,0,&nl,0,0); CHKERRQ(ierr);
@@ -205,7 +205,6 @@ int main(int argc, char *argv[])
 
    // Destroy everything before finishing
    ierr = DMDestroy(&da); CHKERRQ(ierr);
-   ierr = VecDestroy(&ul); CHKERRQ(ierr);
    ierr = VecDestroy(&ug); CHKERRQ(ierr);
 
    ierr = PetscFinalize(); CHKERRQ(ierr);
