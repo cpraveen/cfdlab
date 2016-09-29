@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
 
    while(t < tfinal)
    {
+      if(t+dt > tfinal) dt = tfinal - t;
       for(int rk=0; rk<3; ++rk)
       {
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
@@ -157,7 +158,7 @@ int main(int argc, char *argv[])
          ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
 
          if(rk==0)
-            for(i=0; i<nloc; ++i) uold[i] = u[i];
+            for(i=ibeg; i<ibeg+nloc; ++i) uold[i-ibeg] = u[i];
 
          for(i=0; i<nloc; ++i) 
             res[i] = 0.0;
@@ -190,7 +191,7 @@ int main(int argc, char *argv[])
 
          // Update solution
          for(i=ibeg; i<ibeg+nloc; ++i)
-            unew[i] = ark[rk]*uold[i] + (1-ark[rk])*(u[i] - lam * res[i-ibeg]);
+            unew[i] = ark[rk]*uold[i-ibeg] + (1-ark[rk])*(u[i] - lam * res[i-ibeg]);
 
          ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
          ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
