@@ -46,24 +46,50 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
 }
 
 //------------------------------------------------------------------------------
+// Saves solution into files sol000.h5, sol001.h5, etc.
+// You can open them in VisIt.
+//------------------------------------------------------------------------------
+PetscErrorCode savesol(int *c, Vec ug)
+{
+   PetscErrorCode ierr;
+   char           filename[32] = "sol";
+   PetscViewer    viewer;
+   sprintf(filename, "sol%03d.h5", *c);
+   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD, filename, FILE_MODE_WRITE, &viewer);  CHKERRQ(ierr);
+   ierr = VecView(ug, viewer); CHKERRQ(ierr);
+   ierr = PetscViewerDestroy(&viewer); CHKERRQ(ierr);
+   ++(*c);
+   return(0);
+}
+
+//------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+   // some parameters that can overwritten from command line
+   PetscReal Tf  = 10.0;
+   PetscReal cfl = 0.4;
+   PetscInt  si  = 100;
+   PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
+   
    PetscErrorCode ierr;
    DM       da;
    Vec      ug, ul;
-   PetscInt i, j, ibeg, jbeg, nlocx, nlocy, nx=50, ny=50;
+   PetscInt i, j, ibeg, jbeg, nlocx, nlocy;
    const PetscInt sw = 3, ndof = 1; // stencil width
    PetscMPIInt rank, size;
-   double cfl = 0.4;
    PetscScalar **u;
    PetscScalar **unew;
-   PetscViewer viewer;
-
+   int c = 0; // counter for saving solution files
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
+   
+   // Get some command line options
+   ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&Tf,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&cfl,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetInt(NULL,NULL,"-si",&si,NULL); CHKERRQ(ierr);
 
    ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
                        DMDA_STENCIL_STAR, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, ndof,
@@ -76,7 +102,7 @@ int main(int argc, char *argv[])
    ierr = DMDASetUniformCoordinates(da, xmin+0.5*dx, xmax-0.5*dx, ymin+0.5*dy, ymax-0.5*dy, 0.0, 0.0);
 
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
-   ierr = PetscObjectSetName((PetscObject) ug, "Initial"); CHKERRQ(ierr);
+   ierr = PetscObjectSetName((PetscObject) ug, "Solution"); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
    ierr = DMDAVecGetArray(da, ug, &u); CHKERRQ(ierr);
@@ -88,10 +114,7 @@ int main(int argc, char *argv[])
          u[j][i] = initcond(x,y);
       }
    ierr = DMDAVecRestoreArray(da, ug, &u); CHKERRQ(ierr);
-
-   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD, "sol.h5",FILE_MODE_WRITE,&viewer);  CHKERRQ(ierr);
-   //ierr = PetscViewerHDF5SetTimestep(viewer, 0); CHKERRQ(ierr);
-   ierr = VecView(ug, viewer); CHKERRQ(ierr);
+   ierr = savesol(&c, ug); CHKERRQ(ierr);
 
    // Get local view
    ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
@@ -104,12 +127,12 @@ int main(int argc, char *argv[])
    double dt = cfl * dx / umax;
    double lam= dt/(dx*dy);
 
-   double tfinal = 10.0, t = 0.0;
+   double t = 0.0;
    int it = 0;
 
-   while(t < tfinal)
+   while(t < Tf)
    {
-      if(t+dt > tfinal) dt = tfinal - t;
+      if(t+dt > Tf) dt = Tf - t;
       for(int rk=0; rk<3; ++rk)
       {
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
@@ -186,15 +209,13 @@ int main(int argc, char *argv[])
 
       t += dt; ++it;
       PetscPrintf(PETSC_COMM_WORLD,"it, t = %d, %f\n", it, t);
+      if(it%si == 0)
+      {
+         ierr = savesol(&c, ug); CHKERRQ(ierr);
+      }
    }
 
-   //ierr = PetscViewerHDF5IncrementTimestep(viewer); CHKERRQ(ierr);
-   //ierr = PetscViewerHDF5SetTimestep(viewer, 1); CHKERRQ(ierr);
-   ierr = PetscObjectSetName((PetscObject) ug, "Final"); CHKERRQ(ierr);
-   ierr = VecView(ug, viewer); CHKERRQ(ierr);
-
    // Destroy everything before finishing
-   ierr = PetscViewerDestroy(&viewer); CHKERRQ(ierr);
    ierr = DMDestroy(&da); CHKERRQ(ierr);
    ierr = VecDestroy(&ug); CHKERRQ(ierr);
 
