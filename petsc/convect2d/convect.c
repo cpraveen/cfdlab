@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
    PetscReal dy = (ymax - ymin) / (PetscReal)(ny);
    PetscPrintf(PETSC_COMM_WORLD,"nx = %d, dx = %e\n", nx, dx);
    PetscPrintf(PETSC_COMM_WORLD,"ny = %d, dy = %e\n", ny, dy);
-   ierr = DMDASetUniformCoordinates(da, xmin+0.5*dx, xmax-0.5*dx, ymin+0.5*dy, ymax-0.5*dy, 0.0, 0.0);
 
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
    ierr = PetscObjectSetName((PetscObject) ug, "Solution"); CHKERRQ(ierr);
@@ -216,8 +215,8 @@ int main(int argc, char *argv[])
    }
 
    // Destroy everything before finishing
-   ierr = DMDestroy(&da); CHKERRQ(ierr);
    ierr = VecDestroy(&ug); CHKERRQ(ierr);
+   ierr = DMDestroy(&da); CHKERRQ(ierr);
 
    ierr = PetscFinalize(); CHKERRQ(ierr);
 }
