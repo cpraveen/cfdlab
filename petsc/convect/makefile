@@ -1,12 +1,12 @@
 CC = mpicc
-CFLAGS = -Wall -I/usr/local/include
-LDFLAGS = -lpetsc -L/usr/local/lib -lm
+CFLAGS = -Wall -I$(PETSC_DIR)/include
+LDFLAGS = -lpetsc -L$(PETSC_DIR)/lib -lm
 
 TARGET = convect
 
 all: $(TARGET)
 
-$(TARGET): $(TARGET).o
+$(TARGET): $(TARGET).c
 	$(CC) $(CFLAGS) -o $(TARGET) $< $(LDFLAGS)
 
 clean:
