@@ -206,7 +206,8 @@ int main(int argc, char *argv[])
          // Update solution
          for(j=jbeg; j<jbeg+nlocy; ++j)
             for(i=ibeg; i<ibeg+nlocx; ++i)
-               unew[j][i] = ark[rk]*uold[j-jbeg][i-ibeg] + (1.0-ark[rk])*(u[j][i] - lam * res[j-jbeg][i-ibeg]);
+               unew[j][i] = ark[rk]*uold[j-jbeg][i-ibeg]
+                          + (1.0-ark[rk])*(u[j][i] - lam * res[j-jbeg][i-ibeg]);
 
          ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
          ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
@@ -222,6 +223,7 @@ int main(int argc, char *argv[])
 
    // Destroy everything before finishing
    ierr = VecDestroy(&ug); CHKERRQ(ierr);
+   ierr = DMRestoreLocalVector(da, &ul); CHKERRQ(ierr);
    ierr = DMDestroy(&da); CHKERRQ(ierr);
 
    ierr = PetscFinalize(); CHKERRQ(ierr);
