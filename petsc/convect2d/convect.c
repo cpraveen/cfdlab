@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
    PetscInt il, jl, nl, ml;
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
-   double res[nlocx][nlocy], uold[nlocx][nlocy];
+   double res[nlocy][nlocx], uold[nlocy][nlocx];
    double umax = sqrt(2.0);
    double dt = cfl * dx / umax;
    double lam= dt/(dx*dy);
@@ -146,14 +146,14 @@ int main(int argc, char *argv[])
 
          if(rk==0)
          {
-            for(i=ibeg; i<ibeg+nlocx; ++i)
-               for(j=jbeg; j<jbeg+nlocy; ++j)
-                  uold[i-ibeg][j-jbeg] = u[j][i];
+            for(j=jbeg; j<jbeg+nlocy; ++j)
+               for(i=ibeg; i<ibeg+nlocx; ++i)
+                  uold[j-jbeg][i-ibeg] = u[j][i];
          }
 
-         for(i=0; i<nlocx; ++i)
-            for(j=0; j<nlocy; ++j)
-               res[i][j] = 0.0;
+         for(j=0; j<nlocy; ++j)
+            for(i=0; i<nlocx; ++i)
+               res[j][i] = 0.0;
 
          // x fluxes
          for(i=0; i<nlocx+1; ++i)
@@ -166,16 +166,16 @@ int main(int argc, char *argv[])
                double flux = uleft * dy;
                if(i==0)
                {
-                  res[i][j] -= flux;
+                  res[j][i] -= flux;
                }
                else if(i==nlocx)
                {
-                  res[i-1][j] += flux;
+                  res[j][i-1] += flux;
                }
                else
                {
-                  res[i][j]   -= flux;
-                  res[i-1][j] += flux;
+                  res[j][i]   -= flux;
+                  res[j][i-1] += flux;
                }
             }
 
@@ -190,23 +190,23 @@ int main(int argc, char *argv[])
                double flux = uleft * dx;
                if(j==0)
                {
-                  res[i][j] -= flux;
+                  res[j][i] -= flux;
                }
                else if(j==nlocy)
                {
-                  res[i][j-1] += flux;
+                  res[j-1][i] += flux;
                }
                else
                {
-                  res[i][j]   -= flux;
-                  res[i][j-1] += flux;
+                  res[j][i]   -= flux;
+                  res[j-1][i] += flux;
                }
             }
 
          // Update solution
-         for(i=ibeg; i<ibeg+nlocx; ++i)
-            for(j=jbeg; j<jbeg+nlocy; ++j)
-               unew[j][i] = ark[rk]*uold[i-ibeg][j-jbeg] + (1.0-ark[rk])*(u[j][i] - lam * res[i-ibeg][j-jbeg]);
+         for(j=jbeg; j<jbeg+nlocy; ++j)
+            for(i=ibeg; i<ibeg+nlocx; ++i)
+               unew[j][i] = ark[rk]*uold[j-jbeg][i-ibeg] + (1.0-ark[rk])*(u[j][i] - lam * res[j-jbeg][i-ibeg]);
 
          ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
          ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
