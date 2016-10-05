@@ -145,9 +145,11 @@ int main(int argc, char *argv[])
          ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
 
          if(rk==0)
+         {
             for(i=ibeg; i<ibeg+nlocx; ++i)
                for(j=jbeg; j<jbeg+nlocy; ++j)
                   uold[i-ibeg][j-jbeg] = u[j][i];
+         }
 
          for(i=0; i<nlocx; ++i)
             for(j=0; j<nlocy; ++j)
@@ -204,7 +206,7 @@ int main(int argc, char *argv[])
          // Update solution
          for(i=ibeg; i<ibeg+nlocx; ++i)
             for(j=jbeg; j<jbeg+nlocy; ++j)
-               unew[j][i] = ark[rk]*uold[i-ibeg][j-jbeg] + (1-ark[rk])*(u[j][i] - lam * res[i-ibeg][j-jbeg]);
+               unew[j][i] = ark[rk]*uold[i-ibeg][j-jbeg] + (1.0-ark[rk])*(u[j][i] - lam * res[i-ibeg][j-jbeg]);
 
          ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
          ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
