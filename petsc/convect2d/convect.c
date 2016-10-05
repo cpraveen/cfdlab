@@ -131,7 +131,11 @@ int main(int argc, char *argv[])
 
    while(t < Tf)
    {
-      if(t+dt > Tf) dt = Tf - t;
+      if(t+dt > Tf)
+      {
+         dt = Tf - t;
+         lam = dt/(dx*dy);
+      }
       for(int rk=0; rk<3; ++rk)
       {
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);

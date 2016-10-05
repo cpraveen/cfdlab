@@ -104,11 +104,15 @@ proc main()
   var dt = cfl * min(dx, dy) / umax;
   var t  = 0.0;   // time counter
   var it = 0;     // iteration counter
-  const lam = dt/(dx*dy);
+  var lam = dt/(dx*dy);
   while t < Tf
   {
     // Adjust dt so we exactly reach Tf
-    if t+dt > Tf then dt = Tf - t;
+    if t+dt > Tf 
+    {
+      dt  = Tf - t;
+      lam = dt/(dx*dy);
+    }
 
     u0 = u;
 
