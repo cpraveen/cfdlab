@@ -6,7 +6,7 @@ TARGETS = convect2d
 all: $(TARGETS)
 
 convect2d: convect2d.chpl
-	$(CHPL) $(CHPLFLAGS) -M helpers convect2d.chpl -o convect2d
+	$(CHPL) $(CHPLFLAGS) convect2d.chpl -o convect2d
 
 clean:
 	rm -f $(TARGETS)
