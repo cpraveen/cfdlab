@@ -9,6 +9,7 @@ static char help[] = "Solves u_t + u_x = 0.\n\n";
 const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
 const double xmin = 0.0, xmax = 1.0;
 const double ymin = 0.0, ymax = 1.0;
+double dx, dy;
 
 double initcond(double x, double y)
 {
@@ -46,22 +47,47 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
 }
 
 //------------------------------------------------------------------------------
-// Saves solution into files sol000.h5, sol001.h5, etc.
-// You can open them in VisIt.
-//------------------------------------------------------------------------------
-PetscErrorCode savesol(int *c, Vec ug)
+PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
 {
    PetscErrorCode ierr;
    char           filename[32] = "sol";
-   PetscViewer    viewer;
-   sprintf(filename, "sol%03d.h5", *c);
-   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD, filename, FILE_MODE_WRITE, &viewer);  CHKERRQ(ierr);
-   ierr = VecView(ug, viewer); CHKERRQ(ierr);
-   ierr = PetscViewerDestroy(&viewer); CHKERRQ(ierr);
+   PetscMPIInt    rank;
+   PetscInt       i, j, nx, ny, ibeg, jbeg, nlocx, nlocy;
+   FILE           *fp;
+   Vec            ul;
+   PetscScalar    **u;
+
+   ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
+   ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
+   ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
+   ierr = DMDAVecGetArray(da, ul, &u); CHKERRQ(ierr);
+   ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
+   ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
+
+   int iend = PetscMin(ibeg+nlocx+1, nx);
+   int jend = PetscMin(jbeg+nlocy+1, ny);
+
+   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
+   sprintf(filename, "sol-%03d-%03d.plt", *c, rank);
+   fp = fopen(filename,"w");
+   fprintf(fp, "TITLE = \"u_t + u_x + u_y = 0\"\n");
+   fprintf(fp, "VARIABLES = x, y, sol\n");
+   fprintf(fp, "ZONE STRANDID=1, SOLUTIONTIME=%e, I=%d, J=%d, DATAPACKING=POINT\n", t, iend-ibeg, jend-jbeg);
+   for(j=jbeg; j<jend; ++j)
+      for(i=ibeg; i<iend; ++i)
+   {
+      PetscReal x = xmin + i*dx + 0.5*dx;
+      PetscReal y = ymin + j*dy + 0.5*dy;
+      fprintf(fp, "%e %e %e\n", x, y, u[j][i]);
+   }
+   fclose(fp);
+
+   ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
+   ierr = DMRestoreLocalVector(da, &ul); CHKERRQ(ierr);
+
    ++(*c);
    return(0);
 }
-
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
@@ -95,8 +121,8 @@ int main(int argc, char *argv[])
                        DMDA_STENCIL_STAR, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, ndof,
                        sw, NULL, NULL, &da); CHKERRQ(ierr);
    ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
-   PetscReal dx = (xmax - xmin) / (PetscReal)(nx);
-   PetscReal dy = (ymax - ymin) / (PetscReal)(ny);
+   dx = (xmax - xmin) / (PetscReal)(nx);
+   dy = (ymax - ymin) / (PetscReal)(ny);
    PetscPrintf(PETSC_COMM_WORLD,"nx = %d, dx = %e\n", nx, dx);
    PetscPrintf(PETSC_COMM_WORLD,"ny = %d, dy = %e\n", ny, dy);
 
@@ -113,7 +139,7 @@ int main(int argc, char *argv[])
          u[j][i] = initcond(x,y);
       }
    ierr = DMDAVecRestoreArray(da, ug, &u); CHKERRQ(ierr);
-   ierr = savesol(&c, ug); CHKERRQ(ierr);
+   ierr = savesol(&c, 0.0, da, ug); CHKERRQ(ierr);
 
    // Get local view
    ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
@@ -217,7 +243,7 @@ int main(int argc, char *argv[])
       PetscPrintf(PETSC_COMM_WORLD,"it, t = %d, %f\n", it, t);
       if(it%si == 0)
       {
-         ierr = savesol(&c, ug); CHKERRQ(ierr);
+         ierr = savesol(&c, t, da, ug); CHKERRQ(ierr);
       }
    }
 
