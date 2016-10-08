@@ -137,7 +137,7 @@ proc main()
   dy = (ymax-ymin)/n;
 
   writeln("Grid size is ",n," x ",n);
-  writeln("dx, dy =", dx, dy);
+  writeln("dx, dy = ", dx, "  ", dy);
 
   const D  = {1..n, 1..n},
         Dx = {1..(n+1),1..n},
@@ -195,9 +195,9 @@ proc main()
            Ul[k] = weno5(U[i-3,j][k],U[i-2,j][k],U[i-1,j][k],U[i,j][k],U[i+1,j][k]);
            Ur[k] = weno5(U[i+2,j][k],U[i+1,j][k],U[i,j][k],U[i-1,j][k],U[i-2,j][k]);
         }   
-        const flux = Flux(Ul,Ur,1.0,0.0,dt/dx);
-        res[i-1,j] += flux * dy;
-        res[i,j]   -= flux * dy;   
+        const flux  = dy * Flux(Ul,Ur,1.0,0.0,dt/dx);
+        res[i-1,j] += flux;
+        res[i,j]   -= flux;   
       }
 
       // y fluxes
@@ -209,9 +209,9 @@ proc main()
            Ul[k] = weno5(U[i,j-3][k],U[i,j-2][k],U[i,j-1][k],U[i,j][k],U[i,j+1][k]);
            Ur[k] = weno5(U[i,j+2][k],U[i,j+1][k],U[i,j][k],U[i,j-1][k],U[i,j-2][k]);
         }   
-        const flux = Flux(Ul,Ur,0.0,1.0,dt/dy);
-        res[i,j-1] += flux * dx;
-        res[i,j]   -= flux * dx;
+        const flux  = dx * Flux(Ul,Ur,0.0,1.0,dt/dy);
+        res[i,j-1] += flux;
+        res[i,j]   -= flux;
       }
       
       U  = ark[rk]*U0 + brk[rk]*(U - lam*res);
