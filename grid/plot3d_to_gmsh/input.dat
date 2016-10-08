@@ -1,0 +1,10 @@
+# Name of input file
+n0012_897-257.p2dfmt
+# Name of output file
+n0012_897-257.msh
+# Gmsh Version, File_type (0 for ASCII), Data_type (8 for double)
+2.12 0 8
+# No of tags
+2
+# Indices for start and end point of airfoil wall
+193 705
