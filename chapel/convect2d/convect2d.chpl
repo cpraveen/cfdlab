@@ -15,8 +15,8 @@ config const n  = 50,   // number of cells in each direction
              si = 100;  // iteration interval to save solution
 const xmin = 0.0, xmax = 1.0,
       ymin = 0.0, ymax = 1.0;
-const ark : [1..3] real = [0.0, 3.0/4.0, 1.0/3.0];
-const brk = 1.0 - ark;
+const ark : 3*real = (0.0, 3.0/4.0, 1.0/3.0);
+const brk : 3*real = (1.0, 1.0/4.0, 2.0/3.0);
 var dx, dy : real;
 
 // fv weno5 reconstruction, gives left state at interface
