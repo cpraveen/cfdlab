@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 
       t += dt; ++it;
       PetscPrintf(PETSC_COMM_WORLD,"it, t = %d, %f\n", it, t);
-      if(it%si == 0)
+      if(it%si == 0 || PetscAbs(t-Tf) < 1.0e-13)
       {
          ierr = savesol(&c, t, da, ug); CHKERRQ(ierr);
       }
