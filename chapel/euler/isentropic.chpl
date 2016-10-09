@@ -71,6 +71,15 @@ proc savesol(t : real, U : [?D] 4*real, c : int) : int
   return c+1;
 }
 
+// Compute maximum eigenvalue in direction (nx,ny)
+proc maxeigval(Con : 4*real, nx : real, ny : real) : real
+{
+   const Prim  = con2prim(Con);
+   const u     = abs(Prim[2]*nx + Prim[3]*ny);
+   const a     = sqrt(gamma*Prim[4]/Prim[1]);
+   return u + a;
+}
+
 // Compute local timestep
 proc dt_local(Con : 4*real) : real
 {
@@ -103,10 +112,11 @@ proc prim2con(Prim : 4*real) :  4*real
   return Con;
 }
 
-// Evaluate flux
-proc Flux(Ul : 4*real, Ur : 4*real, nx : real, ny : real, lam : real) : 4*real
+// Rusanov flux
+proc Flux(Ul : 4*real, Ur : 4*real, nx : real, ny : real) : 4*real
 {
-  return avg_flux(Ul,Ur,nx,ny) - 0.5*(Ur-Ul)/lam;
+  const lam = maxeigval( 0.5*(Ul + Ur), nx, ny );
+  return avg_flux(Ul,Ur,nx,ny) - 0.5*lam*(Ur-Ul);
 }
 
 // Simple average flux
@@ -195,7 +205,7 @@ proc main()
            Ul[k] = weno5(U[i-3,j][k],U[i-2,j][k],U[i-1,j][k],U[i,j][k],U[i+1,j][k]);
            Ur[k] = weno5(U[i+2,j][k],U[i+1,j][k],U[i,j][k],U[i-1,j][k],U[i-2,j][k]);
         }   
-        const flux  = dy * Flux(Ul,Ur,1.0,0.0,dt/dx);
+        const flux  = dy * Flux(Ul,Ur,1.0,0.0);
         res[i-1,j] += flux;
         res[i,j]   -= flux;   
       }
@@ -209,7 +219,7 @@ proc main()
            Ul[k] = weno5(U[i,j-3][k],U[i,j-2][k],U[i,j-1][k],U[i,j][k],U[i,j+1][k]);
            Ur[k] = weno5(U[i,j+2][k],U[i,j+1][k],U[i,j][k],U[i,j-1][k],U[i,j-2][k]);
         }   
-        const flux  = dx * Flux(Ul,Ur,0.0,1.0,dt/dy);
+        const flux  = dx * Flux(Ul,Ur,0.0,1.0);
         res[i,j-1] += flux;
         res[i,j]   -= flux;
       }
