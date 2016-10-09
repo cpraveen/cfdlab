@@ -3,7 +3,7 @@
    You need to use StencilDist which will be available in v1.14
    of Chapel. You can specify some command line options, e.g.,
       ./a.out --n=100 --Tf=5.0 --cfl=0.4 --si=100
-   See below for explanation of n, Tf, cfl, si. 
+   See below for explanation of n, Tf, cfl, si.
    Solution is saved in Tecplot format which can also be opened
    in VisIt.
    Original Author: Deep Ray, 8 Oct 2016
@@ -64,7 +64,7 @@ proc savesol(t : real, U : [?D] 4*real, c : int) : int
   {
     const x = xmin + (i-1)*dx + 0.5*dx,
           y = ymin + (j-1)*dy + 0.5*dy;
-    const Prim = con2prim(U[i,j]);      
+    const Prim = con2prim(U[i,j]);
     fw.writeln(x,"  ",y,"  ",Prim[1],"  ",Prim[2],"  ",Prim[3],"  ",Prim[4]);
   }
   fw.close();
@@ -121,22 +121,22 @@ proc Flux(Ul : 4*real, Ur : 4*real, nx : real, ny : real) : 4*real
 
 // Simple average flux
 proc avg_flux(Ul : 4*real, Ur : 4*real, nx : real, ny : real) : 4*real
-{   
+{
   const Pl = con2prim(Ul);
   const Pr = con2prim(Ur);
 
   var fluxl, fluxr: 4*real;
-  
+
   fluxl[1] = Ul[2]*nx + Ul[3]*ny;
   fluxl[2] = Pl[4]*nx + Pl[2]*fluxl[1];
   fluxl[3] = Pl[4]*ny + Pl[3]*fluxl[1];
   fluxl[4] = (Ul[4]+Pl[4])*(Pl[2]*nx + Pl[3]*ny);
-  
+
   fluxr[1] = Ur[2]*nx + Ur[3]*ny;
   fluxr[2] = Pr[4]*nx + Pr[2]*fluxr[1];
   fluxr[3] = Pr[4]*ny + Pr[3]*fluxr[1];
   fluxr[4] = (Ur[4]+Pr[4])*(Pr[2]*nx + Pr[3]*ny);
-  
+
   return 0.5*(fluxl+fluxr);
 }
 
@@ -161,7 +161,7 @@ proc main()
   var U, U0, res : [PSpace] 4*real;
 
   // Set initial condition
-  const beta = 5.0;      
+  const beta = 5.0;
   forall (i,j) in PSpace
   {
     const x = xmin + (i-1)*dx + 0.5*dx,
@@ -170,9 +170,9 @@ proc main()
     var Prim : 4*real;
     Prim[1] =  (1.0 - (gamma-1.0)*(beta**2)/(8.0*gamma*pi*pi)*exp(1-r2))**(1.0/(gamma-1.0));
     Prim[2] =  M*cos(alpha*pi/180.0) - beta/(2.0*pi)*y*exp(0.5*(1.0-r2));
-    Prim[3] =  M*sin(alpha*pi/180.0) + beta/(2.0*pi)*x*exp(0.5*(1.0-r2));    
+    Prim[3] =  M*sin(alpha*pi/180.0) + beta/(2.0*pi)*x*exp(0.5*(1.0-r2));
     Prim[4] =  Prim[1]**gamma;
-    U[i,j] = prim2con(Prim);  
+    U[i,j] = prim2con(Prim);
   }
   U.updateFluff();
 
@@ -204,10 +204,10 @@ proc main()
         {
            Ul[k] = weno5(U[i-3,j][k],U[i-2,j][k],U[i-1,j][k],U[i,j][k],U[i+1,j][k]);
            Ur[k] = weno5(U[i+2,j][k],U[i+1,j][k],U[i,j][k],U[i-1,j][k],U[i-2,j][k]);
-        }   
+        }
         const flux  = dy * Flux(Ul,Ur,1.0,0.0);
         res[i-1,j] += flux;
-        res[i,j]   -= flux;   
+        res[i,j]   -= flux;
       }
 
       // y fluxes
@@ -218,12 +218,12 @@ proc main()
         {
            Ul[k] = weno5(U[i,j-3][k],U[i,j-2][k],U[i,j-1][k],U[i,j][k],U[i,j+1][k]);
            Ur[k] = weno5(U[i,j+2][k],U[i,j+1][k],U[i,j][k],U[i,j-1][k],U[i,j-2][k]);
-        }   
+        }
         const flux  = dx * Flux(Ul,Ur,0.0,1.0);
         res[i,j-1] += flux;
         res[i,j]   -= flux;
       }
-      
+
       U  = ark[rk]*U0 + brk[rk]*(U - lam*res);
       U.updateFluff();
     }
