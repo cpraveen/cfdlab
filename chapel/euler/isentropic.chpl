@@ -184,7 +184,7 @@ proc main()
     // 3-stage RK scheme
     for rk in 1..3
     {
-      [ij in PSpace] for k in 1..4 do res[ij][k]  = 0.0;
+      for k in 1..4 do res[1..n,1..n][k]  = 0.0;
 
       // x fluxes
       forall (i,j) in Dx
