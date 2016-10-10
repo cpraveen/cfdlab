@@ -1,5 +1,5 @@
 CHPL=chpl
-CHPLFLAGS=--fast
+CHPLFLAGS=--fast --ccflags=-O3
 
 TARGETS = convect2d
 
