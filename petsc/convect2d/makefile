@@ -1,5 +1,5 @@
 CC = mpicc
-CFLAGS = -Wall -I$(PETSC_DIR)/include
+CFLAGS = -O3 -Wall -I$(PETSC_DIR)/include
 LDFLAGS = -lpetsc -L$(PETSC_DIR)/lib -lm
 
 TARGET = convect
