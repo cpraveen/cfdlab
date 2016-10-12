@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
    DM       da;
    Vec      ug, ul;
    PetscInt i, j, ibeg, jbeg, nlocx, nlocy, d;
-   const PetscInt sw = 3, ndof = nvar; // stencil width
+   const PetscInt sw = 3; // stencil width
    PetscMPIInt rank, size;
    PetscScalar ***u;
    PetscScalar ***unew;
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&si,NULL); CHKERRQ(ierr);
 
    ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
-                       DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, ndof,
+                       DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                        sw, NULL, NULL, &da); CHKERRQ(ierr);
    ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    dx = (xmax - xmin) / (PetscReal)(nx);
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
    PetscInt il, jl, nl, ml;
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
-   double res[nlocy][nlocx][ndof], uold[nlocy][nlocx][ndof];
+   double res[nlocy][nlocx][nvar], uold[nlocy][nlocx][nvar];
    double dt, lam;
 
    double t = 0.0;
@@ -245,10 +245,8 @@ int main(int argc, char *argv[])
    {
       for(int rk=0; rk<3; ++rk)
       {
+         // start global to local but continue with other tasks
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
-         ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
-
-         ierr = DMDAVecGetArrayDOFRead(da, ul, &u); CHKERRQ(ierr);
          ierr = DMDAVecGetArrayDOF(da, ug, &unew); CHKERRQ(ierr);
 
          if(rk==0)
@@ -259,9 +257,9 @@ int main(int argc, char *argv[])
             for(j=jbeg; j<jbeg+nlocy; ++j)
                for(i=ibeg; i<ibeg+nlocx; ++i)
                {
-                  for(d=0; d<ndof; ++d)
-                     uold[j-jbeg][i-ibeg][d] = u[j][i][d];
-                  dtlocal = min(dtlocal, dt_local(u[j][i]));
+                  for(d=0; d<nvar; ++d)
+                     uold[j-jbeg][i-ibeg][d] = unew[j][i][d];
+                  dtlocal = min(dtlocal, dt_local(unew[j][i]));
                }
 
             MPI_Allreduce(&dtlocal, &dt, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
@@ -273,8 +271,12 @@ int main(int argc, char *argv[])
 
          for(j=0; j<nlocy; ++j)
             for(i=0; i<nlocx; ++i)
-               for(d=0; d<ndof; ++d)
+               for(d=0; d<nvar; ++d)
                   res[j][i][d] = 0.0;
+
+         // finish global to local
+         ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
+         ierr = DMDAVecGetArrayDOFRead(da, ul, &u); CHKERRQ(ierr);
 
          // x fluxes
          for(i=0; i<nlocx+1; ++i)
@@ -283,8 +285,8 @@ int main(int argc, char *argv[])
                // face between k-1, k
                int k = il+sw+i;
                int l = jl+sw+j;
-               double UL[ndof], UR[ndof], flux[ndof];
-               for(d=0; d<ndof; ++d)
+               double UL[nvar], UR[nvar], flux[nvar];
+               for(d=0; d<nvar; ++d)
                {
                   UL[d] = weno5(u[l][k-3][d],u[l][k-2][d],u[l][k-1][d],u[l][k][d],u[l][k+1][d]);
                   UR[d] = weno5(u[l][k+2][d],u[l][k+1][d],u[l][k][d],u[l][k-1][d],u[l][k-2][d]);
@@ -292,17 +294,17 @@ int main(int argc, char *argv[])
                numflux(UL, UR, 1.0, 0.0, flux);
                if(i==0)
                {
-                  for(d=0; d<ndof; ++d)
+                  for(d=0; d<nvar; ++d)
                      res[j][i][d] -= dy * flux[d];
                }
                else if(i==nlocx)
                {
-                  for(d=0; d<ndof; ++d)
+                  for(d=0; d<nvar; ++d)
                      res[j][i-1][d] += dy * flux[d];
                }
                else
                {
-                  for(d=0; d<ndof; ++d)
+                  for(d=0; d<nvar; ++d)
                   {
                      res[j][i][d]   -= dy * flux[d];
                      res[j][i-1][d] += dy * flux[d];
@@ -317,8 +319,8 @@ int main(int argc, char *argv[])
                // face between l-1, l
                int k = il+sw+i;
                int l = jl+sw+j;
-               double UL[ndof], UR[ndof], flux[ndof];
-               for(d=0; d<ndof; ++d)
+               double UL[nvar], UR[nvar], flux[nvar];
+               for(d=0; d<nvar; ++d)
                {
                   UL[d] = weno5(u[l-3][k][d],u[l-2][k][d],u[l-1][k][d],u[l][k][d],u[l+1][k][d]);
                   UR[d] = weno5(u[l+2][k][d],u[l+1][k][d],u[l][k][d],u[l-1][k][d],u[l-2][k][d]);
@@ -326,17 +328,17 @@ int main(int argc, char *argv[])
                numflux(UL, UR, 0.0, 1.0, flux);
                if(j==0)
                {
-                  for(d=0; d<ndof; ++d)
+                  for(d=0; d<nvar; ++d)
                      res[j][i][d] -= dx * flux[d];
                }
                else if(j==nlocy)
                {
-                  for(d=0; d<ndof; ++d)
+                  for(d=0; d<nvar; ++d)
                      res[j-1][i][d] += dx * flux[d];
                }
                else
                {
-                  for(d=0; d<ndof; ++d)
+                  for(d=0; d<nvar; ++d)
                   {
                      res[j][i][d]   -= dx * flux[d];
                      res[j-1][i][d] += dx * flux[d];
@@ -347,7 +349,7 @@ int main(int argc, char *argv[])
          // Update solution
          for(j=jbeg; j<jbeg+nlocy; ++j)
             for(i=ibeg; i<ibeg+nlocx; ++i)
-               for(d=0; d<ndof; ++d)
+               for(d=0; d<nvar; ++d)
                   unew[j][i][d] = ark[rk]*uold[j-jbeg][i-ibeg][d]
                                  + (1.0-ark[rk])*(u[j][i][d] - lam * res[j-jbeg][i-ibeg][d]);
 
