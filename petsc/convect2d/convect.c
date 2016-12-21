@@ -4,7 +4,6 @@ static char help[] = "Solves u_t + u_x = 0.\n\n";
 #include <petscdm.h>
 #include <petscdmda.h>
 #include <petscvec.h>
-#include <petscviewerhdf5.h>
 
 const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
 const double xmin = 0.0, xmax = 1.0;

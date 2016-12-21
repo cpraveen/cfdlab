@@ -4,7 +4,6 @@ static char help[] = "Solves 2d Euler equations.\n\n";
 #include <petscdm.h>
 #include <petscdmda.h>
 #include <petscvec.h>
-#include <petscviewerhdf5.h>
 
 #define min(a,b)  ( (a < b) ? a : b )
 #define nvar  4
