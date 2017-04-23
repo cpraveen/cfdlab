@@ -234,7 +234,10 @@ int main(int argc, char *argv[])
    PetscInt il, jl, nl, ml;
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
-   double res[nlocy][nlocx][nvar], uold[nlocy][nlocx][nvar];
+   // Allocate res[nlocy][nlocx][nvar] and uold[nlocy][nlocx][nvar]
+   double (*res) [nlocx][nvar] = calloc(nlocy, sizeof(*res) );
+   double (*uold)[nlocx][nvar] = calloc(nlocy, sizeof(*uold));
+
    double dt, lam;
 
    double t = 0.0;
