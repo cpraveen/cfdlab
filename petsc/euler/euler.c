@@ -372,5 +372,7 @@ int main(int argc, char *argv[])
    ierr = DMRestoreLocalVector(da, &ul); CHKERRQ(ierr);
    ierr = DMDestroy(&da); CHKERRQ(ierr);
 
+   free(res); free(uold);
+
    ierr = PetscFinalize(); CHKERRQ(ierr);
 }
