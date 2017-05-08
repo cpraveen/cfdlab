@@ -146,7 +146,9 @@ int main(int argc, char *argv[])
    PetscInt il, jl, nl, ml;
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
-   double res[nlocy][nlocx], uold[nlocy][nlocx];
+   // Allocate res[nlocy][nlocx] and uold[nlocy][nlocx]
+   double (*res) [nlocx] = calloc(nlocy, sizeof(*res) );
+   double (*uold)[nlocx] = calloc(nlocy, sizeof(*uold));
    double umax = sqrt(2.0);
    double dt = cfl * dx / umax;
    double lam= dt/(dx*dy);
@@ -250,6 +252,8 @@ int main(int argc, char *argv[])
    ierr = VecDestroy(&ug); CHKERRQ(ierr);
    ierr = DMRestoreLocalVector(da, &ul); CHKERRQ(ierr);
    ierr = DMDestroy(&da); CHKERRQ(ierr);
+
+   free(res); free(uold);
 
    ierr = PetscFinalize(); CHKERRQ(ierr);
 }
