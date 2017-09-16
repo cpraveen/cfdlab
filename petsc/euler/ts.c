@@ -198,12 +198,14 @@ int main(int argc, char *argv[])
    Vec         ug;
    PetscInt    i, j, ibeg, jbeg, nlocx, nlocy;
    PetscMPIInt rank, size;
+   PetscReal   dtglobal, dtlocal = 1.0e-20;
    PetscScalar ***u;
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
    ctx.Tf  = 10.0;
-   ctx.cfl = 0.8;
+   ctx.dt  = -1.0;
+   ctx.cfl = -1.0;
    ctx.max_steps = 1000000;
    ctx.si = 100;
 
@@ -212,6 +214,7 @@ int main(int argc, char *argv[])
    
    // Get some command line options
    ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&ctx.Tf,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&ctx.dt,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
 
@@ -229,7 +232,6 @@ int main(int argc, char *argv[])
 
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
    ierr = DMDAVecGetArrayDOF(da, ug, &u); CHKERRQ(ierr);
-   double dtlocal = 1.0e20;
    for(j=jbeg; j<jbeg+nlocy; ++j)
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
@@ -241,8 +243,21 @@ int main(int argc, char *argv[])
          dtlocal = min(dtlocal, dt_local(u[j][i]));
       }
    ierr = DMDAVecRestoreArrayDOF(da, ug, &u); CHKERRQ(ierr);
-   MPI_Allreduce(&dtlocal, &ctx.dt, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
-   ctx.dt *= ctx.cfl;
+   MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
+   if(ctx.cfl > 0)
+   {
+      ctx.dt = ctx.cfl * dtglobal;
+      PetscPrintf(PETSC_COMM_WORLD,"Using dt based on specified cfl\n");
+   }
+   else if(ctx.dt > 0)
+   {
+      PetscPrintf(PETSC_COMM_WORLD,"Using specified dt\n");
+   }
+   else
+   {
+      PetscPrintf(PETSC_COMM_WORLD,"Specify atleast dt or cfl\n");
+      return(0);
+   }
    PetscPrintf(PETSC_COMM_WORLD,"Initial time step = %e\n", ctx.dt);
 
    // Save initial condition to file
@@ -293,6 +308,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
+   // ---Begin res computation---
    // Set residual 0
    for(j=jbeg; j<jbeg+nlocy; ++j)
       for(i=ibeg; i<ibeg+nlocx; ++i)
@@ -366,6 +382,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       for(i=ibeg; i<ibeg+nlocx; ++i)
          for(d=0; d<nvar; ++d)
             res[j][i][d] *= -lam;
+   // ---End res computation---
 
    ierr = DMDAVecRestoreArrayDOFRead(da, localU, &u); CHKERRQ(ierr);
    ierr = DMDAVecRestoreArrayDOF(da, R, &res); CHKERRQ(ierr);
@@ -393,6 +410,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
       ierr = savesol(time, da, U); CHKERRQ(ierr);
    }
 
+   // Compute time step based on cfl
    if(ctx->cfl > 0)
    {
       ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
