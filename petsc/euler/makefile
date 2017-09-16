@@ -6,12 +6,12 @@ ifeq ($(OS),Linux)
 	LDFLAGS += -Wl,-rpath=$(PETSC_DIR)/lib
 endif
 
-TARGET = euler
+TARGET = euler ts
 
 all: $(TARGET)
 
-$(TARGET): $(TARGET).c
-	$(CC) $(CFLAGS) -o $(TARGET) $< $(LDFLAGS)
+%: %.c
+	$(CC) $(CFLAGS) -o $* $< $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TARGET)
