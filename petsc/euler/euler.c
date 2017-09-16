@@ -91,10 +91,10 @@ double dt_local(const double *Con)
 {
    double Prim[nvar];
    con2prim(Con, Prim);
-   const double u = sqrt(pow(Prim[1],2) + pow(Prim[2],2));
    const double a = sqrt(gas_gamma*Prim[3]/Prim[0]);
-   const double eigen = u + a;
-   return min(dx,dy)/eigen;
+   const double sx = fabs(Prim[1]) + a;
+   const double sy = fabs(Prim[2]) + a;
+   return 1.0/(sx/dx + sy/dy);
 }
 
 // Simple average flux
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 {
    // some parameters that can overwritten from command line
    PetscReal Tf  = 10.0;
-   PetscReal cfl = 0.4;
+   PetscReal cfl = 0.8;
    PetscInt  si  = 100;
    PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
    

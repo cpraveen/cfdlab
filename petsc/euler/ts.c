@@ -102,10 +102,10 @@ double dt_local(const double *Con)
 {
    double Prim[nvar];
    con2prim(Con, Prim);
-   const double u = sqrt(pow(Prim[1],2) + pow(Prim[2],2));
    const double a = sqrt(gas_gamma*Prim[3]/Prim[0]);
-   const double eigen = u + a;
-   return min(dx,dy)/eigen;
+   const double sx = fabs(Prim[1]) + a;
+   const double sy = fabs(Prim[2]) + a;
+   return 1.0/(sx/dx + sy/dy);
 }
 
 // Simple average flux
@@ -251,6 +251,7 @@ int main(int argc, char *argv[])
    }
    else if(ctx.dt > 0)
    {
+      PetscPrintf(PETSC_COMM_WORLD,"Global dt = %e\n", dtglobal);
       PetscPrintf(PETSC_COMM_WORLD,"Using specified dt\n");
    }
    else
