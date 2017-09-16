@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
    ctx.Tf  = 10.0;
-   ctx.cfl = 0.4;
+   ctx.cfl = 0.8;
    ctx.max_steps = 1000000;
    ctx.si = 100;
 
@@ -270,6 +270,7 @@ int main(int argc, char *argv[])
    ierr = PetscFinalize(); CHKERRQ(ierr);
 }
 
+// The rhs function in du/dt = R(t,u)
 PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
 {
    AppCtx*        ctx = (AppCtx*) ptr;
@@ -373,18 +374,40 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    PetscFunctionReturn(0);
 }
 
-PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec u,void *ptr)
+// This function is called after every time step.
+PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
 {
    AppCtx*        ctx = (AppCtx*) ptr;
    DM             da;
+   PetscInt       i, j, ibeg, jbeg, nlocx, nlocy;
+   PetscReal      dtlocal, dtglobal;
+   PetscScalar    ***u;
    PetscErrorCode ierr;
 
    if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
 
+   ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
+
    if(step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13)
    {
-      ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
-      ierr = savesol(time, da, u); CHKERRQ(ierr);
+      ierr = savesol(time, da, U); CHKERRQ(ierr);
+   }
+
+   if(ctx->cfl > 0)
+   {
+      ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
+      ierr = DMDAVecGetArrayDOFRead(da, U, &u); CHKERRQ(ierr);
+
+      dtlocal = 1.0e20;
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+         for(i=ibeg; i<ibeg+nlocx; ++i)
+         {
+            dtlocal = min(dtlocal, dt_local(u[j][i]));
+         }
+      ierr = DMDAVecRestoreArrayDOFRead(da, U, &u); CHKERRQ(ierr);
+      MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
+      dtglobal *= ctx->cfl;
+      ierr = TSSetTimeStep(ts, dtglobal); CHKERRQ(ierr);
    }
 
    return(0);

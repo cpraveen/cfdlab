@@ -11,6 +11,8 @@ You can open the plt files using Tecplot of VisIt.
 
 ## TS version
 
+This makes use of time stepping schemes in Petsc. To solve du/dt = R(t,u) you must implement R inside the function RHSFunction.
+
 ```
 make ts
 rm -f sol*.plt
