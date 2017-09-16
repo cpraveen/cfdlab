@@ -20,10 +20,11 @@ double dx, dy;
 typedef struct
 {
    PetscReal dt, cfl, Tf;
-   PetscInt  max_steps;
+   PetscInt  max_steps, si;
 } AppCtx;
 
 extern PetscErrorCode RHSFunction(TS,PetscReal,Vec,Vec,void*);
+extern PetscErrorCode Monitor(TS,PetscInt,PetscReal,Vec,void*);
 
 // Isentropic vortex
 void initcond(const double x, const double y, double *Prim)
@@ -140,7 +141,7 @@ void numflux(const double *Ul, const double *Ur, const double nx, const double n
 }
 
 //------------------------------------------------------------------------------
-PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
+PetscErrorCode savesol(double t, DM da, Vec ug)
 {
    PetscErrorCode ierr;
    char           filename[32] = "sol";
@@ -149,6 +150,7 @@ PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
    FILE           *fp;
    Vec            ul;
    PetscScalar    ***u;
+   static int     c = 0;
 
    ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
    ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
@@ -161,7 +163,7 @@ PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
    int jend = PetscMin(jbeg+nlocy+1, ny);
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-   sprintf(filename, "sol-%03d-%03d.plt", *c, rank);
+   sprintf(filename, "sol-%03d-%03d.plt", c, rank);
    fp = fopen(filename,"w");
    fprintf(fp, "TITLE = \"u_t + u_x + u_y = 0\"\n");
    fprintf(fp, "VARIABLES = x, y, rho, u, v, p\n");
@@ -180,14 +182,13 @@ PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
    ierr = DMDAVecRestoreArrayDOFRead(da, ul, &u); CHKERRQ(ierr);
    ierr = DMRestoreLocalVector(da, &ul); CHKERRQ(ierr);
 
-   ++(*c);
+   ++c;
    return(0);
 }
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
    // some parameters that can overwritten from command line
-   PetscInt  si  = 100;
    PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
    
    PetscErrorCode ierr;
@@ -198,13 +199,13 @@ int main(int argc, char *argv[])
    PetscInt    i, j, ibeg, jbeg, nlocx, nlocy;
    PetscMPIInt rank, size;
    PetscScalar ***u;
-   int c = 0; // counter for saving solution files
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
    ctx.Tf  = 10.0;
    ctx.cfl = 0.4;
    ctx.max_steps = 1000000;
+   ctx.si = 100;
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
@@ -212,7 +213,7 @@ int main(int argc, char *argv[])
    // Get some command line options
    ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&ctx.Tf,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetInt(NULL,NULL,"-si",&si,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
 
    ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
                        DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
@@ -245,19 +246,21 @@ int main(int argc, char *argv[])
    PetscPrintf(PETSC_COMM_WORLD,"Initial time step = %e\n", ctx.dt);
 
    // Save initial condition to file
-   ierr = savesol(&c, 0.0, da, ug); CHKERRQ(ierr);
+   ierr = savesol(0.0, da, ug); CHKERRQ(ierr);
 
    ierr = TSCreate(PETSC_COMM_WORLD,&ts); CHKERRQ(ierr);
+   ierr = TSSetDM(ts,da); CHKERRQ(ierr);
    ierr = TSSetProblemType(ts,TS_NONLINEAR); CHKERRQ(ierr);
    ierr = TSSetRHSFunction(ts,NULL,RHSFunction,&ctx); CHKERRQ(ierr);
    ierr = TSSetInitialTimeStep(ts,0.0,ctx.dt);
    ierr = TSSetType(ts,TSSSP); CHKERRQ(ierr);
    ierr = TSSetDuration(ts,ctx.max_steps,ctx.Tf); CHKERRQ(ierr);
    ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP); CHKERRQ(ierr);
-   ierr = TSSetFromOptions(ts);
+   ierr = TSSetSolution(ts,ug); CHKERRQ(ierr);
+   ierr = TSMonitorSet(ts,Monitor,&ctx,NULL); CHKERRQ(ierr);
+   ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
 
    ierr = TSSolve(ts,ug); CHKERRQ(ierr);
-   ierr = savesol(&c, ctx.Tf, da, ug); CHKERRQ(ierr);
 
    // Destroy everything before finishing
    ierr = VecDestroy(&ug); CHKERRQ(ierr);
@@ -269,12 +272,14 @@ int main(int argc, char *argv[])
 
 PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
 {
+   AppCtx*        ctx = (AppCtx*) ptr;
    DM             da;
    Vec            localU;
    PetscScalar    ***u;
    PetscScalar    ***res;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d;
    PetscInt       il, jl, nl, ml;
+   PetscReal      UL[nvar], UR[nvar], flux[nvar], lam;
    PetscErrorCode ierr;
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
@@ -287,26 +292,29 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
+   // Set residual 0
+   for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+         for(d=0; d<nvar; ++d)
+            res[j][i][d] = 0;
+
    // x fluxes
-   for(i=0; i<nlocx+1; ++i)
-      for(j=0; j<nlocy; ++j)
+   for(i=ibeg; i<ibeg+nlocx+1; ++i)
+      for(j=jbeg; j<jbeg+nlocy; ++j)
       {
-         // face between k-1, k
-         int k = il+sw+i;
-         int l = jl+sw+j;
-         double UL[nvar], UR[nvar], flux[nvar];
+         // face between i-1, i
          for(d=0; d<nvar; ++d)
          {
-            UL[d] = weno5(u[l][k-3][d],u[l][k-2][d],u[l][k-1][d],u[l][k][d],u[l][k+1][d]);
-            UR[d] = weno5(u[l][k+2][d],u[l][k+1][d],u[l][k][d],u[l][k-1][d],u[l][k-2][d]);
+            UL[d] = weno5(u[j][i-3][d],u[j][i-2][d],u[j][i-1][d],u[j][i][d],u[j][i+1][d]);
+            UR[d] = weno5(u[j][i+2][d],u[j][i+1][d],u[j][i][d],u[j][i-1][d],u[j][i-2][d]);
          }
          numflux(UL, UR, 1.0, 0.0, flux);
-         if(i==0)
+         if(i==ibeg)
          {
             for(d=0; d<nvar; ++d)
                res[j][i][d] -= dy * flux[d];
          }
-         else if(i==nlocx)
+         else if(i==ibeg+nlocx)
          {
             for(d=0; d<nvar; ++d)
                res[j][i-1][d] += dy * flux[d];
@@ -322,25 +330,22 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       }
 
    // y fluxes
-   for(j=0; j<nlocy+1; ++j)
-      for(i=0; i<nlocx; ++i)
+   for(j=jbeg; j<jbeg+nlocy+1; ++j)
+      for(i=ibeg; i<ibeg+nlocx; ++i)
       {
-         // face between l-1, l
-         int k = il+sw+i;
-         int l = jl+sw+j;
-         double UL[nvar], UR[nvar], flux[nvar];
+         // face between j-1, j
          for(d=0; d<nvar; ++d)
          {
-            UL[d] = weno5(u[l-3][k][d],u[l-2][k][d],u[l-1][k][d],u[l][k][d],u[l+1][k][d]);
-            UR[d] = weno5(u[l+2][k][d],u[l+1][k][d],u[l][k][d],u[l-1][k][d],u[l-2][k][d]);
+            UL[d] = weno5(u[j-3][i][d],u[j-2][i][d],u[j-1][i][d],u[j][i][d],u[j+1][i][d]);
+            UR[d] = weno5(u[j+2][i][d],u[j+1][i][d],u[j][i][d],u[j-1][i][d],u[j-2][i][d]);
          }
          numflux(UL, UR, 0.0, 1.0, flux);
-         if(j==0)
+         if(j==jbeg)
          {
             for(d=0; d<nvar; ++d)
                res[j][i][d] -= dx * flux[d];
          }
-         else if(j==nlocy)
+         else if(j==jbeg+nlocy)
          {
             for(d=0; d<nvar; ++d)
                res[j-1][i][d] += dx * flux[d];
@@ -355,9 +360,32 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          }
       }
 
+   lam = 1.0/(dx*dy);
+   for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+         for(d=0; d<nvar; ++d)
+            res[j][i][d] *= -lam;
+
    ierr = DMDAVecRestoreArrayDOFRead(da, localU, &u); CHKERRQ(ierr);
    ierr = DMDAVecRestoreArrayDOF(da, R, &res); CHKERRQ(ierr);
    ierr = DMRestoreLocalVector(da,&localU); CHKERRQ(ierr);
 
    PetscFunctionReturn(0);
+}
+
+PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec u,void *ptr)
+{
+   AppCtx*        ctx = (AppCtx*) ptr;
+   DM             da;
+   PetscErrorCode ierr;
+
+   if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
+
+   if(step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13)
+   {
+      ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
+      ierr = savesol(time, da, u); CHKERRQ(ierr);
+   }
+
+   return(0);
 }
