@@ -1,16 +1,13 @@
 static char help[] = "Solves 2d Euler equations.\n\n";
 
-#include <petscsys.h>
 #include <petscdm.h>
 #include <petscdmda.h>
-#include <petscvec.h>
 #include <petscts.h>
 
 #define min(a,b)  ( (a < b) ? a : b )
 #define nvar  4
 
-const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
-const PetscInt sw = 3; // stencil width
+const PetscInt sw = 3; // stencil width, 3 on either side, for weno5
 const double xmin = -5.0, xmax = 5.0;
 const double ymin = -5.0, ymax = 5.0;
 const double gas_gamma = 1.4;
@@ -237,7 +234,7 @@ int main(int argc, char *argv[])
       {
          PetscReal x = xmin + i*dx + 0.5*dx;
          PetscReal y = ymin + j*dy + 0.5*dy;
-         double prim[nvar];
+         PetscReal prim[nvar];
          initcond(x, y, prim);
          prim2con(prim, u[j][i]);
          dtlocal = min(dtlocal, dt_local(u[j][i]));
@@ -295,7 +292,6 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    PetscScalar    ***u;
    PetscScalar    ***res;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d;
-   PetscInt       il, jl, nl, ml;
    PetscReal      UL[nvar], UR[nvar], flux[nvar], lam;
    PetscErrorCode ierr;
 
@@ -307,7 +303,6 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    ierr = DMDAVecGetArrayDOF(da, R, &res); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
-   ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
    // ---Begin res computation---
    // Set residual 0
@@ -429,5 +424,5 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
       ierr = TSSetTimeStep(ts, dtglobal); CHKERRQ(ierr);
    }
 
-   return(0);
+   PetscFunctionReturn(0);
 }
