@@ -421,6 +421,8 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
       ierr = DMDAVecRestoreArrayDOFRead(da, U, &u); CHKERRQ(ierr);
       MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
       dtglobal *= ctx->cfl;
+      // Adjust dt to reach final time exactly
+      if(time+dtglobal > ctx->Tf) dtglobal = ctx->Tf - time;
       ierr = TSSetTimeStep(ts, dtglobal); CHKERRQ(ierr);
    }
 
