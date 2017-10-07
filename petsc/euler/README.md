@@ -2,9 +2,9 @@
 
 This code solves 2d Euler equations on Cartesian mesh using WENO5 finite volume method with periodic boundary conditions.
 ```
-make euler
+make ssprk
 rm -f sol*.plt
-mpirun -np 4 ./euler -da_grid_x 100 -da_grid_y 100 -Tf 10.0 -cfl 0.8 -si 100
+mpirun -np 4 ./ssprk -da_grid_x 100 -da_grid_y 100 -Tf 10.0 -cfl 0.8 -si 100
 sh ./merge.sh
 ```
 You can open the plt files using Tecplot of VisIt.

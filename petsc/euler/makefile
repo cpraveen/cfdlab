@@ -6,7 +6,7 @@ ifeq ($(OS),Linux)
 	LDFLAGS += -Wl,-rpath=$(PETSC_DIR)/lib
 endif
 
-TARGET = euler ts
+TARGET = ssprk ts
 
 all: $(TARGET)
 
