@@ -6,7 +6,7 @@ ifeq ($(OS),Linux)
 	LDFLAGS += -Wl,-rpath=$(PETSC_DIR)/lib
 endif
 
-TARGET = ssprk ts
+TARGET = ssprk ts fdweno
 
 all: $(TARGET)
 

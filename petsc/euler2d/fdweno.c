@@ -4,37 +4,23 @@ static char help[] = "Solves 2d Euler equations.\n\n";
 #include <petscdmda.h>
 #include <petscts.h>
 
+#include "isentropic.h"
+
 #define min(a,b)  ( (a < b) ? a : b )
 #define nvar  4
 
 const PetscInt sw = 3; // stencil width, 3 on either side, for weno5
-const double xmin = -5.0, xmax = 5.0;
-const double ymin = -5.0, ymax = 5.0;
-const double gas_gamma = 1.4;
-const double gas_const = 1.0;
 double dx, dy;
 
 typedef struct
 {
    PetscReal dt, cfl, Tf;
    PetscInt  max_steps, si;
+   Vec fxp, fxm, fyp, fym;
 } AppCtx;
 
 extern PetscErrorCode RHSFunction(TS,PetscReal,Vec,Vec,void*);
 extern PetscErrorCode Monitor(TS,PetscInt,PetscReal,Vec,void*);
-
-// Isentropic vortex
-void initcond(const double x, const double y, double *Prim)
-{
-   const double M = 0.5;
-   const double alpha = 0.0;
-   const double beta = 5.0;
-   const double r2 = x*x + y*y;
-   Prim[0] =  pow(1.0 - (gas_gamma-1.0)*(beta*beta)/(8.0*gas_gamma*M_PI*M_PI)*exp(1-r2), (1.0/(gas_gamma-1.0)));
-   Prim[1] =  M*cos(alpha*M_PI/180.0) - beta/(2.0*M_PI)*y*exp(0.5*(1.0-r2));
-   Prim[2] =  M*sin(alpha*M_PI/180.0) + beta/(2.0*M_PI)*x*exp(0.5*(1.0-r2));
-   Prim[3] =  pow(Prim[0],gas_gamma);
-}
 
 //------------------------------------------------------------------------------
 // Weno reconstruction
@@ -215,9 +201,31 @@ int main(int argc, char *argv[])
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
 
+   if(PERIODIC == 0)
+   {
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
+                          DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+   }
+   else if(PERIODIC == 1)
+   {
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
+                          DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+   }
+   else if(PERIODIC == 2)
+   {
    ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
                        DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                        sw, NULL, NULL, &da); CHKERRQ(ierr);
+   }
+   else
+   {
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                          DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+   }
+
    ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    dx = (xmax - xmin) / (PetscReal)(nx);
    dy = (ymax - ymin) / (PetscReal)(ny);
@@ -226,6 +234,12 @@ int main(int argc, char *argv[])
 
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
    ierr = PetscObjectSetName((PetscObject) ug, "Solution"); CHKERRQ(ierr);
+
+   // Create vectors to store split fluxes
+   ierr = DMCreateLocalVector(da, &ctx.fxp); CHKERRQ(ierr);
+   ierr = DMCreateLocalVector(da, &ctx.fxm); CHKERRQ(ierr);
+   ierr = DMCreateLocalVector(da, &ctx.fyp); CHKERRQ(ierr);
+   ierr = DMCreateLocalVector(da, &ctx.fym); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
    ierr = DMDAVecGetArrayDOF(da, ug, &u); CHKERRQ(ierr);
@@ -277,6 +291,11 @@ int main(int argc, char *argv[])
 
    // Destroy everything before finishing
    ierr = VecDestroy(&ug); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fxp); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fxm); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fyp); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fym); CHKERRQ(ierr);
+
    ierr = DMDestroy(&da); CHKERRQ(ierr);
    ierr = TSDestroy(&ts); CHKERRQ(ierr);
 
@@ -291,6 +310,10 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    Vec            localU;
    PetscScalar    ***u;
    PetscScalar    ***res;
+   PetscScalar    ***fxp;
+   PetscScalar    ***fxm;
+   PetscScalar    ***fyp;
+   PetscScalar    ***fym;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d;
    PetscReal      UL[nvar], UR[nvar], flux[nvar], lam;
    PetscErrorCode ierr;
@@ -299,8 +322,13 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    ierr = DMGetLocalVector(da,&localU); CHKERRQ(ierr);
    ierr = DMGlobalToLocalBegin(da, U, INSERT_VALUES, localU); CHKERRQ(ierr);
    ierr = DMGlobalToLocalEnd(da, U, INSERT_VALUES, localU); CHKERRQ(ierr);
-   ierr = DMDAVecGetArrayDOFRead(da, localU, &u); CHKERRQ(ierr);
+   ierr = DMDAVecGetArrayDOF(da, localU, &u); CHKERRQ(ierr);
    ierr = DMDAVecGetArrayDOF(da, R, &res); CHKERRQ(ierr);
+
+   ierr = DMDAVecGetArrayDOF(da, ctx->fxp, &fxp); CHKERRQ(ierr);
+   ierr = DMDAVecGetArrayDOF(da, ctx->fxm, &fxm); CHKERRQ(ierr);
+   ierr = DMDAVecGetArrayDOF(da, ctx->fyp, &fyp); CHKERRQ(ierr);
+   ierr = DMDAVecGetArrayDOF(da, ctx->fym, &fym); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
 
@@ -311,10 +339,17 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          for(d=0; d<nvar; ++d)
             res[j][i][d] = 0;
 
+   // Fill in ghost values based on boundary condition
+   // Compute split fluxes
+
    // x fluxes
-   for(i=ibeg; i<ibeg+nlocx+1; ++i)
-      for(j=jbeg; j<jbeg+nlocy; ++j)
+   for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(i=ibeg; i<ibeg+nlocx+1; ++i)
       {
+         // Compute average state
+         // Compute eigenvector matrix
+         // Transform split fluxes
+         
          // face between i-1, i
          for(d=0; d<nvar; ++d)
          {
@@ -380,7 +415,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             res[j][i][d] *= -lam;
    // ---End res computation---
 
-   ierr = DMDAVecRestoreArrayDOFRead(da, localU, &u); CHKERRQ(ierr);
+   ierr = DMDAVecRestoreArrayDOF(da, localU, &u); CHKERRQ(ierr);
    ierr = DMDAVecRestoreArrayDOF(da, R, &res); CHKERRQ(ierr);
    ierr = DMRestoreLocalVector(da,&localU); CHKERRQ(ierr);
 
