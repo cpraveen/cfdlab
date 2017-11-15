@@ -112,8 +112,9 @@ int main(int argc, char *argv[])
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
 
-   ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, -nx, ndof, sw, NULL, &da); CHKERRQ(ierr);
-
+   ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, nx, ndof, sw, NULL, &da); CHKERRQ(ierr);
+   ierr = DMSetFromOptions(da); CHKERRQ(ierr);
+   ierr = DMSetUp(da); CHKERRQ(ierr);
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, 0, 0, &nloc, 0, 0); CHKERRQ(ierr);

@@ -216,8 +216,10 @@ int main(int argc, char *argv[])
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
 
    ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
-                       DMDA_STENCIL_BOX, -nx, -ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                       DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                        sw, NULL, NULL, &da); CHKERRQ(ierr);
+   ierr = DMSetFromOptions(da); CHKERRQ(ierr);
+   ierr = DMSetUp(da); CHKERRQ(ierr);
    ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    dx = (xmax - xmin) / (PetscReal)(nx);
    dy = (ymax - ymin) / (PetscReal)(ny);
@@ -265,9 +267,10 @@ int main(int argc, char *argv[])
    ierr = TSSetDM(ts,da); CHKERRQ(ierr);
    ierr = TSSetProblemType(ts,TS_NONLINEAR); CHKERRQ(ierr);
    ierr = TSSetRHSFunction(ts,NULL,RHSFunction,&ctx); CHKERRQ(ierr);
-   ierr = TSSetInitialTimeStep(ts,0.0,ctx.dt);
+   ierr = TSSetTimeStep(ts,ctx.dt);
    ierr = TSSetType(ts,TSSSP); CHKERRQ(ierr);
-   ierr = TSSetDuration(ts,ctx.max_steps,ctx.Tf); CHKERRQ(ierr);
+   ierr = TSSetMaxSteps(ts,ctx.max_steps); CHKERRQ(ierr);
+   ierr = TSSetMaxTime(ts,ctx.Tf); CHKERRQ(ierr);
    ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP); CHKERRQ(ierr);
    ierr = TSSetSolution(ts,ug); CHKERRQ(ierr);
    ierr = TSMonitorSet(ts,Monitor,&ctx,NULL); CHKERRQ(ierr);
@@ -398,6 +401,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    PetscErrorCode ierr;
 
    if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
+   PetscPrintf(PETSC_COMM_WORLD,"iter, t = %e\n", step, time);
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
 
@@ -405,6 +409,10 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    {
       ierr = savesol(time, da, U); CHKERRQ(ierr);
    }
+
+   // If final time reached, dont do anything else, return from function.
+   if(PetscAbs(time-ctx->Tf) < 1.0e-13)
+      PetscFunctionReturn(0);
 
    // Compute time step based on cfl
    if(ctx->cfl > 0)
