@@ -1,5 +1,5 @@
 CC = mpicc
-CFLAGS = -O3 -Wall -I$(PETSC_DIR)/include
+CFLAGS = -march=native -O3 -Wall -I$(PETSC_DIR)/include
 LDFLAGS = -lpetsc -L$(PETSC_DIR)/lib -lm
 OS := $(shell uname)
 ifeq ($(OS),Linux)
