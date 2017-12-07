@@ -4,11 +4,10 @@ static char help[] = "Solves 2d Euler equations.\n\n";
 #include <petscdmda.h>
 #include <petscts.h>
 
-enum bctype { wall, periodic, farfield };
+enum bctype { wall, periodic, farfield, supersonic };
 
 #include "isentropic.h"
 
-#define min(a,b)  ( (a < b) ? a : b )
 #define nvar  4
 
 const PetscInt sw = 3; // stencil width, 3 on either side, for weno5
@@ -208,18 +207,21 @@ int main(int argc, char *argv[])
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                           sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in x\n"); CHKERRQ(ierr);
    }
    else if(PERIODIC == 1) // periodic in y
    {
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                           sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in y\n"); CHKERRQ(ierr);
    }
    else if(PERIODIC == 2) // periodic in both x and y
    {
-   ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
-                       DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
-                       sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
+                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in x and y\n"); CHKERRQ(ierr);
    }
    else // no periodic bc
    {
@@ -255,7 +257,7 @@ int main(int argc, char *argv[])
          PetscReal prim[nvar];
          initcond(x, y, prim);
          prim2con(prim, u[j][i]);
-         dtlocal = min(dtlocal, dt_local(u[j][i]));
+         dtlocal = PetscMin(dtlocal, dt_local(u[j][i]));
       }
    ierr = DMDAVecRestoreArrayDOF(da, ug, &u); CHKERRQ(ierr);
    MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
@@ -320,7 +322,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    PetscScalar    ***fxm;
    PetscScalar    ***fyp;
    PetscScalar    ***fym;
-   PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d;
+   PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d, nx, ny;
    PetscReal      UL[nvar], UR[nvar], flux[nvar], lam;
    PetscErrorCode ierr;
 
@@ -336,6 +338,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    ierr = DMDAVecGetArrayDOF(da, ctx->fyp, &fyp); CHKERRQ(ierr);
    ierr = DMDAVecGetArrayDOF(da, ctx->fym, &fym); CHKERRQ(ierr);
 
+   ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
 
    // ---Begin res computation---
@@ -346,7 +349,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             res[j][i][d] = 0;
 
    // Fill in ghost values based on boundary condition
-   if(BC_LEFT == wall)
+   // Left side
+   if(ibeg == 0 && BC_LEFT == wall)
    {
       i = ibeg - 1;
       for(j=jbeg; j<jbeg+nlocy; ++j)
@@ -368,11 +372,13 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       }
 
    }
-   else if(BC_LEFT == farfield)
+   else if(ibeg == 0 && BC_LEFT == farfield)
    {
+      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
    }
 
-   if(BC_RIGHT == wall)
+   // Right side
+   if(ibeg+nlocx == nx && BC_RIGHT == wall)
    {
       i = ibeg + nlocx;
       for(j=jbeg; j<jbeg+nlocy; ++j)
@@ -396,8 +402,64 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    }
    else if(BC_RIGHT == farfield)
    {
+      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
    }
 
+   // Bottom side
+   if(jbeg == 0 && BC_BOTTOM == wall)
+   {
+      j = jbeg - 1;
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         u[j][i][0] =  u[j+1][i][0];
+         u[j][i][1] =  u[j+1][i][1];
+         u[j][i][2] = -u[j+1][i][2];
+         u[j][i][3] =  u[j+1][i][3];
+
+         u[j-1][i][0] =  u[j+2][i][0];
+         u[j-1][i][1] =  u[j+2][i][1];
+         u[j-1][i][2] = -u[j+2][i][2];
+         u[j-1][i][3] =  u[j+2][i][3];
+
+         u[j-2][i][0] =  u[j+3][i][0];
+         u[j-2][i][1] =  u[j+3][i][1];
+         u[j-2][i][2] = -u[j+3][i][2];
+         u[j-2][i][3] =  u[j+3][i][3];
+      }
+
+   }
+   else if(BC_BOTTOM == farfield)
+   {
+      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
+   }
+
+   // Top side
+   if(jbeg+nlocy == ny && BC_TOP == wall)
+   {
+      j = jbeg + nlocy;
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         u[j][i][0] =  u[j-1][i][0];
+         u[j][i][1] =  u[j-1][i][1];
+         u[j][i][2] = -u[j-1][i][2];
+         u[j][i][3] =  u[j-1][i][3];
+
+         u[j+1][i][0] =  u[j-2][i][0];
+         u[j+1][i][1] =  u[j-2][i][1];
+         u[j+1][i][2] = -u[j-2][i][2];
+         u[j+1][i][3] =  u[j-2][i][3];
+
+         u[j+2][i][0] =  u[j-3][i][0];
+         u[j+2][i][1] =  u[j-3][i][1];
+         u[j+2][i][2] = -u[j-3][i][2];
+         u[j+2][i][3] =  u[j-3][i][3];
+      }
+
+   }
+   else if(BC_TOP == farfield)
+   {
+      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
+   }
 
    // Compute split fluxes
 
@@ -515,7 +577,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
       for(j=jbeg; j<jbeg+nlocy; ++j)
          for(i=ibeg; i<ibeg+nlocx; ++i)
          {
-            dtlocal = min(dtlocal, dt_local(u[j][i]));
+            dtlocal = PetscMin(dtlocal, dt_local(u[j][i]));
          }
       ierr = DMDAVecRestoreArrayDOFRead(da, U, &u); CHKERRQ(ierr);
       MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
