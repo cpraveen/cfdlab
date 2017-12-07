@@ -275,6 +275,7 @@ int main(int argc, char *argv[])
    ierr = TSSetSolution(ts,ug); CHKERRQ(ierr);
    ierr = TSMonitorSet(ts,Monitor,&ctx,NULL); CHKERRQ(ierr);
    ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
+   ierr = TSSetUp(ts); CHKERRQ(ierr);
 
    ierr = TSSolve(ts,ug); CHKERRQ(ierr);
 

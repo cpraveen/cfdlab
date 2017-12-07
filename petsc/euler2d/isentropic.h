@@ -1,4 +1,8 @@
 #define PERIODIC  2
+#define BC_LEFT   periodic
+#define BC_RIGHT  periodic
+#define BC_BOTTOM periodic
+#define BC_TOP    periodic
 
 const double xmin = -5.0, xmax = 5.0;
 const double ymin = -5.0, ymax = 5.0;

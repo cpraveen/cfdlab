@@ -4,6 +4,8 @@ static char help[] = "Solves 2d Euler equations.\n\n";
 #include <petscdmda.h>
 #include <petscts.h>
 
+enum bctype { wall, periodic, farfield };
+
 #include "isentropic.h"
 
 #define min(a,b)  ( (a < b) ? a : b )
@@ -201,25 +203,25 @@ int main(int argc, char *argv[])
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
 
-   if(PERIODIC == 0)
+   if(PERIODIC == 0) // periodic in x
    {
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                           sw, NULL, NULL, &da); CHKERRQ(ierr);
    }
-   else if(PERIODIC == 1)
+   else if(PERIODIC == 1) // periodic in y
    {
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                           sw, NULL, NULL, &da); CHKERRQ(ierr);
    }
-   else if(PERIODIC == 2)
+   else if(PERIODIC == 2) // periodic in both x and y
    {
    ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
                        DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                        sw, NULL, NULL, &da); CHKERRQ(ierr);
    }
-   else
+   else // no periodic bc
    {
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
@@ -289,6 +291,7 @@ int main(int argc, char *argv[])
    ierr = TSSetSolution(ts,ug); CHKERRQ(ierr);
    ierr = TSMonitorSet(ts,Monitor,&ctx,NULL); CHKERRQ(ierr);
    ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
+   ierr = TSSetUp(ts); CHKERRQ(ierr);
 
    ierr = TSSolve(ts,ug); CHKERRQ(ierr);
 
@@ -343,6 +346,59 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             res[j][i][d] = 0;
 
    // Fill in ghost values based on boundary condition
+   if(BC_LEFT == wall)
+   {
+      i = ibeg - 1;
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+      {
+         u[j][i][0] =  u[j][i+1][0];
+         u[j][i][1] = -u[j][i+1][1];
+         u[j][i][2] =  u[j][i+1][2];
+         u[j][i][3] =  u[j][i+1][3];
+
+         u[j][i-1][0] =  u[j][i+2][0];
+         u[j][i-1][1] = -u[j][i+2][1];
+         u[j][i-1][2] =  u[j][i+2][2];
+         u[j][i-1][3] =  u[j][i+2][3];
+
+         u[j][i-2][0] =  u[j][i+3][0];
+         u[j][i-2][1] = -u[j][i+3][1];
+         u[j][i-2][2] =  u[j][i+3][2];
+         u[j][i-2][3] =  u[j][i+3][3];
+      }
+
+   }
+   else if(BC_LEFT == farfield)
+   {
+   }
+
+   if(BC_RIGHT == wall)
+   {
+      i = ibeg + nlocx;
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+      {
+         u[j][i][0] =  u[j][i-1][0];
+         u[j][i][1] = -u[j][i-1][1];
+         u[j][i][2] =  u[j][i-1][2];
+         u[j][i][3] =  u[j][i-1][3];
+
+         u[j][i+1][0] =  u[j][i-2][0];
+         u[j][i+1][1] = -u[j][i-2][1];
+         u[j][i+1][2] =  u[j][i-2][2];
+         u[j][i+1][3] =  u[j][i-2][3];
+
+         u[j][i+2][0] =  u[j][i-3][0];
+         u[j][i+2][1] = -u[j][i-3][1];
+         u[j][i+2][2] =  u[j][i-3][2];
+         u[j][i+2][3] =  u[j][i-3][3];
+      }
+
+   }
+   else if(BC_RIGHT == farfield)
+   {
+   }
+
+
    // Compute split fluxes
 
    // x fluxes
