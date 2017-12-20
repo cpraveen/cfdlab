@@ -1,0 +1,22 @@
+#!/bin/sh
+# Rename *.ext1 to *.ext2
+
+PN=`basename "$0"`
+
+usage () {
+   echo >&2 "usage: $PN <extold> <extnew>
+
+   Rename file by changing extension from extold to extnew
+   example: $PN f95 F90"
+
+    exit 1
+}
+
+if [ $# -lt 2 ]
+then
+	usage
+fi
+
+for file in *.$1; do
+   [ -f "$file" ] && git mv "$file" "${file%$1}$2"
+done
