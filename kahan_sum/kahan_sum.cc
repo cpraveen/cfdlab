@@ -62,8 +62,8 @@ void test()
    T a = 1.234567891234567e-2;
    vector<T> v(n, a);
 
-   KahanSum<T> ksum(one);
-   T sum = one;
+   KahanSum<T> ksum(one); // Kahan sum
+   T sum = one;           // Ordinary sum
    for(size_t i=0; i<n; ++i)
    {
       ksum += v[i];
