@@ -1,57 +1,13 @@
 // Kahan summation to avoid roundoff errors, see
 // https://en.wikipedia.org/wiki/Kahan_summation_algorithm
 // For a fortran example, see
-// http://ossanworld.com/cfdbooks//cfdcodes/kahan_sum_example/kahan_sum_example.f90
+// http://ossanworld.com/cfdbooks/cfdcodes/kahan_sum_example/kahan_sum_example.f90
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include "kahan_sum.h"
 
 using namespace std;
-
-template <typename T>
-class KahanSum
-{
-   public:
-      KahanSum (T init=0.0);
-      KahanSum& operator=  (const T &v);
-      KahanSum& operator+= (const T &v);
-      T result() const;
-
-   private:
-      T c;
-      T sum;
-};
-
-template <typename T>
-KahanSum<T>::KahanSum(T init)
-{
-   c   = 0.0;
-   sum = init;
-}
-
-template <typename T>
-KahanSum<T>& KahanSum<T>::operator+=(const T &v)
-{
-   T temp = v - c;
-   T t    = sum + temp;
-   c      = (t - sum) - temp;
-   sum    = t;
-   return *this;
-}
-
-template <typename T>
-KahanSum<T>& KahanSum<T>::operator=(const T &v)
-{
-   c      = 0.0;
-   sum    = v;
-   return *this;
-}
-
-template <typename T>
-T KahanSum<T>::result() const
-{
-   return sum;
-}
 
 // Compute 1 + sum(i=0,n-1) v[i]
 template <typename T>
