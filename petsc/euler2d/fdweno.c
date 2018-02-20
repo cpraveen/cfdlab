@@ -8,6 +8,7 @@ enum bctype { wall, periodic, farfield, supersonic };
 
 #include "isentropic.h"
 
+// Number of variables at each grid point
 #define nvar  4
 
 const PetscInt sw = 3; // stencil width, 3 on either side, for weno5
@@ -17,7 +18,7 @@ typedef struct
 {
    PetscReal dt, cfl, Tf;
    PetscInt  max_steps, si;
-   Vec fxp, fxm, fyp, fym;
+   Vec       fxp, fxm, fyp, fym;
 } AppCtx;
 
 extern PetscErrorCode RHSFunction(TS,PetscReal,Vec,Vec,void*);
@@ -71,14 +72,16 @@ void prim2con(const double *Prim, double *Con)
   Con[3] = 0.5*Prim[0]*(pow(Prim[1],2) + pow(Prim[2],2)) + Prim[3]/(gas_gamma-1.0);
 }
 
-// Compute maximum eigenvalue in direction (nx,ny)
-double maxeigval(const double *Con, const double nx, const double ny)
+// Compute max eigenvalue along x and y
+void compute_lambda(const double *Con, double *lambdax, double *lambday)
 {
-   double Prim[nvar];
-   con2prim(Con, Prim);
-   const double u = fabs(Prim[1]*nx + Prim[2]*ny);
-   const double a = sqrt(gas_gamma*Prim[3]/Prim[0]);
-   return u + a;
+   double vx = Con[1]/Con[0];
+   double vy = Con[2]/Con[0];
+   double p = (gas_gamma - 1.0) * (Con[3] - 0.5*Con[0]*(vx*vx + vy*vy));
+   double a = sqrt(gas_gamma * p / Con[0]);
+
+   *lambdax = fabs(vx) + a;
+   *lambday = fabs(vy) + a;
 }
 
 // Compute local timestep
@@ -92,36 +95,22 @@ double dt_local(const double *Con)
    return 1.0/(sx/dx + sy/dy);
 }
 
-// Simple average flux
-void avg_flux(const double *Ul, const double *Ur, const double nx, const double ny, double *flux)
+// Computes split fluxes along direction (nx,ny)
+void split_fluxes(const double *U, const double nx, const double ny,
+                  const double lambda, double *fp, double *fm)
 {
-   double Pl[nvar], Pr[nvar];
-   con2prim(Ul, Pl);
-   con2prim(Ur, Pr);
+   double P[nvar], flux[nvar];
+   con2prim(U, P);
+   flux[0] = U[1]*nx + U[2]*ny;
+   flux[1] = P[3]*nx + P[1]*flux[0];
+   flux[2] = P[3]*ny + P[2]*flux[0];
+   flux[3] = (U[3] + P[3]) * (P[1]*nx + P[2]*ny);
 
-   double fluxl[nvar], fluxr[nvar];
-
-  fluxl[0] = Ul[1]*nx + Ul[2]*ny;
-  fluxl[1] = Pl[3]*nx + Pl[1]*fluxl[0];
-  fluxl[2] = Pl[3]*ny + Pl[2]*fluxl[0];
-  fluxl[3] = (Ul[3]+Pl[3])*(Pl[1]*nx + Pl[2]*ny);
-
-  fluxr[0] = Ur[1]*nx + Ur[2]*ny;
-  fluxr[1] = Pr[3]*nx + Pr[1]*fluxr[0];
-  fluxr[2] = Pr[3]*ny + Pr[2]*fluxr[0];
-  fluxr[3] = (Ur[3]+Pr[3])*(Pr[1]*nx + Pr[2]*ny);
-
-  for(int i=0; i<nvar; ++i) flux[i] = 0.5*(fluxl[i] + fluxr[i]);
-}
-
-// Rusanov flux
-void numflux(const double *Ul, const double *Ur, const double nx, const double ny, double *flux)
-{
-   double Ua[nvar];
-   for(int i=0; i<nvar; ++i) Ua[i] = 0.5*(Ul[i] + Ur[i]);
-   double lam = maxeigval( Ua, nx, ny );
-   avg_flux(Ul,Ur,nx,ny,flux);
-   for(int i=0; i<nvar; ++i) flux[i] -= 0.5*lam*(Ur[i] - Ul[i]);
+   for(int i=0; i<nvar; ++i)
+   {
+      fp[i] = 0.5*(flux[i] + lambda * U[i]);
+      fm[i] = 0.5*(flux[i] - lambda * U[i]);
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -323,7 +312,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    PetscScalar    ***fyp;
    PetscScalar    ***fym;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d, nx, ny;
-   PetscReal      UL[nvar], UR[nvar], flux[nvar], lam;
+   PetscReal      UL[nvar], UR[nvar], flux[nvar], lam, lamx, lamy, lambdax, lambday;
    PetscErrorCode ierr;
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
@@ -461,7 +450,31 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
    }
 
-   // Compute split fluxes
+   // compute maximum wave speeds
+   for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         compute_lambda(u[j][i], &lamx, &lamy);
+         lambdax = PetscMax(lambdax, lamx);
+         lambday = PetscMax(lambday, lamy);
+      }
+   lamx = lambdax; lamy = lambday;
+   MPI_Allreduce(&lamx, &lambdax, 1, MPI_DOUBLE, MPI_MAX, PETSC_COMM_WORLD);
+   MPI_Allreduce(&lamy, &lambday, 1, MPI_DOUBLE, MPI_MAX, PETSC_COMM_WORLD);
+
+   // Compute x-split fluxes
+   for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(i=ibeg-sw; i<ibeg+nlocx+sw; ++i)
+      {
+         split_fluxes(u[j][i], 1.0, 0.0, lambdax, fxp[j][i], fxm[j][i]);
+      }
+
+   // Compute y-split fluxes
+   for(j=jbeg-sw; j<jbeg+nlocy+sw; ++j)
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         split_fluxes(u[j][i], 0.0, 1.0, lambday, fyp[j][i], fym[j][i]);
+      }
 
    // x fluxes
    for(j=jbeg; j<jbeg+nlocy; ++j)
@@ -474,10 +487,9 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          // face between i-1, i
          for(d=0; d<nvar; ++d)
          {
-            UL[d] = weno5(u[j][i-3][d],u[j][i-2][d],u[j][i-1][d],u[j][i][d],u[j][i+1][d]);
-            UR[d] = weno5(u[j][i+2][d],u[j][i+1][d],u[j][i][d],u[j][i-1][d],u[j][i-2][d]);
+            UL[d] = weno5(fxp[j][i-3][d],fxp[j][i-2][d],fxp[j][i-1][d],fxp[j][i][d],fxp[j][i+1][d]);
+            UR[d] = weno5(fxm[j][i+2][d],fxm[j][i+1][d],fxm[j][i][d],fxm[j][i-1][d],fxm[j][i-2][d]);
          }
-         numflux(UL, UR, 1.0, 0.0, flux);
          if(i==ibeg)
          {
             for(d=0; d<nvar; ++d)
@@ -505,10 +517,9 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          // face between j-1, j
          for(d=0; d<nvar; ++d)
          {
-            UL[d] = weno5(u[j-3][i][d],u[j-2][i][d],u[j-1][i][d],u[j][i][d],u[j+1][i][d]);
-            UR[d] = weno5(u[j+2][i][d],u[j+1][i][d],u[j][i][d],u[j-1][i][d],u[j-2][i][d]);
+            UL[d] = weno5(fyp[j-3][i][d],fyp[j-2][i][d],fyp[j-1][i][d],fyp[j][i][d],fyp[j+1][i][d]);
+            UR[d] = weno5(fym[j+2][i][d],fym[j+1][i][d],fym[j][i][d],fym[j-1][i][d],fym[j-2][i][d]);
          }
-         numflux(UL, UR, 0.0, 1.0, flux);
          if(j==jbeg)
          {
             for(d=0; d<nvar; ++d)
@@ -539,6 +550,11 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    ierr = DMDAVecRestoreArrayDOF(da, localU, &u); CHKERRQ(ierr);
    ierr = DMDAVecRestoreArrayDOF(da, R, &res); CHKERRQ(ierr);
    ierr = DMRestoreLocalVector(da,&localU); CHKERRQ(ierr);
+
+   ierr = DMDAVecRestoreArrayDOF(da, ctx->fxp, &fxp); CHKERRQ(ierr);
+   ierr = DMDAVecRestoreArrayDOF(da, ctx->fxm, &fxm); CHKERRQ(ierr);
+   ierr = DMDAVecRestoreArrayDOF(da, ctx->fyp, &fyp); CHKERRQ(ierr);
+   ierr = DMDAVecRestoreArrayDOF(da, ctx->fym, &fym); CHKERRQ(ierr);
 
    PetscFunctionReturn(0);
 }
