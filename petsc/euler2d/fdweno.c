@@ -28,7 +28,8 @@ extern PetscErrorCode Monitor(TS,PetscInt,PetscReal,Vec,void*);
 // Weno reconstruction
 // Return left value for face between u0, up1
 //------------------------------------------------------------------------------
-double weno5(const double um2, const double um1, const double u0, const double up1, const double up2)
+void weno5(const double *um2, const double *um1, const double *u0, const double *up1,
+           const double *up2, double *res)
 {
    double eps = 1.0e-6;
    double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
@@ -36,22 +37,25 @@ double weno5(const double um2, const double um1, const double u0, const double u
    double u1, u2, u3;
    double w1, w2, w3;
 
-   beta1 = (13.0/12.0)*pow((um2 - 2.0*um1 + u0),2) +
-           (1.0/4.0)*pow((um2 - 4.0*um1 + 3.0*u0),2);
-   beta2 = (13.0/12.0)*pow((um1 - 2.0*u0 + up1),2) +
-           (1.0/4.0)*pow((um1 - up1),2);
-   beta3 = (13.0/12.0)*pow((u0 - 2.0*up1 + up2),2) +
-           (1.0/4.0)*pow((3.0*u0 - 4.0*up1 + up2),2);
+   for(int i=0; i<nvar; ++i)
+   {
+      beta1 = (13.0/12.0)*pow((um2[i] - 2.0*um1[i] + u0[i]),2) +
+              (1.0/4.0)*pow((um2[i] - 4.0*um1[i] + 3.0*u0[i]),2);
+      beta2 = (13.0/12.0)*pow((um1[i] - 2.0*u0[i] + up1[i]),2) +
+              (1.0/4.0)*pow((um1[i] - up1[i]),2);
+      beta3 = (13.0/12.0)*pow((u0[i] - 2.0*up1[i] + up2[i]),2) +
+              (1.0/4.0)*pow((3.0*u0[i] - 4.0*up1[i] + up2[i]),2);
 
-   w1 = gamma1 / pow(eps+beta1, 2);
-   w2 = gamma2 / pow(eps+beta2, 2);
-   w3 = gamma3 / pow(eps+beta3, 2);
+      w1 = gamma1 / pow(eps+beta1, 2);
+      w2 = gamma2 / pow(eps+beta2, 2);
+      w3 = gamma3 / pow(eps+beta3, 2);
 
-   u1 = (1.0/3.0)*um2 - (7.0/6.0)*um1 + (11.0/6.0)*u0;
-   u2 = -(1.0/6.0)*um1 + (5.0/6.0)*u0 + (1.0/3.0)*up1;
-   u3 = (1.0/3.0)*u0 + (5.0/6.0)*up1 - (1.0/6.0)*up2;
+      u1 = (1.0/3.0)*um2[i] - (7.0/6.0)*um1[i] + (11.0/6.0)*u0[i];
+      u2 = -(1.0/6.0)*um1[i] + (5.0/6.0)*u0[i] + (1.0/3.0)*up1[i];
+      u3 = (1.0/3.0)*u0[i] + (5.0/6.0)*up1[i] - (1.0/6.0)*up2[i];
 
-   return (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
+      res[i] = (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
+   }
 }
 
 // Conserved to primitive variables
@@ -312,7 +316,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    PetscScalar    ***fyp;
    PetscScalar    ***fym;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d, nx, ny;
-   PetscReal      UL[nvar], UR[nvar], flux[nvar], lam, lamx, lamy, lambdax, lambday;
+   PetscReal      fp[nvar], fm[nvar], flux[nvar], lam, lamx, lamy, lambdax, lambday;
    PetscErrorCode ierr;
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
@@ -485,11 +489,10 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          // Transform split fluxes
          
          // face between i-1, i
+         weno5(fxp[j][i-3],fxp[j][i-2],fxp[j][i-1],fxp[j][i],fxp[j][i+1],fp);
+         weno5(fxm[j][i+2],fxm[j][i+1],fxm[j][i],fxm[j][i-1],fxm[j][i-2],fm);
          for(d=0; d<nvar; ++d)
-         {
-            UL[d] = weno5(fxp[j][i-3][d],fxp[j][i-2][d],fxp[j][i-1][d],fxp[j][i][d],fxp[j][i+1][d]);
-            UR[d] = weno5(fxm[j][i+2][d],fxm[j][i+1][d],fxm[j][i][d],fxm[j][i-1][d],fxm[j][i-2][d]);
-         }
+            flux[d] = fp[d] + fm[d];
          if(i==ibeg)
          {
             for(d=0; d<nvar; ++d)
@@ -515,11 +518,10 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
          // face between j-1, j
+         weno5(fyp[j-3][i],fyp[j-2][i],fyp[j-1][i],fyp[j][i],fyp[j+1][i],fp);
+         weno5(fym[j+2][i],fym[j+1][i],fym[j][i],fym[j-1][i],fym[j-2][i],fm);
          for(d=0; d<nvar; ++d)
-         {
-            UL[d] = weno5(fyp[j-3][i][d],fyp[j-2][i][d],fyp[j-1][i][d],fyp[j][i][d],fyp[j+1][i][d]);
-            UR[d] = weno5(fym[j+2][i][d],fym[j+1][i][d],fym[j][i][d],fym[j-1][i][d],fym[j-2][i][d]);
-         }
+            flux[d] = fp[d] + fm[d];
          if(j==jbeg)
          {
             for(d=0; d<nvar; ++d)
