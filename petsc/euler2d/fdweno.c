@@ -525,7 +525,7 @@ int main(int argc, char *argv[])
    Vec         ug;
    PetscInt    i, j, ibeg, jbeg, nlocx, nlocy;
    PetscMPIInt rank, size;
-   PetscReal   dtglobal, dtlocal = 1.0e-20;
+   PetscReal   dtglobal, dtlocal = 1.0e20;
    PetscScalar ***u;
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
@@ -607,7 +607,7 @@ int main(int argc, char *argv[])
    if(ctx.cfl > 0)
    {
       ctx.dt = ctx.cfl * dtglobal;
-      PetscPrintf(PETSC_COMM_WORLD,"Using dt based on specified cfl\n");
+      PetscPrintf(PETSC_COMM_WORLD,"Using dt based on specified cfl = %f\n",ctx.cfl);
    }
    else if(ctx.dt > 0)
    {
