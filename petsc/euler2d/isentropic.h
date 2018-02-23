@@ -13,7 +13,7 @@ const double gas_const = 1.0;
 void exactsol(const double t, const double x1, const double y1, double *Prim)
 {
    const double M = 0.5;
-   const double alpha = 30.0; // between 0 and 90
+   const double alpha = 0.0; // between 0 and 90
    const double beta = 5.0;
    const double vx0 = M * cos(alpha*M_PI/180);
    const double vy0 = M * sin(alpha*M_PI/180);
