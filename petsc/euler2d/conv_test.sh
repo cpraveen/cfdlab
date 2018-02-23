@@ -15,3 +15,5 @@ do
    tail -n1 log.txt
    tail -n1 log.txt >> $out
 done
+
+echo "See errors in file $out"
