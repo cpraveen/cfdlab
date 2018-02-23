@@ -491,7 +491,7 @@ PetscErrorCode compute_error(double t, DM da, Vec ug)
          PetscReal x = xmin + i*dx + 0.5*dx;
          PetscReal y = ymin + j*dy + 0.5*dy;
          double prim_exa[nvar], prim_num[nvar];
-         initcond(x, y, prim_exa);
+         exactsol(t, x, y, prim_exa);
          con2prim(u[j][i], prim_num);
          for(k=0; k<nvar; ++k) error_loc[k] += pow(prim_exa[k] - prim_num[k], 2);
       }
