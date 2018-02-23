@@ -162,146 +162,6 @@ PetscErrorCode savesol(double t, DM da, Vec ug)
    ++c;
    return(0);
 }
-//------------------------------------------------------------------------------
-int main(int argc, char *argv[])
-{
-   // some parameters that can overwritten from command line
-   PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
-   
-   PetscErrorCode ierr;
-   AppCtx      ctx;
-   TS          ts;
-   DM          da;
-   Vec         ug;
-   PetscInt    i, j, ibeg, jbeg, nlocx, nlocy;
-   PetscMPIInt rank, size;
-   PetscReal   dtglobal, dtlocal = 1.0e-20;
-   PetscScalar ***u;
-
-   ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
-
-   ctx.Tf  = 10.0;
-   ctx.dt  = -1.0;
-   ctx.cfl = -1.0;
-   ctx.max_steps = 1000000;
-   ctx.si = 100;
-
-   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-   MPI_Comm_size(PETSC_COMM_WORLD, &size);
-   
-   // Get some command line options
-   ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&ctx.Tf,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&ctx.dt,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
-
-   if(PERIODIC == 0) // periodic in x
-   {
-      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
-                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
-                          sw, NULL, NULL, &da); CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in x\n"); CHKERRQ(ierr);
-   }
-   else if(PERIODIC == 1) // periodic in y
-   {
-      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
-                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
-                          sw, NULL, NULL, &da); CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in y\n"); CHKERRQ(ierr);
-   }
-   else if(PERIODIC == 2) // periodic in both x and y
-   {
-      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
-                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
-                          sw, NULL, NULL, &da); CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in x and y\n"); CHKERRQ(ierr);
-   }
-   else // no periodic bc
-   {
-      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
-                          sw, NULL, NULL, &da); CHKERRQ(ierr);
-   }
-   ierr = DMSetFromOptions(da); CHKERRQ(ierr);
-   ierr = DMSetUp(da); CHKERRQ(ierr);
-
-   ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
-   dx = (xmax - xmin) / (PetscReal)(nx);
-   dy = (ymax - ymin) / (PetscReal)(ny);
-   PetscPrintf(PETSC_COMM_WORLD,"nx = %d, dx = %e\n", nx, dx);
-   PetscPrintf(PETSC_COMM_WORLD,"ny = %d, dy = %e\n", ny, dy);
-
-   ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
-   ierr = PetscObjectSetName((PetscObject) ug, "Solution"); CHKERRQ(ierr);
-
-   // Create vectors to store split fluxes
-   ierr = DMCreateLocalVector(da, &ctx.fxp); CHKERRQ(ierr);
-   ierr = DMCreateLocalVector(da, &ctx.fxm); CHKERRQ(ierr);
-   ierr = DMCreateLocalVector(da, &ctx.fyp); CHKERRQ(ierr);
-   ierr = DMCreateLocalVector(da, &ctx.fym); CHKERRQ(ierr);
-
-   ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
-   ierr = DMDAVecGetArrayDOF(da, ug, &u); CHKERRQ(ierr);
-   for(j=jbeg; j<jbeg+nlocy; ++j)
-      for(i=ibeg; i<ibeg+nlocx; ++i)
-      {
-         PetscReal x = xmin + i*dx + 0.5*dx;
-         PetscReal y = ymin + j*dy + 0.5*dy;
-         PetscReal prim[nvar];
-         initcond(x, y, prim);
-         prim2con(prim, u[j][i]);
-         dtlocal = PetscMin(dtlocal, dt_local(u[j][i]));
-      }
-   ierr = DMDAVecRestoreArrayDOF(da, ug, &u); CHKERRQ(ierr);
-   MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
-   if(ctx.cfl > 0)
-   {
-      ctx.dt = ctx.cfl * dtglobal;
-      PetscPrintf(PETSC_COMM_WORLD,"Using dt based on specified cfl\n");
-   }
-   else if(ctx.dt > 0)
-   {
-      PetscPrintf(PETSC_COMM_WORLD,"Global dt = %e\n", dtglobal);
-      PetscPrintf(PETSC_COMM_WORLD,"Using specified dt\n");
-   }
-   else
-   {
-      PetscPrintf(PETSC_COMM_WORLD,"Specify atleast dt or cfl\n");
-      return(0);
-   }
-   PetscPrintf(PETSC_COMM_WORLD,"Initial time step = %e\n", ctx.dt);
-
-   // Save initial condition to file
-   ierr = savesol(0.0, da, ug); CHKERRQ(ierr);
-
-   ierr = TSCreate(PETSC_COMM_WORLD,&ts); CHKERRQ(ierr);
-   ierr = TSSetDM(ts,da); CHKERRQ(ierr);
-   ierr = TSSetProblemType(ts,TS_NONLINEAR); CHKERRQ(ierr);
-   ierr = TSSetRHSFunction(ts,NULL,RHSFunction,&ctx); CHKERRQ(ierr);
-   ierr = TSSetTimeStep(ts,ctx.dt);
-   ierr = TSSetType(ts,TSSSP); CHKERRQ(ierr);
-   ierr = TSSetMaxSteps(ts,ctx.max_steps); CHKERRQ(ierr);
-   ierr = TSSetMaxTime(ts,ctx.Tf); CHKERRQ(ierr);
-   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP); CHKERRQ(ierr);
-   ierr = TSSetSolution(ts,ug); CHKERRQ(ierr);
-   ierr = TSMonitorSet(ts,Monitor,&ctx,NULL); CHKERRQ(ierr);
-   ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
-   ierr = TSSetUp(ts); CHKERRQ(ierr);
-
-   ierr = TSSolve(ts,ug); CHKERRQ(ierr);
-
-   // Destroy everything before finishing
-   ierr = VecDestroy(&ug); CHKERRQ(ierr);
-   ierr = VecDestroy(&ctx.fxp); CHKERRQ(ierr);
-   ierr = VecDestroy(&ctx.fxm); CHKERRQ(ierr);
-   ierr = VecDestroy(&ctx.fyp); CHKERRQ(ierr);
-   ierr = VecDestroy(&ctx.fym); CHKERRQ(ierr);
-
-   ierr = DMDestroy(&da); CHKERRQ(ierr);
-   ierr = TSDestroy(&ts); CHKERRQ(ierr);
-
-   ierr = PetscFinalize(); CHKERRQ(ierr);
-}
 
 // The rhs function in du/dt = R(t,u)
 PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
@@ -606,4 +466,191 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    }
 
    PetscFunctionReturn(0);
+}
+
+//------------------------------------------------------------------------------
+PetscErrorCode compute_error(double t, DM da, Vec ug)
+{
+   PetscErrorCode ierr;
+   PetscInt       i, j, k, nx, ny, ibeg, jbeg, nlocx, nlocy;
+   PetscScalar    ***u;
+
+   ierr = DMDAVecGetArrayDOFRead(da, ug, &u); CHKERRQ(ierr);
+   ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
+   ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
+
+   int iend = ibeg+nlocx;
+   int jend = jbeg+nlocy;
+
+   double error_loc[nvar], error[nvar];
+   for(k=0; k<nvar; ++k) error_loc[k] = 0.0;
+
+   for(j=jbeg; j<jend; ++j)
+      for(i=ibeg; i<iend; ++i)
+      {
+         PetscReal x = xmin + i*dx + 0.5*dx;
+         PetscReal y = ymin + j*dy + 0.5*dy;
+         double prim_exa[nvar], prim_num[nvar];
+         initcond(x, y, prim_exa);
+         con2prim(u[j][i], prim_num);
+         for(k=0; k<nvar; ++k) error_loc[k] += pow(prim_exa[k] - prim_num[k], 2);
+      }
+
+   // Sum the error from all procs (onto root only)
+   MPI_Reduce(error_loc, error, nvar, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+
+   // Print error in primitive variables
+   PetscPrintf(PETSC_COMM_WORLD,"%e ",dx);
+   for(k=0; k<nvar; ++k)
+   {
+      error[k] = sqrt(error[k]/(nx*ny));
+      PetscPrintf(PETSC_COMM_WORLD,"%e ",error[k]);
+   }
+   PetscPrintf(PETSC_COMM_WORLD,"\n");
+
+   ierr = DMDAVecRestoreArrayDOFRead(da, ug, &u); CHKERRQ(ierr);
+   return(0);
+}
+
+//------------------------------------------------------------------------------
+int main(int argc, char *argv[])
+{
+   // some parameters that can overwritten from command line
+   PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
+
+   PetscErrorCode ierr;
+   AppCtx      ctx;
+   TS          ts;
+   DM          da;
+   Vec         ug;
+   PetscInt    i, j, ibeg, jbeg, nlocx, nlocy;
+   PetscMPIInt rank, size;
+   PetscReal   dtglobal, dtlocal = 1.0e-20;
+   PetscScalar ***u;
+
+   ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
+
+   ctx.Tf  = 10.0;
+   ctx.dt  = -1.0;
+   ctx.cfl = -1.0;
+   ctx.max_steps = 1000000;
+   ctx.si = 100;
+
+   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
+   MPI_Comm_size(PETSC_COMM_WORLD, &size);
+
+   // Get some command line options
+   ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&ctx.Tf,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&ctx.dt,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
+
+   if(PERIODIC == 0) // periodic in x
+   {
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
+                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in x\n"); CHKERRQ(ierr);
+   }
+   else if(PERIODIC == 1) // periodic in y
+   {
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
+                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in y\n"); CHKERRQ(ierr);
+   }
+   else if(PERIODIC == 2) // periodic in both x and y
+   {
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
+                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in x and y\n"); CHKERRQ(ierr);
+   }
+   else // no periodic bc
+   {
+      ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                          DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
+                          sw, NULL, NULL, &da); CHKERRQ(ierr);
+   }
+   ierr = DMSetFromOptions(da); CHKERRQ(ierr);
+   ierr = DMSetUp(da); CHKERRQ(ierr);
+
+   ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
+   dx = (xmax - xmin) / (PetscReal)(nx);
+   dy = (ymax - ymin) / (PetscReal)(ny);
+   PetscPrintf(PETSC_COMM_WORLD,"nx = %d, dx = %e\n", nx, dx);
+   PetscPrintf(PETSC_COMM_WORLD,"ny = %d, dy = %e\n", ny, dy);
+
+   ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
+   ierr = PetscObjectSetName((PetscObject) ug, "Solution"); CHKERRQ(ierr);
+
+   // Create vectors to store split fluxes
+   ierr = DMCreateLocalVector(da, &ctx.fxp); CHKERRQ(ierr);
+   ierr = DMCreateLocalVector(da, &ctx.fxm); CHKERRQ(ierr);
+   ierr = DMCreateLocalVector(da, &ctx.fyp); CHKERRQ(ierr);
+   ierr = DMCreateLocalVector(da, &ctx.fym); CHKERRQ(ierr);
+
+   ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
+   ierr = DMDAVecGetArrayDOF(da, ug, &u); CHKERRQ(ierr);
+   for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         PetscReal x = xmin + i*dx + 0.5*dx;
+         PetscReal y = ymin + j*dy + 0.5*dy;
+         PetscReal prim[nvar];
+         initcond(x, y, prim);
+         prim2con(prim, u[j][i]);
+         dtlocal = PetscMin(dtlocal, dt_local(u[j][i]));
+      }
+   ierr = DMDAVecRestoreArrayDOF(da, ug, &u); CHKERRQ(ierr);
+   MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
+   if(ctx.cfl > 0)
+   {
+      ctx.dt = ctx.cfl * dtglobal;
+      PetscPrintf(PETSC_COMM_WORLD,"Using dt based on specified cfl\n");
+   }
+   else if(ctx.dt > 0)
+   {
+      PetscPrintf(PETSC_COMM_WORLD,"Global dt = %e\n", dtglobal);
+      PetscPrintf(PETSC_COMM_WORLD,"Using specified dt\n");
+   }
+   else
+   {
+      PetscPrintf(PETSC_COMM_WORLD,"Specify atleast dt or cfl\n");
+      return(0);
+   }
+   PetscPrintf(PETSC_COMM_WORLD,"Initial time step = %e\n", ctx.dt);
+
+   // Save initial condition to file
+   ierr = savesol(0.0, da, ug); CHKERRQ(ierr);
+
+   ierr = TSCreate(PETSC_COMM_WORLD,&ts); CHKERRQ(ierr);
+   ierr = TSSetDM(ts,da); CHKERRQ(ierr);
+   ierr = TSSetProblemType(ts,TS_NONLINEAR); CHKERRQ(ierr);
+   ierr = TSSetRHSFunction(ts,NULL,RHSFunction,&ctx); CHKERRQ(ierr);
+   ierr = TSSetTimeStep(ts,ctx.dt);
+   ierr = TSSetType(ts,TSSSP); CHKERRQ(ierr);
+   ierr = TSSetMaxSteps(ts,ctx.max_steps); CHKERRQ(ierr);
+   ierr = TSSetMaxTime(ts,ctx.Tf); CHKERRQ(ierr);
+   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP); CHKERRQ(ierr);
+   ierr = TSSetSolution(ts,ug); CHKERRQ(ierr);
+   ierr = TSMonitorSet(ts,Monitor,&ctx,NULL); CHKERRQ(ierr);
+   ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
+   ierr = TSSetUp(ts); CHKERRQ(ierr);
+
+   ierr = TSSolve(ts,ug); CHKERRQ(ierr);
+
+   ierr = compute_error(ctx.Tf, da, ug); CHKERRQ(ierr);
+
+   // Destroy everything before finishing
+   ierr = VecDestroy(&ug); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fxp); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fxm); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fyp); CHKERRQ(ierr);
+   ierr = VecDestroy(&ctx.fym); CHKERRQ(ierr);
+
+   ierr = DMDestroy(&da); CHKERRQ(ierr);
+   ierr = TSDestroy(&ts); CHKERRQ(ierr);
+
+   ierr = PetscFinalize(); CHKERRQ(ierr);
 }
