@@ -406,7 +406,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
 
-   if(step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13)
+   if(step > 0 && (step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13))
    {
       ierr = savesol(time, da, U); CHKERRQ(ierr);
    }

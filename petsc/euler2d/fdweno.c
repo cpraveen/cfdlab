@@ -24,6 +24,73 @@ typedef struct
 extern PetscErrorCode RHSFunction(TS,PetscReal,Vec,Vec,void*);
 extern PetscErrorCode Monitor(TS,PetscInt,PetscReal,Vec,void*);
 
+// Compute y = A*x
+void multi(double A[nvar][nvar], double *x, double *y)
+{
+   int i, j;
+
+   for(i=0; i<nvar; ++i)
+   {
+      y[i] = 0;
+      for(j=0; j<nvar; ++j)
+         y[i] += A[i][j]*x[j];
+   }
+}
+
+// Matrix of right and left eigenvectors for x flux
+void eigenvector_matrix_x(double *W, double Rx[nvar][nvar], double Lx[nvar][nvar])
+{
+   double g1   = gas_gamma - 1.0;
+   double rho  = W[0];
+   double E    = W[3];
+   double u    = W[0] / rho;
+   double v    = W[1] / rho;
+   double q2   = u*u + v*v;
+   double p    = g1 * (E - 0.5 * rho * q2);
+   double c2   = gas_gamma * p / rho;
+   double c    = sqrt(c2);
+   double beta = 0.5/c2;
+   double phi2 = 0.5*g1*q2;
+   double h    = c2/g1 + 0.5*q2;
+
+   Rx[0][0] = 1;      Rx[0][1] = 0;  Rx[0][2] = 1;     Rx[0][3] = 1;
+   Rx[1][0] = u;      Rx[1][1] = 0;  Rx[1][2] = u+c;   Rx[1][3] = u-c;
+   Rx[2][0] = v;      Rx[2][1] = -1; Rx[2][2] = v;     Rx[2][3] = v;
+   Rx[3][0] = 0.5*q2; Rx[3][1] = -v; Rx[3][2] = h+c*u; Rx[3][3] = h-c*u;
+
+   Lx[0][0] = 1-phi2/c2;       Lx[0][1] = g1*u/c2;       Lx[0][2] = g1*v/c2;    Lx[0][3] = -g1/c2;
+   Lx[1][0] = v;               Lx[1][1] = 0;             Lx[1][2] = -1;         Lx[1][3] = 0;
+   Lx[2][0] = beta*(phi2-c*u); Lx[2][1] = beta*(c-g1*u); Lx[2][2] = -beta*g1*v; Lx[2][3] = beta*g1;
+   Lx[3][0] = beta*(phi2+c*u); Lx[3][1] =-beta*(c+g1*u); Lx[3][2] = -beta*g1*v; Lx[3][3] = beta*g1;
+}
+
+// Matrix of right and left eigenvectors for y flux
+void eigenvector_matrix_y(double *W, double Ry[nvar][nvar], double Ly[nvar][nvar])
+{
+   double g1   = gas_gamma - 1.0;
+   double rho  = W[0];
+   double E    = W[3];
+   double u    = W[0] / rho;
+   double v    = W[1] / rho;
+   double q2   = u*u + v*v;
+   double p    = g1 * (E - 0.5 * rho * q2);
+   double c2   = gas_gamma * p / rho;
+   double c    = sqrt(c2);
+   double beta = 0.5/c2;
+   double phi2 = 0.5*g1*q2;
+   double h    = c2/g1 + 0.5*q2;
+
+   Ry[0][0] = 1;      Ry[0][1] = 0;  Ry[0][2] = 1;     Ry[0][3] = 1;
+   Ry[1][0] = u;      Ry[1][1] = 1;  Ry[1][2] = u;     Ry[1][3] = u;
+   Ry[2][0] = v;      Ry[2][1] = 0;  Ry[2][2] = v+c;   Ry[2][3] = v-c;
+   Ry[3][0] = 0.5*q2; Ry[3][1] = u;  Ry[3][2] = h+c*v; Ry[3][3] = h-c*v;
+
+   Ly[0][0] = 1-phi2/c2;       Ly[0][1] = g1*u/c2;       Ly[0][2] = g1*v/c2;       Ly[0][3] = -g1/c2;
+   Ly[1][0] = -u;              Ly[1][1] = 1;             Ly[1][2] = 0;             Ly[1][3] = 0;
+   Ly[2][0] = beta*(phi2-c*v); Ly[2][1] =-beta*g1*u;     Ly[2][2] = beta*(c-g1*v); Ly[2][3] = beta*g1;
+   Ly[3][0] = beta*(phi2+c*v); Ly[3][1] =-beta*g1*u;     Ly[3][2] =-beta*(c+g1*v); Ly[3][3] = beta*g1;
+}
+
 //------------------------------------------------------------------------------
 // Weno reconstruction
 // Return left value for face between u0, up1
@@ -176,7 +243,9 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    PetscScalar    ***fyp;
    PetscScalar    ***fym;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d, nx, ny;
-   PetscReal      fp[nvar], fm[nvar], flux[nvar], lam, lamx, lamy, lambdax, lambday;
+   PetscReal      fp[nvar], fm[nvar], flux1[nvar], flux[nvar], lam, lamx, lamy, lambdax, lambday;
+   PetscReal      fim3[nvar], fim2[nvar], fim1[nvar], fi[nvar], fip1[nvar];
+   PetscReal      uavg[nvar], Rm[nvar][nvar], Lm[nvar][nvar];
    PetscErrorCode ierr;
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
@@ -344,15 +413,35 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    for(j=jbeg; j<jbeg+nlocy; ++j)
       for(i=ibeg; i<ibeg+nlocx+1; ++i)
       {
-         // Compute average state
-         // Compute eigenvector matrix
-         // Transform split fluxes
-         
          // face between i-1, i
-         weno5(fxp[j][i-3],fxp[j][i-2],fxp[j][i-1],fxp[j][i],fxp[j][i+1],fp);
-         weno5(fxm[j][i+2],fxm[j][i+1],fxm[j][i],fxm[j][i-1],fxm[j][i-2],fm);
+         // Compute average state
+         for(d=0; d<nvar; ++d) uavg[d] = 0.5*(u[j][i-1][d] + u[j][i][d]);
+         // Compute eigenvector matrix
+         eigenvector_matrix_x(uavg, Rm, Lm);
+
+         // positive flux
+         // Transform split fluxes
+         multi(Lm, fxp[j][i-3], fim3);
+         multi(Lm, fxp[j][i-2], fim2);
+         multi(Lm, fxp[j][i-1], fim1);
+         multi(Lm, fxp[j][i  ], fi  );
+         multi(Lm, fxp[j][i+1], fip1);
+         weno5(fim3,fim2,fim1,fi,fip1,fp);
+
+         // negative flux
+         // Transform split fluxes
+         multi(Lm, fxm[j][i+2], fim3);
+         multi(Lm, fxm[j][i+1], fim2);
+         multi(Lm, fxm[j][i  ], fim1);
+         multi(Lm, fxm[j][i-1], fi  );
+         multi(Lm, fxm[j][i-2], fip1);
+         weno5(fim3,fim2,fim1,fi,fip1,fm);
+
+         // Total flux
          for(d=0; d<nvar; ++d)
-            flux[d] = fp[d] + fm[d];
+            flux1[d] = fp[d] + fm[d];
+         multi(Rm, flux1, flux);
+
          if(i==ibeg)
          {
             for(d=0; d<nvar; ++d)
@@ -378,10 +467,34 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
          // face between j-1, j
-         weno5(fyp[j-3][i],fyp[j-2][i],fyp[j-1][i],fyp[j][i],fyp[j+1][i],fp);
-         weno5(fym[j+2][i],fym[j+1][i],fym[j][i],fym[j-1][i],fym[j-2][i],fm);
+         // Compute average state
+         for(d=0; d<nvar; ++d) uavg[d] = 0.5*(u[j-1][i][d] + u[j][i][d]);
+         // Compute eigenvector matrix
+         eigenvector_matrix_y(uavg, Rm, Lm);
+
+         // positive flux
+         // Transform split fluxes
+         multi(Lm, fyp[j-3][i], fim3);
+         multi(Lm, fyp[j-2][i], fim2);
+         multi(Lm, fyp[j-1][i], fim1);
+         multi(Lm, fyp[j  ][i], fi  );
+         multi(Lm, fyp[j+1][i], fip1);
+         weno5(fim3,fim2,fim1,fi,fip1,fp);
+
+         // negative flux
+         // Transform split fluxes
+         multi(Lm, fym[j+2][i], fim3);
+         multi(Lm, fym[j+1][i], fim2);
+         multi(Lm, fym[j  ][i], fim1);
+         multi(Lm, fym[j-1][i], fi  );
+         multi(Lm, fym[j-2][i], fip1);
+         weno5(fim3,fim2,fim1,fi,fip1,fm);
+
+         // Total flux
          for(d=0; d<nvar; ++d)
-            flux[d] = fp[d] + fm[d];
+            flux1[d] = fp[d] + fm[d];
+         multi(Rm, flux1, flux);
+
          if(j==jbeg)
          {
             for(d=0; d<nvar; ++d)
@@ -432,11 +545,10 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    PetscErrorCode ierr;
 
    if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
-   PetscPrintf(PETSC_COMM_WORLD,"iter, t = %e\n", step, time);
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
 
-   if(step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13)
+   if(step > 0 && (step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13))
    {
       ierr = savesol(time, da, U); CHKERRQ(ierr);
    }

@@ -15,6 +15,15 @@ This makes use of time stepping schemes in Petsc. To solve du/dt = R(t,u) you mu
 ```
 make ts
 ```
+If you dont specify any scheme
+```
+rm -f sol*.plt
+mpirun -np 4 ./ts -da_grid_x 100 -da_grid_y 100 -Tf 20.0 -cfl 1.8 -si 100 \
+                  -ts_monitor 
+sh ./merge.sh
+```
+it will use 2-stage, 2-nd order SSPRK scheme.
+
 The following will use 4-stage, 3-order SSPRK scheme.
 ```
 rm -f sol*.plt
@@ -32,4 +41,8 @@ sh ./merge.sh
 
 ## TS version (fdweno.c, finite difference WENO)
 
+This is the most sophisticated of the three codes.  Compile the code
+```
+make fdweno
+```
 Run this similar to ts.c code.
