@@ -6,6 +6,9 @@ static char help[] = "Solves 2d Euler equations.\n\n";
 
 enum bctype { wall, periodic, farfield, supersonic };
 
+void prim2con(const double *Prim, double *Con);
+void con2prim(const double *Con, double *Prim);
+
 #include "isentropic.h"
 
 // Number of variables at each grid point
@@ -274,7 +277,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    // Left side
    if(ibeg == 0 && BC_LEFT == wall)
    {
-      i = ibeg - 1;
+      i = -1;
       for(j=jbeg; j<jbeg+nlocy; ++j)
       {
          u[j][i][0] =  u[j][i+1][0];
@@ -296,13 +299,21 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    }
    else if(ibeg == 0 && BC_LEFT == farfield)
    {
-      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
+      PetscReal x = xmin - 0.5*dx;
+      i = -1;
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+      {
+         PetscReal y = ymin + j*dy + 0.5*dy;
+         boundary_value(time, x,      y, u[j][i]);
+         boundary_value(time, x-dx,   y, u[j][i-1]);
+         boundary_value(time, x-2*dx, y, u[j][i-2]);
+      }
    }
 
    // Right side
    if(ibeg+nlocx == nx && BC_RIGHT == wall)
    {
-      i = ibeg + nlocx;
+      i = nx;
       for(j=jbeg; j<jbeg+nlocy; ++j)
       {
          u[j][i][0] =  u[j][i-1][0];
@@ -322,15 +333,23 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       }
 
    }
-   else if(BC_RIGHT == farfield)
+   else if(ibeg+nlocx == nx && BC_RIGHT == farfield)
    {
-      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
+      PetscReal x = xmax + 0.5*dx;
+      i = nx;
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+      {
+         PetscReal y = ymin + j*dy + 0.5*dy;
+         boundary_value(time, x,      y, u[j][i]);
+         boundary_value(time, x+dx,   y, u[j][i+1]);
+         boundary_value(time, x+2*dx, y, u[j][i+2]);
+      }
    }
 
    // Bottom side
    if(jbeg == 0 && BC_BOTTOM == wall)
    {
-      j = jbeg - 1;
+      j = -1;
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
          u[j][i][0] =  u[j+1][i][0];
@@ -350,15 +369,23 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       }
 
    }
-   else if(BC_BOTTOM == farfield)
+   else if(jbeg == 0 && BC_BOTTOM == farfield)
    {
-      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
+      PetscReal y = ymin - 0.5*dy;
+      j = -1;
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         PetscReal x = xmax + i*dx + 0.5*dx;
+         boundary_value(time, x, y,      u[j][i]);
+         boundary_value(time, x, y-dy,   u[j-1][i]);
+         boundary_value(time, x, y-2*dy, u[j-2][i]);
+      }
    }
 
    // Top side
    if(jbeg+nlocy == ny && BC_TOP == wall)
    {
-      j = jbeg + nlocy;
+      j = ny;
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
          u[j][i][0] =  u[j-1][i][0];
@@ -378,9 +405,17 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       }
 
    }
-   else if(BC_TOP == farfield)
+   else if(jbeg+nlocy == ny && BC_TOP == farfield)
    {
-      SETERRQ(PETSC_COMM_WORLD,1,"Not implemented");
+      PetscReal y = ymax + 0.5*dy;
+      j = ny;
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         PetscReal x = xmax + i*dx + 0.5*dx;
+         boundary_value(time, x, y,      u[j][i]);
+         boundary_value(time, x, y+dy,   u[j+1][i]);
+         boundary_value(time, x, y+2*dy, u[j+2][i]);
+      }
    }
 
    // compute maximum wave speeds
@@ -657,21 +692,25 @@ int main(int argc, char *argv[])
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
 
-   if(PERIODIC == 0) // periodic in x
+   int PERIODIC_X = 0, PERIODIC_Y = 0;
+   if(BC_LEFT == periodic && BC_RIGHT == periodic) ++PERIODIC_X;
+   if(BC_BOTTOM == periodic && BC_TOP == periodic) ++PERIODIC_Y;
+
+   if(PERIODIC_X == 1 && PERIODIC_Y == 0) // periodic in x
    {
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                           sw, NULL, NULL, &da); CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in x\n"); CHKERRQ(ierr);
    }
-   else if(PERIODIC == 1) // periodic in y
+   else if(PERIODIC_X == 0 && PERIODIC_Y == 1) // periodic in y
    {
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                           sw, NULL, NULL, &da); CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Periodic in y\n"); CHKERRQ(ierr);
    }
-   else if(PERIODIC == 2) // periodic in both x and y
+   else if(PERIODIC_X == 1 && PERIODIC_Y == 1) // periodic in both x and y
    {
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,

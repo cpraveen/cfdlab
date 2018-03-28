@@ -1,4 +1,3 @@
-#define PERIODIC  2
 #define BC_LEFT   periodic
 #define BC_RIGHT  periodic
 #define BC_BOTTOM periodic
@@ -34,4 +33,9 @@ void exactsol(const double t, const double x1, const double y1, double *Prim)
 void initcond(const double x, const double y, double *Prim)
 {
    exactsol(0.0, x, y, Prim);
+}
+
+void boundary_value(const double t, const double x, const double y, double *Con)
+{
+   abort();
 }
