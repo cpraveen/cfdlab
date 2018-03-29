@@ -4,15 +4,15 @@ static char help[] = "Solves 2d Euler equations.\n\n";
 #include <petscdmda.h>
 #include <petscts.h>
 
-enum bctype { wall, periodic, farfield, supersonic };
+// Number of variables at each grid point
+#define nvar  4
+enum bctype { wall, periodic, farfield, neumann };
 
 void prim2con(const double *Prim, double *Con);
 void con2prim(const double *Con, double *Prim);
 
 #include "isentropic.h"
 
-// Number of variables at each grid point
-#define nvar  4
 
 const PetscInt sw = 3; // stencil width, 3 on either side, for weno5
 double dx, dy;
@@ -309,6 +309,27 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          boundary_value(time, x-2*dx, y, u[j][i-2]);
       }
    }
+   else if(ibeg == 0 && BC_LEFT == neumann)
+   {
+      i = -1;
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+      {
+         for(d=0; d<nvar; ++d)
+         {
+            u[j][i][d]   =  u[j][i+1][d];
+            u[j][i-1][d] =  u[j][i+1][d];
+            u[j][i-2][d] =  u[j][i+1][d];
+         }
+      }
+   }
+   else if(ibeg == 0 && BC_LEFT == periodic)
+   {
+      // Nothing to do
+   }
+   else
+   {
+      SETERRQ(PETSC_COMM_WORLD,1,"Left bc is not implemented");
+   }
 
    // Right side
    if(ibeg+nlocx == nx && BC_RIGHT == wall)
@@ -344,6 +365,27 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          boundary_value(time, x+dx,   y, u[j][i+1]);
          boundary_value(time, x+2*dx, y, u[j][i+2]);
       }
+   }
+   else if(ibeg+nlocx == nx && BC_RIGHT == neumann)
+   {
+      i = nx;
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+      {
+         for(d=0; d<nvar; ++d)
+         {
+            u[j][i][d]   =  u[j][i-1][d];
+            u[j][i+1][d] =  u[j][i-1][d];
+            u[j][i+2][d] =  u[j][i-1][d];
+         }
+      }
+   }
+   else if(ibeg+nlocx == nx && BC_RIGHT == periodic)
+   {
+      // Nothing to do
+   }
+   else
+   {
+      SETERRQ(PETSC_COMM_WORLD,1,"Right bc is not implemented");
    }
 
    // Bottom side
@@ -381,6 +423,27 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          boundary_value(time, x, y-2*dy, u[j-2][i]);
       }
    }
+   else if(jbeg == 0 && BC_BOTTOM == neumann)
+   {
+      j = -1;
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         for(d=0; d<nvar; ++d)
+         {
+            u[j][i][d]   = u[j+1][i][d];
+            u[j-1][i][d] = u[j+1][i][d];
+            u[j-2][i][d] = u[j+1][i][d];
+         }
+      }
+   }
+   else if(jbeg == 0 && BC_BOTTOM == periodic)
+   {
+      // Nothing to do
+   }
+   else
+   {
+      SETERRQ(PETSC_COMM_WORLD,1,"Bottom bc is not implemented");
+   }
 
    // Top side
    if(jbeg+nlocy == ny && BC_TOP == wall)
@@ -416,6 +479,27 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          boundary_value(time, x, y+dy,   u[j+1][i]);
          boundary_value(time, x, y+2*dy, u[j+2][i]);
       }
+   }
+   else if(jbeg+nlocy == ny && BC_TOP == neumann)
+   {
+      j = ny;
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         for(d=0; d<nvar; ++d)
+         {
+            u[j][i][d]   = u[j-1][i][d];
+            u[j+1][i][d] = u[j-1][i][d];
+            u[j+2][i][d] = u[j-1][i][d];
+         }
+      }
+   }
+   else if(jbeg+nlocy == ny && BC_TOP == periodic)
+   {
+      // Nothing to do
+   }
+   else
+   {
+      SETERRQ(PETSC_COMM_WORLD,1,"Top bc is not implemented");
    }
 
    // compute maximum wave speeds
