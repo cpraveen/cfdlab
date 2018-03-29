@@ -747,7 +747,7 @@ PetscErrorCode compute_error(double t, DM da, Vec ug)
 int main(int argc, char *argv[])
 {
    // some parameters that can overwritten from command line
-   PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
+   PetscInt  nx = 50, ny = 50; // use -da_grid_x, -da_grid_y to override these
 
    PetscErrorCode ierr;
    AppCtx      ctx;
@@ -875,7 +875,10 @@ int main(int argc, char *argv[])
 
    ierr = TSSolve(ts,ug); CHKERRQ(ierr);
 
-   ierr = compute_error(ctx.Tf, da, ug); CHKERRQ(ierr);
+   if(has_exact_sol)
+   {
+      ierr = compute_error(ctx.Tf, da, ug); CHKERRQ(ierr);
+   }
 
    // Destroy everything before finishing
    ierr = VecDestroy(&ug); CHKERRQ(ierr);

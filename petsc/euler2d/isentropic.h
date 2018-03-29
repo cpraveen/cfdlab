@@ -7,6 +7,7 @@ const double xmin = -5.0, xmax = 5.0;
 const double ymin = -5.0, ymax = 5.0;
 const double gas_gamma = 1.4;
 const double gas_const = 1.0;
+const int has_exact_sol = 1;
 
 // Isentropic vortex
 void exactsol(const double t, const double x1, const double y1, double *Prim)
