@@ -806,6 +806,7 @@ int main(int argc, char *argv[])
       ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
                           DMDA_STENCIL_BOX, nx, ny, PETSC_DECIDE, PETSC_DECIDE, nvar,
                           sw, NULL, NULL, &da); CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"No periodic boundaries present\n"); CHKERRQ(ierr);
    }
    ierr = DMSetFromOptions(da); CHKERRQ(ierr);
    ierr = DMSetUp(da); CHKERRQ(ierr);
