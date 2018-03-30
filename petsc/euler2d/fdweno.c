@@ -11,8 +11,15 @@ enum bctype { wall, periodic, farfield, neumann };
 void prim2con(const double *Prim, double *Con);
 void con2prim(const double *Con, double *Prim);
 
+#if defined(ISENTROPIC)
 #include "isentropic.h"
-
+#elif defined(SHOCKREF)
+#include "shockref.h"
+#elif defined(SHOCKVORTEX)
+#include "shockvortex.h"
+#else
+#error "No PROBLEM is specified"
+#endif
 
 const PetscInt sw = 3; // stencil width, 3 on either side, for weno5
 double dx, dy;

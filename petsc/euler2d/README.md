@@ -43,6 +43,10 @@ sh ./merge.sh
 
 This is the most sophisticated of the three codes.  Compile the code
 ```
-make fdweno
+make fdweno PROBLEM=ISENTROPIC
 ```
-Run this similar to ts.c code.
+Run this similar to ts.c code. Other options for PROBLEM are
+
+ * ISENTROPIC: Isentropic vortex with periodic bc
+ * SHOCKREF  : Shock reflection
+ * SHOCKVORTEX: Shock vortex interaction

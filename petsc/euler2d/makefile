@@ -13,5 +13,8 @@ all: $(TARGET)
 %: %.c
 	$(CC) $(CFLAGS) -o $* $< $(LDFLAGS)
 
+fdweno: fdweno.c
+	$(CC) -D${PROBLEM} $(CFLAGS) -o fdweno fdweno.c $(LDFLAGS)
+
 clean:
 	rm -f *.o $(TARGET)
