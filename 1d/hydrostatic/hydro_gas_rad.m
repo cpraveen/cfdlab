@@ -1,7 +1,10 @@
+% Pressure            : p = rho*R*T + (a/3)*T^4
+% Energy per unit mass: e = R*T/(gamma-1) + a*T^4/rho
+% Entropy change      : T*ds = de - (p/rho^2)*drho
 clear all
 close all
 
-a = 0.01;
+a = 0.1;
 
 % Equation of state: rho = rho(p,T)
 rho = @(p,T) (p - (a/3)*T.^4)./T;
@@ -16,7 +19,7 @@ phi = r;
 gam = 1.4;
 
 % Hydrostatic temperature
-T = 1 + r;
+T = 1 - 0.1*r;
 
 % Define the problem: dp/dr + rho*dphi/dr = 0
 N = chebop(@(p) diff(p,1) + rho(p,T)*diff(phi,1), dom);
@@ -45,7 +48,7 @@ print -dpdf 'T.pdf'
 
 
 den  = rho(p,T);
-dsdr = (1/(gam-1) + 4*a*T.^3) .* diff(T,1) + p./den.^2 .* diff(den,1);
+dsdr = (1/(gam-1) + 4*a*T^3/den)/T * diff(T,1) - (p + a*T^4)/(T * den^2) * diff(den,1);
 figure(4)
 plot(dsdr)
 xlabel('r')
