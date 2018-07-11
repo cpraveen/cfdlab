@@ -105,8 +105,8 @@ void eigenvector_matrix_y(double *W, double Ry[nvar][nvar], double Ly[nvar][nvar
 // Weno reconstruction
 // Return left value for face between u0, up1
 //------------------------------------------------------------------------------
-void weno5(const double *um2, const double *um1, const double *u0, const double *up1,
-           const double *up2, double *res)
+void weno_js(const double *um2, const double *um1, const double *u0, const double *up1,
+             const double *up2, double *res)
 {
    double eps = 1.0e-6;
    double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
@@ -135,6 +135,41 @@ void weno5(const double *um2, const double *um1, const double *u0, const double 
    }
 }
 
+//------------------------------------------------------------------------------
+// Weno-Z reconstruction
+// Return left value for face between u0, up1
+//------------------------------------------------------------------------------
+void weno_z(const double *um2, const double *um1, const double *u0, const double *up1,
+           const double *up2, double *res)
+{
+   double eps = 1.0e-6;
+   double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
+   double beta1, beta2, beta3;
+   double u1, u2, u3;
+   double w1, w2, w3;
+   double tau;
+
+   for(int i=0; i<nvar; ++i)
+   {
+      beta1 = (13.0/12.0)*pow((um2[i] - 2.0*um1[i] + u0[i]),2) +
+              (1.0/4.0)*pow((um2[i] - 4.0*um1[i] + 3.0*u0[i]),2);
+      beta2 = (13.0/12.0)*pow((um1[i] - 2.0*u0[i] + up1[i]),2) +
+              (1.0/4.0)*pow((um1[i] - up1[i]),2);
+      beta3 = (13.0/12.0)*pow((u0[i] - 2.0*up1[i] + up2[i]),2) +
+              (1.0/4.0)*pow((3.0*u0[i] - 4.0*up1[i] + up2[i]),2);
+
+      tau= pow(beta1 - beta3,2);
+      w1 = gamma1 * (1.0 + tau / pow(eps+beta1, 2));
+      w2 = gamma2 * (1.0 + tau / pow(eps+beta2, 2));
+      w3 = gamma3 * (1.0 + tau / pow(eps+beta3, 2));
+
+      u1 = (1.0/3.0)*um2[i] - (7.0/6.0)*um1[i] + (11.0/6.0)*u0[i];
+      u2 = -(1.0/6.0)*um1[i] + (5.0/6.0)*u0[i] + (1.0/3.0)*up1[i];
+      u3 = (1.0/3.0)*u0[i] + (5.0/6.0)*up1[i] - (1.0/6.0)*up2[i];
+
+      res[i] = (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
+   }
+}
 // Conserved to primitive variables
 void con2prim(const double *Con, double *Prim)
 {
@@ -552,7 +587,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          multi(Lm, fxp[j][i-1], fim1);
          multi(Lm, fxp[j][i  ], fi  );
          multi(Lm, fxp[j][i+1], fip1);
-         weno5(fim3,fim2,fim1,fi,fip1,fp);
+         weno_js(fim3,fim2,fim1,fi,fip1,fp);
 
          // negative flux
          // Transform split fluxes
@@ -561,7 +596,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          multi(Lm, fxm[j][i  ], fim1);
          multi(Lm, fxm[j][i-1], fi  );
          multi(Lm, fxm[j][i-2], fip1);
-         weno5(fim3,fim2,fim1,fi,fip1,fm);
+         weno_js(fim3,fim2,fim1,fi,fip1,fm);
 
          // Total flux
          for(d=0; d<nvar; ++d)
@@ -605,7 +640,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          multi(Lm, fyp[j-1][i], fim1);
          multi(Lm, fyp[j  ][i], fi  );
          multi(Lm, fyp[j+1][i], fip1);
-         weno5(fim3,fim2,fim1,fi,fip1,fp);
+         weno_js(fim3,fim2,fim1,fi,fip1,fp);
 
          // negative flux
          // Transform split fluxes
@@ -614,7 +649,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          multi(Lm, fym[j  ][i], fim1);
          multi(Lm, fym[j-1][i], fi  );
          multi(Lm, fym[j-2][i], fip1);
-         weno5(fim3,fim2,fim1,fi,fip1,fm);
+         weno_js(fim3,fim2,fim1,fi,fip1,fm);
 
          // Total flux
          for(d=0; d<nvar; ++d)
