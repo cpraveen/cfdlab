@@ -108,8 +108,8 @@ void eigenvector_matrix_y(double *W, double Ry[nvar][nvar], double Ly[nvar][nvar
 void weno_js(const double *um2, const double *um1, const double *u0, const double *up1,
              const double *up2, double *res)
 {
-   double eps = 1.0e-6;
-   double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
+   const double eps = 1.0e-6;
+   const double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
    double beta1, beta2, beta3;
    double u1, u2, u3;
    double w1, w2, w3;
@@ -142,8 +142,8 @@ void weno_js(const double *um2, const double *um1, const double *u0, const doubl
 void weno_z(const double *um2, const double *um1, const double *u0, const double *up1,
            const double *up2, double *res)
 {
-   double eps = 1.0e-6;
-   double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
+   const double eps = 1.0e-6;
+   const double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
    double beta1, beta2, beta3;
    double u1, u2, u3;
    double w1, w2, w3;
@@ -158,10 +158,10 @@ void weno_z(const double *um2, const double *um1, const double *u0, const double
       beta3 = (13.0/12.0)*pow((u0[i] - 2.0*up1[i] + up2[i]),2) +
               (1.0/4.0)*pow((3.0*u0[i] - 4.0*up1[i] + up2[i]),2);
 
-      tau= pow(beta1 - beta3,2);
-      w1 = gamma1 * (1.0 + tau / pow(eps+beta1, 2));
-      w2 = gamma2 * (1.0 + tau / pow(eps+beta2, 2));
-      w3 = gamma3 * (1.0 + tau / pow(eps+beta3, 2));
+      tau= fabs(beta1 - beta3);
+      w1 = gamma1 * (1.0 + pow(tau/(eps+beta1), 2));
+      w2 = gamma2 * (1.0 + pow(tau/(eps+beta2), 2));
+      w3 = gamma3 * (1.0 + pow(tau/(eps+beta3), 2));
 
       u1 = (1.0/3.0)*um2[i] - (7.0/6.0)*um1[i] + (11.0/6.0)*u0[i];
       u2 = -(1.0/6.0)*um1[i] + (5.0/6.0)*u0[i] + (1.0/3.0)*up1[i];
