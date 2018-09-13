@@ -368,7 +368,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    {
       // Nothing to do
    }
-   else
+   else if(ibeg == 0)
    {
       SETERRQ(PETSC_COMM_WORLD,1,"Left bc is not implemented");
    }
@@ -425,7 +425,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    {
       // Nothing to do
    }
-   else
+   else if(ibeg+nlocx == nx)
    {
       SETERRQ(PETSC_COMM_WORLD,1,"Right bc is not implemented");
    }
@@ -482,7 +482,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    {
       // Nothing to do
    }
-   else
+   else if(jbeg == 0)
    {
       SETERRQ(PETSC_COMM_WORLD,1,"Bottom bc is not implemented");
    }
@@ -539,7 +539,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    {
       // Nothing to do
    }
-   else
+   else if(jbeg+nlocy == ny)
    {
       SETERRQ(PETSC_COMM_WORLD,1,"Top bc is not implemented");
    }
