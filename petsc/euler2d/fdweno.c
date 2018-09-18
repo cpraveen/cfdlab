@@ -552,6 +552,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    }
 
    // compute maximum wave speeds
+   lambdax = lambday = 0.0;
    for(j=jbeg; j<jbeg+nlocy; ++j)
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
