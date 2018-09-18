@@ -6,6 +6,13 @@ ifeq ($(OS),Linux)
 	LDFLAGS += -Wl,-rpath=$(PETSC_DIR)/lib
 endif
 
+ifeq ($(WENO),js)
+	CFLAGS += -DWENOJS
+endif
+ifeq ($(WENO),z)
+	CFLAGS += -DWENOZ
+endif
+
 TARGET = ssprk ts fdweno
 
 all: $(TARGET)

@@ -43,7 +43,7 @@ sh ./merge.sh
 
 This is the most sophisticated of the three codes.  Compile the code
 ```
-make fdweno PROBLEM=ISENTROPIC
+make fdweno PROBLEM=ISENTROPIC WENO=z
 ```
 Run this similar to ts.c code. Other options for PROBLEM are
 
@@ -51,3 +51,5 @@ Run this similar to ts.c code. Other options for PROBLEM are
  * SHOCKREF  : Shock reflection (has steady solution for large time)
  * SHOCKVORTEX: Shock vortex interaction
  * RIEMANN2D: 2-D Riemann problem
+
+Options for WENO are js and z.
