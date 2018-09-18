@@ -17,6 +17,8 @@ void con2prim(const double *Con, double *Prim);
 #include "shockref.h"
 #elif defined(SHOCKVORTEX)
 #include "shockvortex.h"
+#elif defined(RIEMANN2D)
+#include "2d_riemann.h"
 #else
 #error "No PROBLEM is specified"
 #endif
@@ -803,7 +805,7 @@ int main(int argc, char *argv[])
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
-   ctx.Tf  = 10.0;
+   ctx.Tf  = final_time; // over-ride with command line option -Tf
    ctx.dt  = -1.0;
    ctx.cfl = -1.0;
    ctx.max_steps = 1000000;

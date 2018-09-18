@@ -48,5 +48,6 @@ make fdweno PROBLEM=ISENTROPIC
 Run this similar to ts.c code. Other options for PROBLEM are
 
  * ISENTROPIC: Isentropic vortex with periodic bc
- * SHOCKREF  : Shock reflection
+ * SHOCKREF  : Shock reflection (has steady solution for large time)
  * SHOCKVORTEX: Shock vortex interaction
+ * RIEMANN2D: 2-D Riemann problem

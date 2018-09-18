@@ -8,6 +8,7 @@ const double ymin = 0.0, ymax = 1.0;
 const double gas_gamma = 1.4;
 const double gas_const = 1.0;
 const int has_exact_sol = 0;
+const double final_time = 20.0;
 
 // Isentropic vortex
 void exactsol(const double t, const double x1, const double y1, double *Prim)
