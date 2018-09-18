@@ -295,9 +295,9 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    PetscScalar    ***fyp;
    PetscScalar    ***fym;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy, d, nx, ny;
-   PetscReal      fp[nvar], fm[nvar], flux1[nvar], flux[nvar], lam, lamx, lamy, lambdax, lambday;
+   PetscReal      fp[nvar], fm[nvar], flux1[nvar], flux[nvar], lamx, lamy, lambdax, lambday;
    PetscReal      fim3[nvar], fim2[nvar], fim1[nvar], fi[nvar], fip1[nvar];
-   PetscReal      uavg[nvar], Rm[nvar][nvar], Lm[nvar][nvar];
+   PetscReal      uavg[nvar], Rm[nvar][nvar], Lm[nvar][nvar], idx, idy;
    PetscErrorCode ierr;
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
@@ -316,11 +316,6 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
 
    // ---Begin res computation---
-   // Set residual 0
-   for(j=jbeg; j<jbeg+nlocy; ++j)
-      for(i=ibeg; i<ibeg+nlocx; ++i)
-         for(d=0; d<nvar; ++d)
-            res[j][i][d] = 0;
 
    // Fill in ghost values based on boundary condition
    // Left side
@@ -551,7 +546,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       SETERRQ(PETSC_COMM_WORLD,1,"Top bc is not implemented");
    }
 
-   // compute maximum wave speeds
+   // compute maximum wave speeds along x and y
+   // set residual to zero
    lambdax = lambday = 0.0;
    for(j=jbeg; j<jbeg+nlocy; ++j)
       for(i=ibeg; i<ibeg+nlocx; ++i)
@@ -559,6 +555,9 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          compute_lambda(u[j][i], &lamx, &lamy);
          lambdax = PetscMax(lambdax, lamx);
          lambday = PetscMax(lambday, lamy);
+
+         for(d=0; d<nvar; ++d)
+            res[j][i][d] = 0;
       }
    lamx = lambdax; lamy = lambday;
    ierr = MPI_Allreduce(&lamx, &lambdax, 1, MPI_DOUBLE, MPI_MAX,
@@ -579,6 +578,11 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       {
          split_fluxes(u[j][i], 0.0, 1.0, lambday, fyp[j][i], fym[j][i]);
       }
+
+   // Minus sign needed because res is assembled on lhs, but petsc needs
+   // it on rhs.
+   idx = -1.0/dx;
+   idy = -1.0/dy;
 
    // x fluxes
    for(j=jbeg; j<jbeg+nlocy; ++j)
@@ -616,19 +620,19 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          if(i==ibeg)
          {
             for(d=0; d<nvar; ++d)
-               res[j][i][d] -= dy * flux[d];
+               res[j][i][d] -= idx * flux[d];
          }
          else if(i==ibeg+nlocx)
          {
             for(d=0; d<nvar; ++d)
-               res[j][i-1][d] += dy * flux[d];
+               res[j][i-1][d] += idx * flux[d];
          }
          else
          {
             for(d=0; d<nvar; ++d)
             {
-               res[j][i][d]   -= dy * flux[d];
-               res[j][i-1][d] += dy * flux[d];
+               res[j][i][d]   -= idx * flux[d];
+               res[j][i-1][d] += idx * flux[d];
             }
          }
       }
@@ -669,28 +673,23 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          if(j==jbeg)
          {
             for(d=0; d<nvar; ++d)
-               res[j][i][d] -= dx * flux[d];
+               res[j][i][d] -= idy * flux[d];
          }
          else if(j==jbeg+nlocy)
          {
             for(d=0; d<nvar; ++d)
-               res[j-1][i][d] += dx * flux[d];
+               res[j-1][i][d] += idy * flux[d];
          }
          else
          {
             for(d=0; d<nvar; ++d)
             {
-               res[j][i][d]   -= dx * flux[d];
-               res[j-1][i][d] += dx * flux[d];
+               res[j][i][d]   -= idy * flux[d];
+               res[j-1][i][d] += idy * flux[d];
             }
          }
       }
 
-   lam = 1.0/(dx*dy);
-   for(j=jbeg; j<jbeg+nlocy; ++j)
-      for(i=ibeg; i<ibeg+nlocx; ++i)
-         for(d=0; d<nvar; ++d)
-            res[j][i][d] *= -lam;
    // ---End res computation---
 
    ierr = DMDAVecRestoreArrayDOF(da, localU, &u); CHKERRQ(ierr);
