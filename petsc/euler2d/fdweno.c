@@ -561,8 +561,10 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          lambday = PetscMax(lambday, lamy);
       }
    lamx = lambdax; lamy = lambday;
-   MPI_Allreduce(&lamx, &lambdax, 1, MPI_DOUBLE, MPI_MAX, PETSC_COMM_WORLD);
-   MPI_Allreduce(&lamy, &lambday, 1, MPI_DOUBLE, MPI_MAX, PETSC_COMM_WORLD);
+   ierr = MPI_Allreduce(&lamx, &lambdax, 1, MPI_DOUBLE, MPI_MAX,
+                        PETSC_COMM_WORLD);  CHKERRQ(ierr);
+   ierr = MPI_Allreduce(&lamy, &lambday, 1, MPI_DOUBLE, MPI_MAX,
+                        PETSC_COMM_WORLD);  CHKERRQ(ierr);
 
    // Compute x-split fluxes
    for(j=jbeg; j<jbeg+nlocy; ++j)
@@ -739,7 +741,8 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
             dtlocal = PetscMin(dtlocal, dt_local(u[j][i]));
          }
       ierr = DMDAVecRestoreArrayDOFRead(da, U, &u); CHKERRQ(ierr);
-      MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
+      ierr = MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN,
+                           PETSC_COMM_WORLD);  CHKERRQ(ierr);
       dtglobal *= ctx->cfl;
       // Adjust dt to reach final time exactly
       if(time+dtglobal > ctx->Tf) dtglobal = ctx->Tf - time;
@@ -889,7 +892,8 @@ int main(int argc, char *argv[])
          dtlocal = PetscMin(dtlocal, dt_local(u[j][i]));
       }
    ierr = DMDAVecRestoreArrayDOF(da, ug, &u); CHKERRQ(ierr);
-   MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
+   ierr = MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN,
+                        PETSC_COMM_WORLD);  CHKERRQ(ierr);
    if(ctx.cfl > 0)
    {
       ctx.dt = ctx.cfl * dtglobal;
