@@ -19,6 +19,8 @@ void con2prim(const double *Con, double *Prim);
 #include "shockvortex.h"
 #elif defined(RIEMANN2D)
 #include "2d_riemann.h"
+#elif defined(KH)
+#include "kh.h"
 #else
 #error "No PROBLEM is specified"
 #endif

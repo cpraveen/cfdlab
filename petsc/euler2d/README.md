@@ -51,5 +51,6 @@ Run this similar to ts.c code. Other options for PROBLEM are
  * SHOCKREF  : Shock reflection (has steady solution for large time)
  * SHOCKVORTEX: Shock vortex interaction
  * RIEMANN2D: 2-D Riemann problem
+ * KH: Kelvin-Helmholtz instability
 
 Options for WENO are js and z.
