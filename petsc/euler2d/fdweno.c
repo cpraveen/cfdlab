@@ -57,8 +57,8 @@ void eigenvector_matrix_x(double *W, double Rx[nvar][nvar], double Lx[nvar][nvar
    double g1   = gas_gamma - 1.0;
    double rho  = W[0];
    double E    = W[3];
-   double u    = W[0] / rho;
-   double v    = W[1] / rho;
+   double u    = W[1] / rho;
+   double v    = W[2] / rho;
    double q2   = u*u + v*v;
    double p    = g1 * (E - 0.5 * rho * q2);
    double c2   = gas_gamma * p / rho;
@@ -84,8 +84,8 @@ void eigenvector_matrix_y(double *W, double Ry[nvar][nvar], double Ly[nvar][nvar
    double g1   = gas_gamma - 1.0;
    double rho  = W[0];
    double E    = W[3];
-   double u    = W[0] / rho;
-   double v    = W[1] / rho;
+   double u    = W[1] / rho;
+   double v    = W[2] / rho;
    double q2   = u*u + v*v;
    double p    = g1 * (E - 0.5 * rho * q2);
    double c2   = gas_gamma * p / rho;
