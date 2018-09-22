@@ -13,6 +13,8 @@ ifeq ($(WENO),z)
 	CFLAGS += -DWENOZ
 endif
 
+HDR=$(wildcard *.h)
+
 TARGET = ssprk ts fdweno
 
 all: $(TARGET)
@@ -20,7 +22,7 @@ all: $(TARGET)
 %: %.c
 	$(CC) $(CFLAGS) -o $* $< $(LDFLAGS)
 
-fdweno: fdweno.c
+fdweno: fdweno.c $(HDR)
 	$(CC) -D${PROBLEM} $(CFLAGS) -o fdweno fdweno.c $(LDFLAGS)
 
 help:

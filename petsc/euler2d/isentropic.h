@@ -22,8 +22,8 @@ void exactsol(const double t, const double x1, const double y1, double *Prim)
    double x = x1 - vx0 * t;
    double y = y1 - vy0 * t;
 
-   while(x < -5.0) x += 10.0;
-   while(y < -5.0) y += 10.0;
+   while(x < xmin) x += xmax - xmin;
+   while(y < ymin) y += ymax - ymin;
 
    const double r2 = x*x + y*y;
    Prim[0] =  pow(1.0 - (gas_gamma-1.0)*(beta*beta)/(8.0*gas_gamma*M_PI*M_PI)*exp(1-r2), (1.0/(gas_gamma-1.0)));

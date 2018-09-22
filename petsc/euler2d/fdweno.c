@@ -197,6 +197,17 @@ void prim2con(const double *Prim, double *Con)
   Con[3] = 0.5*Prim[0]*(pow(Prim[1],2) + pow(Prim[2],2)) + Prim[3]/(gas_gamma-1.0);
 }
 
+// Convert conserved to primitive, average primitive variables,
+// then convert back to conserved.
+void avg_prim_to_con(double *conl, double *conr, double *avg)
+{
+   double priml[nvar], primr[nvar], pavg[nvar];
+   con2prim(conl, priml);
+   con2prim(conr, primr);
+   for(int i=0; i<nvar; ++i) pavg[i] = 0.5*(priml[i] + primr[i]);
+   prim2con(pavg, avg);
+}
+
 // Compute max eigenvalue along x and y
 void compute_lambda(const double *Con, double *lambdax, double *lambday)
 {
@@ -592,7 +603,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       {
          // face between i-1, i
          // Compute average state
-         for(d=0; d<nvar; ++d) uavg[d] = 0.5*(u[j][i-1][d] + u[j][i][d]);
+         avg_prim_to_con(u[j][i-1], u[j][i], uavg);
          // Compute eigenvector matrix
          eigenvector_matrix_x(uavg, Rm, Lm);
 
@@ -645,7 +656,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       {
          // face between j-1, j
          // Compute average state
-         for(d=0; d<nvar; ++d) uavg[d] = 0.5*(u[j-1][i][d] + u[j][i][d]);
+         avg_prim_to_con(u[j-1][i], u[j][i], uavg);
          // Compute eigenvector matrix
          eigenvector_matrix_y(uavg, Rm, Lm);
 
