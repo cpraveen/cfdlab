@@ -43,13 +43,16 @@ c     set initial condition
             ux = ark(rk)*uxold + (1.0-ark(rk))*(ux - dt*ures(2,:))
             v  = ark(rk)*vold  + (1.0-ark(rk))*(v  - dt*vres)
 
+c Scheme I---------------------------------------------------------------
 c           do e=1,nel
 c              u(1,e) = ua(e) - 0.5*dx*ux(e)
 c              u(2,e) = ua(e) + 0.5*dx*ux(e)
 c           enddo
 c           u(1,1)   = 0.0
 c           u(2,nel) = 0.0
+c Scheme I---------------------------------------------------------------
 
+c Scheme II--------------------------------------------------------------
             u(1,1)   = 0.0
             u(2,1)   = dx*ux(1)
             do e=2,nel
@@ -57,6 +60,7 @@ c           u(2,nel) = 0.0
                u(2,e) = u(1,e) + dx*ux(e)
             enddo
             u(2,nel) = 0.0
+c Scheme II--------------------------------------------------------------
 
             call limiter()
          enddo

@@ -1,5 +1,5 @@
-nx = 50;
-ny = 50;
+nx = 20;
+ny = nx;
 
 // Corner points of unit square
 Point(1) = {-1, -1, 0};

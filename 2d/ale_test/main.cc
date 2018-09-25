@@ -100,6 +100,51 @@ void Grid::move_noshear(double dt)
    }
 }
 
+bool Grid::to_swap(unsigned int f)
+{
+   return false;
+}
+
+void Grid::remesh()
+{
+   for(unsigned int f=0; f<n_face; ++f)
+   if(face[f].type == -1 && to_swap(f))
+   {
+      cout << "Swapping face = " << f << endl;
+      int cl = face[f].lcell;
+      int cr = face[f].rcell;
+
+      cell[cl].vertex[0] = face[f].lvertex;
+      cell[cl].vertex[1] = face[f].rvertex;
+      cell[cl].vertex[2] = face[f].vertex[1];
+
+      cell[cr].vertex[0] = face[f].lvertex;
+      cell[cr].vertex[1] = face[f].vertex[0];
+      cell[cr].vertex[2] = face[f].rvertex;
+
+      face[f].vertex[0] = face[f].lvertex;
+      face[f].vertex[1] = face[f].rvertex;
+
+      face[f].lvertex   = cell[cl].vertex[2];
+      face[f].rvertex   = cell[cr].vertex[1];
+
+      unsigned int v0, v1, v2;
+      v0 = cell[cl].vertex[0];
+      v1 = cell[cl].vertex[1];
+      v2 = cell[cl].vertex[2];
+      cell[cl].centroid = ( vertex[v0].coord + 
+                           vertex[v1].coord + 
+                           vertex[v2].coord ) / 3.0;
+
+      v0 = cell[cr].vertex[0];
+      v1 = cell[cr].vertex[1];
+      v2 = cell[cr].vertex[2];
+      cell[cr].centroid = ( vertex[v0].coord + 
+                           vertex[v1].coord + 
+                           vertex[v2].coord ) / 3.0;
+   }
+}
+
 void Grid::save()
 {
    static int counter = 0;
@@ -162,6 +207,7 @@ int main(int argc, char* argv[])
    {
       //grid.move_lagrange(dt);
       grid.move_noshear(dt);
+      grid.remesh();
       grid.save();
    }
 }

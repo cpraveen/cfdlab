@@ -45,6 +45,7 @@ class Grid
       void preproc ();
       void move_lagrange(double dt);
       void move_noshear(double dt);
+      void remesh();
       void save();
 
    private:
@@ -66,6 +67,7 @@ class Grid
       void find_nbr_vertex ();
       void print_cells();
       void compute_radius ();
+      bool to_swap(unsigned int);
 
       std::vector< std::vector<unsigned int> > node_face;
 
