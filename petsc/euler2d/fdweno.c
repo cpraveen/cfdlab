@@ -21,6 +21,8 @@ void con2prim(const double *Con, double *Prim);
 #include "2d_riemann.h"
 #elif defined(KH)
 #include "kh.h"
+#elif defined(DMR)
+#include "dmr.h"
 #else
 #error "No PROBLEM is specified"
 #endif
@@ -474,7 +476,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       j = -1;
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
-         PetscReal x = xmax + i*dx + 0.5*dx;
+         PetscReal x = xmin + i*dx + 0.5*dx;
          boundary_value(time, x, y,      u[j][i]);
          boundary_value(time, x, y-dy,   u[j-1][i]);
          boundary_value(time, x, y-2*dy, u[j-2][i]);
@@ -531,7 +533,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       j = ny;
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
-         PetscReal x = xmax + i*dx + 0.5*dx;
+         PetscReal x = xmin + i*dx + 0.5*dx;
          boundary_value(time, x, y,      u[j][i]);
          boundary_value(time, x, y+dy,   u[j+1][i]);
          boundary_value(time, x, y+2*dy, u[j+2][i]);
@@ -778,8 +780,15 @@ PetscErrorCode compute_error(double t, DM da, Vec ug)
    int iend = ibeg+nlocx;
    int jend = jbeg+nlocy;
 
-   double error_loc[nvar], error[nvar];
-   for(k=0; k<nvar; ++k) error_loc[k] = 0.0;
+   double error_loc_l1[nvar], error_loc_l2[nvar], error_loc_li[nvar];
+   double error_l1[nvar], error_l2[nvar], error_li[nvar];
+
+   for(k=0; k<nvar; ++k)
+   {
+      error_loc_l1[k] = 0.0;
+      error_loc_l2[k] = 0.0;
+      error_loc_li[k] = 0.0;
+   }
 
    for(j=jbeg; j<jend; ++j)
       for(i=ibeg; i<iend; ++i)
@@ -789,19 +798,39 @@ PetscErrorCode compute_error(double t, DM da, Vec ug)
          double prim_exa[nvar], prim_num[nvar];
          exactsol(t, x, y, prim_exa);
          con2prim(u[j][i], prim_num);
-         for(k=0; k<nvar; ++k) error_loc[k] += pow(prim_exa[k] - prim_num[k], 2);
+         for(k=0; k<nvar; ++k)
+         {
+            double diff = prim_exa[k] - prim_num[k];
+            error_loc_l1[k] += fabs(diff);
+            error_loc_l2[k] += pow(diff, 2);
+            error_loc_li[k]  = PetscMax(error_loc_li[k], fabs(diff));
+         }
       }
 
    // Sum the error from all procs (onto root only)
-   MPI_Reduce(error_loc, error, nvar, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+   MPI_Reduce(error_loc_l1, error_l1, nvar, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+   MPI_Reduce(error_loc_l2, error_l2, nvar, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+   MPI_Reduce(error_loc_li, error_li, nvar, MPI_DOUBLE, MPI_MAX, 0, PETSC_COMM_WORLD);
 
    // Print error in primitive variables
    PetscPrintf(PETSC_COMM_WORLD,"%e ",dx);
    for(k=0; k<nvar; ++k)
    {
-      error[k] = sqrt(error[k]/(nx*ny));
-      PetscPrintf(PETSC_COMM_WORLD,"%e ",error[k]);
+      error_l1[k] = error_l1[k]/(nx*ny);
+      PetscPrintf(PETSC_COMM_WORLD,"%e ",error_l1[k]);
    }
+
+   for(k=0; k<nvar; ++k)
+   {
+      error_l2[k] = sqrt(error_l2[k]/(nx*ny));
+      PetscPrintf(PETSC_COMM_WORLD,"%e ",error_l2[k]);
+   }
+
+   for(k=0; k<nvar; ++k)
+   {
+      PetscPrintf(PETSC_COMM_WORLD,"%e ",error_li[k]);
+   }
+
    PetscPrintf(PETSC_COMM_WORLD,"\n");
 
    ierr = DMDAVecRestoreArrayDOFRead(da, ug, &u); CHKERRQ(ierr);
