@@ -1,0 +1,56 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]
+then
+   echo "Usage:  location home|cam|iisc|iitd"
+fi
+
+loc=$1
+
+if [ "$loc" == "iisc" ]; then
+   cp $HOME/.wgetrc.iisc $HOME/.wgetrc
+   cp $HOME/.subversion/servers.iisc $HOME/.subversion/servers
+   proxy=iiscproxy.serc.iisc.ernet.in:3128
+   export http_proxy=http://$proxy
+   export https_proxy=http://$proxy
+   export HTTP_PROXY=http://$proxy
+   export HTTPS_PROXY=http://$proxy
+   export ftp_proxy=http://$proxy
+   export FTP_PROXY=$proxy
+   export RSYNC_PROXY=$proxy
+   git config --global http.proxy $http_proxy
+elif [ "$loc" == "cam" ]; then
+   cp $HOME/.wgetrc.cam $HOME/.wgetrc
+   cp $HOME/.subversion/servers.cam $HOME/.subversion/servers
+   proxy=192.168.1.1:3128
+   export http_proxy=http://$proxy
+   export https_proxy=http://$proxy
+   export HTTP_PROXY=http://$proxy
+   export HTTPS_PROXY=http://$proxy
+   export ftp_proxy=http://$proxy
+   export FTP_PROXY=$proxy
+   export RSYNC_PROXY=$proxy
+   git config --global http.proxy $http_proxy
+elif [ "$loc" == "iitd" ]; then
+   cp $HOME/.wgetrc.iitd $HOME/.wgetrc
+   proxy=10.10.78.82:3128
+   export http_proxy=http://$proxy
+   export https_proxy=http://$proxy
+   export HTTP_PROXY=http://$proxy
+   export HTTPS_PROXY=http://$proxy
+   export ftp_proxy=http://$proxy
+   export FTP_PROXY=$proxy
+   export RSYNC_PROXY=$proxy
+   git config --global http.proxy $http_proxy
+elif [ "$loc" == "home" ]; then
+   cp $HOME/.wgetrc.home $HOME/.wgetrc
+   cp $HOME/.subversion/servers.home $HOME/.subversion/servers
+   unset http_proxy
+   unset https_proxy
+   unset HTTP_PROXY
+   unset HTTPS_PROXY
+   unset ftp_proxy
+   unset FTP_PROXY
+   unset RSYNC_PROXY
+   git config --global --unset http.proxy
+fi
