@@ -35,10 +35,13 @@ DEAL_II_DIR=$2
 # Determine os
 OS=`uname -s`
 echo "OS is $OS"
-if [ $OS == Darwin ]; then
+if [ $OS = "Darwin" ]; then
    LAPACK_LIBRARY=libopenblas.dylib
-elif [ $OS == Linux ]; then
+elif [ $OS = "Linux" ]; then
    LAPACK_LIBRARY=libopenblas.so
+else
+   echo "Unable to determine LAPACK_LIBRARY"
+   exit
 fi
 
 ${SPACK_VIEW_DIR}/bin/cmake  \
