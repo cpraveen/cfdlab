@@ -1,0 +1,40 @@
+#------------------------------------------------------------------
+# Below are added by user
+#------------------------------------------------------------------
+# Git branch in prompt.
+parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
+# Change the window title of X terminals 
+case $TERM in
+	xterm*|rxvt|Eterm|eterm)
+      PROMPT_COMMAND='echo -ne "\033]0;@:${PWD/$HOME/~}$(parse_git_branch)\007"'
+		;;
+	screen)
+		PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\033\\"'
+		;;
+esac
+
+alias visit="/mnt/c/Program\ Files/LLNL/VisIt\ 2.13.3/visit.exe"
+alias gmsh="/mnt/c/Program\ Files/gmsh-4.0.6-Windows64/gmsh.exe"
+alias gvim="/mnt/c/Program\ Files\ \(x86\)/Vim/vim81/gvim.exe"
+alias code="/mnt/c/Users/Test/AppData/Local/Programs/Microsoft\ VS\ Code/Code.exe"
+
+export PS1="$ "
+export DISPLAY=:0
+
+export DEAL_II_DIR=$HOME/Applications/deal.II/git/install
+export SPACK_ROOT=$HOME/Applications/spack
+export SPACK_VIEW=/opt/spack
+#export PETSC_DIR=$SPACK_VIEW
+#export SLEPC_DIR=$SPACK_VIEW
+#export HDF5_DIR=$SPACK_VIEW
+#export METIS_DIR=$SPACK_VIEW
+
+#---- add output of spack_vars.sh here ----
+#---- add output of spack_vars.sh here ----
+
+PATH=$PATH:$SPACK_ROOT/bin
+#PATH=$PATH:$SPACK_VIEW/bin
+export PATH
