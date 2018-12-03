@@ -3,7 +3,7 @@
 # Extract deal.II, change into the deal.II directory and
 #     mkdir build && cd build
 # Then run this script inside "build" directory
-#     sh <path to this script> <path to spack view> <path to deal.II install dir>
+#     sh <path to this script> <path to deal.II install dir>
 # Then compile deal.II (set -j# based on cores you have for parallel compile)
 #     make -j8 all
 # Install deal.II
