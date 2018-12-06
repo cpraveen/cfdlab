@@ -1,6 +1,7 @@
 #------------------------------------------------------------------
 # Below are added by user
 # Change USERNAME to your Windows user name.
+# Some aliases have version numbers which you may need to change.
 #------------------------------------------------------------------
 # Git branch in prompt.
 parse_git_branch() {
@@ -27,15 +28,9 @@ export DISPLAY=:0
 
 export DEAL_II_DIR=$HOME/Applications/deal.II/git/install
 export SPACK_ROOT=$HOME/Applications/spack
-export SPACK_VIEW=/opt/spack
-#export PETSC_DIR=$SPACK_VIEW
-#export SLEPC_DIR=$SPACK_VIEW
-#export HDF5_DIR=$SPACK_VIEW
-#export METIS_DIR=$SPACK_VIEW
 
 #---- add output of spack_vars.sh here ----
 #---- add output of spack_vars.sh here ----
 
 PATH=$PATH:$SPACK_ROOT/bin
-#PATH=$PATH:$SPACK_VIEW/bin
 export PATH
