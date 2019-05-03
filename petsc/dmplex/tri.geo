@@ -13,4 +13,7 @@ Line Loop(1) = {1,2,3,4};
 Plane Surface(1) = {1};
 
 Physical Surface(100) = {1};
-Physical Line(200) = {1,2,3,4};
+Physical Line(200) = {1};
+Physical Line(300) = {2};
+Physical Line(400) = {3};
+Physical Line(500) = {4};

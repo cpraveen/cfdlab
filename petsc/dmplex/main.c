@@ -125,6 +125,20 @@ int main(int argc, char *argv[])
       ierr = VecRestoreArrayRead(facegeom, &fgeom); CHKERRQ(ierr);
    }
 
+   // Get Gmsh tags for each face
+   // Petsc gives -1 tag for interior faces
+   {
+      DMLabel label;
+      ierr = DMGetLabel(dm, "Face Sets", &label); CHKERRQ(ierr);
+
+      for(PetscInt e=eStart; e<eEnd; ++e)
+      {
+         PetscInt tag;
+         ierr = DMLabelGetValue(label, e, &tag);
+         if(tag != -1) printf("%d %d\n", e, tag);
+      }
+   }
+
    // create section with one variable in each cell
    ierr = PetscSectionCreate(PetscObjectComm((PetscObject)dm), &s); CHKERRQ(ierr);
    ierr = PetscSectionSetChart(s, pStart, pEnd); CHKERRQ(ierr);
