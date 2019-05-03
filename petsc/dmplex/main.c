@@ -1,5 +1,5 @@
 // Run as: ./main file.msh
-static char help[] = "Solves 2d Euler equations.\n\n";
+static char help[] = "Testing DMPlex.\n\n";
 
 #include "petscdmplex.h"
 
@@ -45,9 +45,9 @@ int main(int argc, char *argv[])
          const PetscInt *nbcells;
          ierr = DMPlexGetSupport(dm, e, &nbcells); CHKERRQ(ierr);
 
-         if(nbr == 1)
+         if(nbr == 1) // boundary face
             fprintf(fid, "%d %d\n",e-eStart+1,nbcells[0]-cStart+1);
-         else if(nbr == 2)
+         else if(nbr == 2) // interior face
             fprintf(fid, "%d %d %d\n",e-eStart+1,nbcells[0]-cStart+1,nbcells[1]-cStart+1);
          else
          {
