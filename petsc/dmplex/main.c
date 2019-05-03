@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
       Vec cellgeom, facegeom;
       ierr = DMPlexComputeGeometryFVM(dm, &cellgeom, &facegeom); CHKERRQ(ierr);
 
+      // cell information
       DM dmCell;
       ierr = VecGetDM(cellgeom, &dmCell); CHKERRQ(ierr);
 
@@ -103,6 +104,25 @@ int main(int argc, char *argv[])
       }
       fclose(fid);
       ierr = VecRestoreArrayRead(cellgeom, &cgeom); CHKERRQ(ierr);
+
+      // face information
+      DM dmFace;
+      ierr = VecGetDM(facegeom, &dmFace); CHKERRQ(ierr);
+
+      const PetscScalar *fgeom;
+      ierr = VecGetArrayRead(facegeom, &fgeom); CHKERRQ(ierr);
+
+      fid = fopen("faces.txt","w");
+      for(PetscInt e=eStart; e<eEnd; ++e)
+      {
+         // face properties like area normal, centroid
+         PetscFVFaceGeom *fg;
+         ierr = DMPlexPointLocalRead(dmFace, e, fgeom, &fg); CHKERRQ(ierr);
+         fprintf(fid, "%d %f %f %f %f\n", e-eStart+1, fg->normal[0], fg->normal[1],
+                 fg->centroid[0], fg->centroid[1]);
+      }
+      fclose(fid);
+      ierr = VecRestoreArrayRead(facegeom, &fgeom); CHKERRQ(ierr);
    }
 
    // create section with one variable in each cell
