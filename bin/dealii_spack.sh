@@ -98,6 +98,10 @@ $(spack location -i cmake)/bin/cmake  \
 -DDEAL_II_WITH_ADOLC=ON  \
 -DSCALAPACK_DIR=$(spack location -i netlib-scalapack)  \
 -DDEAL_II_WITH_SCALAPACK=ON  \
+-DDEAL_II_WITH_GINKGO=ON  \
+-DGINKGO_DIR=$(spack location -i ginkgo)  \
+-DDEAL_II_WITH_SYMENGINE=ON  \
+-DSYMENGINE_DIR=$(spack location -i symengine)  \
 ../
 
 echo "*** Add this to your profile ***"

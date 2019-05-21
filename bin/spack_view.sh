@@ -31,6 +31,7 @@ dolink assimp
 dolink boost
 dolink bzip2
 dolink cmake
+dolink ginkgo
 dolink gmsh
 dolink gsl
 dolink hdf5
@@ -49,6 +50,7 @@ dolink petsc
 dolink slepc
 dolink suite-sparse
 dolink sundials
+dolink symengine
 dolink tbb
 dolink trilinos
 dolink zlib
