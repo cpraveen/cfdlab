@@ -1,0 +1,51 @@
+--------------------------------------------------------------------------------
+(UG3 question, not DMPlex)
+My plan was to manage the mesh on our own and not use something like DMPlex. So I will use PETSc for solution vectors, rhs, matrix and solvers.
+
+Answer:
+
+Yes, you would just take over the job the DMPlex does. So you need to
+
+  - Create Vecs of the correct size and layout
+
+  - If necessary, create Mats of the correct size, layout, and preallocation
+
+  - Create VecScatter objects for the parallel communcation
+
+  - You can instead create ISGlobalToLocalMapping objects, and then PETSc will automatically create VecScatters
+
+For last approach, see SNES ex12, ex62, and TS ex11
+--------------------------------------------------------------------------------
+In a 2d mesh I save some tags like this
+
+Physical Line(100) = {1,2};
+Physical Line(200) = {3,4};
+
+so that I can identify boundary portions on which bc is to be applied.
+
+How can I access this tag (100,200 in above example) after reading the msh file into a DMPlex ?
+
+Answer:
+
+Plex uses DMLabel objects to store tags like this. You would first retrieve the label. We store them by name,
+determined from the input file. For GMsh I think it should be "Face Sets",
+
+  DMGetLabel(dm, "Face Sets", &label);
+
+You can always check the names using -dm_view. Next you can get all the point with a given label values using
+
+  DMLabelGetStratumIS(label, 3, &pointIS);
+
+or check the label of a particular point,
+
+  DMLabelGetValue(label, point, &val);
+--------------------------------------------------------------------------------
+I am trying to find the list of vertices of a DMPlex mesh that is shared among processes and also the ranks of these processes. Thoughts on how to do this would be helpful.
+
+Answer:
+
+The list of ghost points for a process is in the pointSF, DMPlexGetPointSF(). You can get the owned points
+which are ghosts on other processes using
+
+  https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html
+--------------------------------------------------------------------------------
