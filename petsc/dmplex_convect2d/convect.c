@@ -1,4 +1,4 @@
-static char help[] = "Richards equation, constant density\n";
+static char help[] = "Linear advection using first order FVM\n";
 #include <petsc.h>
 
 PETSC_STATIC_INLINE
@@ -222,7 +222,8 @@ PetscErrorCode ComputeResidual(TS ts,PetscReal t,Vec U,Vec R,void *ctx)
       {
          PetscReal *Xl = &(info->X0[supp[0]*dim]);
 
-         ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
+         //ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
+         ul = &Pl[supp[0]];
          boundary_value(Xf, ur);
          numerical_flux(normal_speed, ul, ur, &Flux);
          ierr = DMPlexPointGlobalRef(dm,supp[0],Rarray,&r);CHKERRQ(ierr);
@@ -233,8 +234,10 @@ PetscErrorCode ComputeResidual(TS ts,PetscReal t,Vec U,Vec R,void *ctx)
          PetscReal *Xl = &(info->X0[supp[0]*dim]);
          PetscReal *Xr = &(info->X0[supp[1]*dim]);
 
-         ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
-         ierr = DMPlexPointGlobalRef(dm,supp[1],Pl,&ur);CHKERRQ(ierr);
+         //ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
+         //ierr = DMPlexPointGlobalRef(dm,supp[1],Pl,&ur);CHKERRQ(ierr);
+         ul = &Pl[supp[0]];
+         ur = &Pl[supp[1]];
          numerical_flux(normal_speed, ul, ur, &Flux);
          ierr = DMPlexPointGlobalRef(dm,supp[0],Rarray,&r);CHKERRQ(ierr);
          if(r) *r -= Flux * info->V1[p-pStart] / info->V0[supp[0]];
