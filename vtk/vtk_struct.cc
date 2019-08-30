@@ -14,10 +14,15 @@ void write_rectilinear_grid(int nx,
 
    ofstream fout;
    fout.open("rect.vtk");
-   fout << "# vtk DataFile Version 2.0" << endl;
+   fout << "# vtk DataFile Version 3.0" << endl;
    fout << "Cartesian grid" << endl;
    fout << "ASCII" << endl;
    fout << "DATASET RECTILINEAR_GRID" << endl;
+   fout << "FIELD FieldData 2" << endl;
+   fout << "TIME 1 1 double" << endl;
+   fout << 0.0 << endl;
+   fout << "CYCLE 1 1 int" << endl;
+   fout << 1 << endl;
    fout << "DIMENSIONS " << nx << " " << ny << " " << nz << endl;
    fout << "X_COORDINATES " << nx << " float" << endl;
    for(int i=0; i<nx; ++i)
@@ -87,10 +92,15 @@ void write_structured_grid(int ni,
 
    ofstream fout;
    fout.open("struct.vtk");
-   fout << "# vtk DataFile Version 2.0" << endl;
+   fout << "# vtk DataFile Version 3.0" << endl;
    fout << "Structured grid" << endl;
    fout << "ASCII" << endl;
    fout << "DATASET STRUCTURED_GRID" << endl;
+   fout << "FIELD FieldData 2" << endl;
+   fout << "TIME 1 1 double" << endl;
+   fout << 0.0 << endl;
+   fout << "CYCLE 1 1 int" << endl;
+   fout << 1 << endl;
    fout << "DIMENSIONS " << ni << " " << nj << " " << nk << endl;
    fout << "POINTS " << ni*nj*nk << " float" << endl;
    for(int i=0; i<ni; ++i)
