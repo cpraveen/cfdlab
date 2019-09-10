@@ -80,6 +80,11 @@ void test_rectilinear_grid()
    write_rectilinear_grid(nx, ny, x, y, var);
 
    // Deallocate memory here
+   delete[] x;
+   delete[] y;
+   for(int i=0; i<nx; ++i)
+      delete[] var[i];
+   delete[] var;
 }
 
 void write_structured_grid(int ni,
@@ -119,6 +124,12 @@ void write_structured_grid(int ni,
    fout.close();
 
    cout << "Wrote structured grid into struct.vtk" << endl;
+
+   delete[] x;
+   delete[] y;
+   for(int i=0; i<ni; ++i)
+      delete[] var[i];
+   delete[] var;
 }
 
 void test_structured_grid()
