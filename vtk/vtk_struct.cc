@@ -124,12 +124,6 @@ void write_structured_grid(int ni,
    fout.close();
 
    cout << "Wrote structured grid into struct.vtk" << endl;
-
-   delete[] x;
-   delete[] y;
-   for(int i=0; i<ni; ++i)
-      delete[] var[i];
-   delete[] var;
 }
 
 void test_structured_grid()
@@ -164,6 +158,17 @@ void test_structured_grid()
       }
 
    write_structured_grid(nt, nr, x, y, var);
+
+   // deallocate memory
+   for(int i=0; i<nt; ++i)
+   {
+      delete[] x[i];
+      delete[] y[i];
+      delete[] var[i];
+   }
+   delete[] x;
+   delete[] y;
+   delete[] var;
 }
 
 int main()
