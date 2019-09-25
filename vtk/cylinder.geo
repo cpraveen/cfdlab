@@ -28,11 +28,11 @@ Transfinite Line {1,2} = n2;
 
 Symmetry{1,0,0,0}{ Duplicata{Surface{1};} }
 Transfinite Surface(5) = {6,17,5,3};
-Recombine Surface(5);
+//Recombine Surface(5);
 
 Symmetry{0,1,0,0}{ Duplicata{Surface{1};} }
 Transfinite Surface(10) = {4,24,20,2};
-Recombine Surface(10);
+//Recombine Surface(10);
 
 Symmetry{0,1,0,0}{ Duplicata{Surface{5};} }
 Transfinite Surface(14) = {6,20,24,17};
