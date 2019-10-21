@@ -129,14 +129,18 @@ int main(int argc, char *argv[])
    ierr = DMDAGetInfo(da,0,&nx,0,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    PetscReal dx = (xmax - xmin) / (PetscReal)(nx);
    PetscPrintf(PETSC_COMM_WORLD,"nx = %d, dx = %e\n", nx, dx);
-   PetscReal umax = 0;
+   PetscReal umax_loc = 0.0;
    for(i=ibeg; i<ibeg+nloc; ++i)
    {
       PetscReal x = xmin + i*dx;
       PetscReal v = initcond(x);
-      umax = max(umax,fabs(v));
+      umax_loc = max(umax_loc,fabs(v)); // max wave speed
       ierr = VecSetValues(ug,1,&i,&v,INSERT_VALUES); CHKERRQ(ierr);
    }
+   // Find max over all partitions
+   PetscReal umax;
+   MPI_Allreduce(&umax_loc, &umax, 1, MPI_DOUBLE, MPI_MAX, PETSC_COMM_WORLD);
+
    ierr = VecAssemblyBegin(ug);  CHKERRQ(ierr);
    ierr = VecAssemblyEnd(ug);    CHKERRQ(ierr);
 
@@ -150,7 +154,7 @@ int main(int argc, char *argv[])
    ierr = DMDAGetGhostCorners(da,&il,0,0,&nl,0,0); CHKERRQ(ierr);
 
    double res[nloc], uold[nloc];
-   double dt = cfl * dx / umax;
+   double dt = cfl * dx / (umax + 1.0e-13);
    double lam= dt/dx;
 
    double tfinal = 0.25, t = 0.0;
