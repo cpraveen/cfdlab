@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-PetscErrorCode savesol_vtk(int *c, DM da, Vec ug)
+PetscErrorCode savesol_vtk(int *c, double t, DM da, Vec ug)
 {
    PetscErrorCode ierr;
    char           filename[32] = "sol";
@@ -16,12 +16,17 @@ PetscErrorCode savesol_vtk(int *c, DM da, Vec ug)
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-   sprintf(filename, "sol-%03d-%03d.vtr", rank, *c);
+   sprintf(filename, "sol-%03d-%03d.vtk", rank, *c);
    fp = fopen(filename,"w");
    fprintf(fp, "# vtk DataFile Version 3.0\n");
    fprintf(fp, "Sample rectilinear grid\n");
    fprintf(fp, "ASCII\n");
    fprintf(fp, "DATASET RECTILINEAR_GRID\n");
+   fprintf(fp, "FIELD FieldData 2\n");
+   fprintf(fp, "TIME 1 1 double\n");
+   fprintf(fp, "%e\n", t);
+   fprintf(fp, "CYCLE 1 1 int\n");
+   fprintf(fp, "%d\n", *c);
    fprintf(fp, "DIMENSIONS %d %d %d\n", nlocx+1, nlocy+1, 1);
    fprintf(fp, "X_COORDINATES %d float\n", nlocx+1);
    for(i=ibeg; i<ibeg+nlocx+1; ++i)

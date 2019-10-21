@@ -71,7 +71,8 @@ PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
    fp = fopen(filename,"w");
    fprintf(fp, "TITLE = \"u_t + u_x + u_y = 0\"\n");
    fprintf(fp, "VARIABLES = x, y, sol\n");
-   fprintf(fp, "ZONE STRANDID=1, SOLUTIONTIME=%e, I=%d, J=%d, DATAPACKING=POINT\n", t, iend-ibeg, jend-jbeg);
+   fprintf(fp, "ZONE STRANDID=1, SOLUTIONTIME=%e, I=%d, J=%d, DATAPACKING=POINT\n",
+           t, iend-ibeg, jend-jbeg);
    for(j=jbeg; j<jend; ++j)
       for(i=ibeg; i<iend; ++i)
    {
