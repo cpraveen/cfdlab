@@ -52,7 +52,7 @@ double Flux(double u)
    return 0.5*pow(u,2);
 }
 //------------------------------------------------------------------------------
-// Numerical flux
+// Godunov flux
 //------------------------------------------------------------------------------
 double numflux(double ul, double ur)
 {
@@ -106,9 +106,12 @@ int main(int argc, char *argv[])
 {
    PetscErrorCode ierr;
    DM       da;
-   Vec      ug, ul;
-   PetscInt i, ibeg, nloc, nx=100;
-   const PetscInt sw = 3, ndof = 1; // stencil width
+   Vec      ug; // global vector
+   Vec      ul; // local vector
+   PetscInt i, ibeg, nloc;
+   PetscInt nx=100;         // no. of cells, can change via command line
+   const PetscInt sw = 3;   // stencil width
+   const PetscInt ndof = 1; // no. of dofs per cell
    PetscMPIInt rank, size;
    double cfl = 0.4;
 
@@ -117,8 +120,9 @@ int main(int argc, char *argv[])
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
 
-   ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, -nx, ndof, sw, NULL, &da); CHKERRQ(ierr);
-
+   ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, nx, ndof, sw, NULL, &da); CHKERRQ(ierr);
+   ierr = DMSetFromOptions(da); CHKERRQ(ierr);
+   ierr = DMSetUp(da); CHKERRQ(ierr);
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, 0, 0, &nloc, 0, 0); CHKERRQ(ierr);
@@ -136,6 +140,7 @@ int main(int argc, char *argv[])
    ierr = VecAssemblyBegin(ug);  CHKERRQ(ierr);
    ierr = VecAssemblyEnd(ug);    CHKERRQ(ierr);
 
+   // save initial condition
    savesol(nx, dx, ug);
 
    // Get local view
@@ -168,6 +173,7 @@ int main(int argc, char *argv[])
          PetscScalar *unew;
          ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
 
+         // First stage, store solution at time level n into uold
          if(rk==0)
             for(i=ibeg; i<ibeg+nloc; ++i) uold[i-ibeg] = u[i];
 
@@ -175,10 +181,10 @@ int main(int argc, char *argv[])
             res[i] = 0.0;
 
          // Loop over faces and compute flux
-         for(i=0; i<nloc+1; ++i)
+         for(i=0; i<nloc+1; ++i) // local index
          {
             // face between j-1, j
-            int j   = il+sw+i;
+            int j   = il+sw+i; // global index
             int jm1 = j-1;
             int jm2 = j-2;
             int jm3 = j-3;
@@ -187,15 +193,15 @@ int main(int argc, char *argv[])
             double ul = weno5(u[jm3],u[jm2],u[jm1],u[j],u[jp1]);
             double ur = weno5(u[jp2],u[jp1],u[j],u[jm1],u[jm2]);
             double flux = numflux(ul, ur);
-            if(i==0)
+            if(i==0) // first face
             {
                res[i] -= flux;
             }
-            else if(i==nloc)
+            else if(i==nloc) // last face
             {
                res[i-1] += flux;
             }
-            else
+            else // intermediate faces
             {
                res[i]   -= flux;
                res[i-1] += flux;
@@ -204,7 +210,7 @@ int main(int argc, char *argv[])
 
          // Update solution
          for(i=ibeg; i<ibeg+nloc; ++i)
-            unew[i] = ark[rk]*uold[i-ibeg] + (1-ark[rk])*(u[i] - lam * res[i-ibeg]);
+            unew[i] = ark[rk]*uold[i-ibeg] + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
 
          ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
          ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
