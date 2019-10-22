@@ -81,7 +81,7 @@ PetscErrorCode savesol(int nx, double dx, Vec ug)
       FILE *f;
       f = fopen("sol.dat","w");
       for(i=0; i<nx; ++i)
-         fprintf(f, "%e %e\n", xmin+i*dx, uarray[i]);
+         fprintf(f, "%e %e\n", xmin+i*dx+0.5*dx, uarray[i]);
       fclose(f);
       printf("Wrote solution into sol.dat\n");
       ierr = VecRestoreArray(uall, &uarray); CHKERRQ(ierr);
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
    PetscPrintf(PETSC_COMM_WORLD,"nx = %d, dx = %e\n", nx, dx);
    for(i=ibeg; i<ibeg+nloc; ++i)
    {
-      PetscReal x = xmin + i*dx;
+      PetscReal x = xmin + i*dx + 0.5*dx;
       PetscReal v = initcond(x);
       ierr = VecSetValues(ug,1,&i,&v,INSERT_VALUES); CHKERRQ(ierr);
    }

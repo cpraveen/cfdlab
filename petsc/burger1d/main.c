@@ -86,7 +86,7 @@ PetscErrorCode savesol(int nx, double dx, Vec ug)
       FILE *f;
       f = fopen("sol.dat","w");
       for(i=0; i<nx; ++i)
-         fprintf(f, "%e %e\n", xmin+i*dx, uarray[i]);
+         fprintf(f, "%e %e\n", xmin+i*dx+0.5*dx, uarray[i]);
       fclose(f);
       printf("Wrote solution into sol.dat\n");
       ierr = VecRestoreArray(uall, &uarray); CHKERRQ(ierr);
@@ -114,11 +114,14 @@ int main(int argc, char *argv[])
    const PetscInt ndof = 1; // no. of dofs per cell
    PetscMPIInt rank, size;
    double cfl = 0.4;
+   PetscReal tfinal = 0.25;
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
+
+   ierr = PetscOptionsGetReal(NULL,NULL,"-tfinal",&tfinal,NULL); CHKERRQ(ierr);
 
    ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, nx, ndof, sw, NULL, &da); CHKERRQ(ierr);
    ierr = DMSetFromOptions(da); CHKERRQ(ierr);
@@ -132,7 +135,7 @@ int main(int argc, char *argv[])
    PetscReal umax_loc = 0.0;
    for(i=ibeg; i<ibeg+nloc; ++i)
    {
-      PetscReal x = xmin + i*dx;
+      PetscReal x = xmin + i*dx + 0.5*dx;
       PetscReal v = initcond(x);
       umax_loc = max(umax_loc,fabs(v)); // max wave speed
       ierr = VecSetValues(ug,1,&i,&v,INSERT_VALUES); CHKERRQ(ierr);
@@ -157,7 +160,7 @@ int main(int argc, char *argv[])
    double dt = cfl * dx / (umax + 1.0e-13);
    double lam= dt/dx;
 
-   double tfinal = 0.25, t = 0.0;
+   double t = 0.0;
 
    while(t < tfinal)
    {
