@@ -122,6 +122,8 @@ int main(int argc, char *argv[])
                        sw, NULL, NULL, &da); CHKERRQ(ierr);
    ierr = DMSetFromOptions(da); CHKERRQ(ierr);
    ierr = DMSetUp(da); CHKERRQ(ierr);
+   ierr = DMDASetUniformCoordinates(da,xmin,xmax,ymin,ymax,0.0,0.0); CHKERRQ(ierr);
+
    ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    dx = (xmax - xmin) / (PetscReal)(nx);
    dy = (ymax - ymin) / (PetscReal)(ny);

@@ -16,7 +16,7 @@ PetscErrorCode savesol_vtk(int *c, double t, DM da, Vec ug)
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-   sprintf(filename, "sol-%03d-%03d.vtk", rank, *c);
+   sprintf(filename, "sol-%03d-%03d.vtk", *c, rank);
    fp = fopen(filename,"w");
    fprintf(fp, "# vtk DataFile Version 3.0\n");
    fprintf(fp, "Sample rectilinear grid\n");
