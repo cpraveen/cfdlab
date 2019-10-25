@@ -16,11 +16,9 @@ fvm: main.o common.o
 
 common_b.f: common.f $(INC)
 	tapenade -r8 -b \
-		      -vars "u cost f1 f2" \
-		      -outvars "u cost f1 f2" \
-				-head cost_function \
-				-o common \
-	          common.f
+	         -head "cost_function(u cost f1 f2)/(u cost f1 f2)" \
+	         -o common \
+	         common.f
 
 adBuffer.o: $(TAPENADE_HOME)/ADFirstAidKit/adBuffer.f
 	@echo "Compiling " $<; $(FC) -c $<
