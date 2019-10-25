@@ -306,7 +306,7 @@ int main(int argc, char **argv)
       ierr = PetscSectionSetDof(sec,p,1); CHKERRQ(ierr);
    }
    ierr = PetscSectionSetUp(sec);CHKERRQ(ierr);
-   ierr = DMSetDefaultSection(dm,sec);CHKERRQ(ierr);
+   ierr = DMSetSection(dm,sec);CHKERRQ(ierr);
    ierr = PetscSectionDestroy(&sec);CHKERRQ(ierr);
 
    // Setup problem info
