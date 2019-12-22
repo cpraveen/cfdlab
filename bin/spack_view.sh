@@ -39,7 +39,7 @@ dolink metis
 dolink muparser
 dolink mumps
 dolink nanoflann
-dolink netcdf
+dolink netcdf-c
 dolink netcdf-cxx
 dolink netlib-scalapack
 dolink oce
