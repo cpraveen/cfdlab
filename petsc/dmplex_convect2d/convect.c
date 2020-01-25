@@ -288,6 +288,8 @@ int main(int argc, char **argv)
    ierr = DMPlexDistribute(dm,overlap,NULL,&dmDist);CHKERRQ(ierr);
    if (dmDist) { ierr = DMDestroy(&dm);CHKERRQ(ierr); dm = dmDist; }
    ierr = DMSetFromOptions(dm);CHKERRQ(ierr);
+   ierr = DMSetUp(dm); CHKERRQ(ierr);
+   ierr = DMView(dm, PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
    ierr = DMGetDimension(dm,&(user.dim));CHKERRQ(ierr);
 
    // Setup the section, 1 dof per cell
