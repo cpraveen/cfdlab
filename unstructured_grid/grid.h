@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <utility> // std::pair, std::make_pair
 
 using namespace std;
 
@@ -11,6 +12,49 @@ public:
    ~Grid ();
    void read_gmsh(const string grid_file);
    void write_vtk(const string grid_file);
+   void compute_carea();
+
+   unsigned int get_n_vertex()
+   {
+      return n_vertex;
+   }
+
+   unsigned int get_n_cell()
+   {
+      return n_cell;
+   }
+
+   unsigned int get_n_tri()
+   {
+      return n_tri;
+   }
+
+   unsigned int get_n_quad()
+   {
+      return n_quad;
+   }
+
+   unsigned int get_n_bface()
+   {
+      return n_bface;
+   }
+
+   double* get_coord(unsigned int i)
+   {
+      return &coord[i*dim];
+   }
+
+   double get_carea(unsigned int i)
+   {
+      return carea[i];
+   }
+
+   std::pair<unsigned int,unsigned int*> get_cell_vertices(unsigned int i)
+   {
+      unsigned int start = cell1[i];
+      unsigned int end = cell1[i+1];
+      return std::make_pair(end-start,&cell2[start]);
+   }
 
 private:
    int          dim;
@@ -19,6 +63,12 @@ private:
    unsigned int *cell1, *cell2;
    unsigned int *bface;
    int          *bface_type;
+   int          *ctype;
+   double       *carea;
+   double       *flen;  // length of face
+   unsigned int *face;  // face
+   double       *fnorm; // unit normal to face
+   unsigned int *fnbr;
 };
 
 Grid::Grid()
@@ -166,6 +216,7 @@ void Grid::read_gmsh(const string grid_file)
    cell2 = new unsigned int[3*n_tri + 4*n_quad];
    bface = new unsigned int[2*n_bface];
    bface_type = new int[n_bface];
+   ctype = new int[n_cell];
 
    cell1[0] = 0;
    unsigned int bface_count = 0;
@@ -185,6 +236,7 @@ void Grid::read_gmsh(const string grid_file)
          cell1[cell_count+1] = cell1[cell_count] + elem1[i+1] - elem1[i];
          for(unsigned int j=0; j<elem1[i+1]-elem1[i]; ++j)
             cell2[cell1[cell_count]+j] = elem2[elem1[i]+j];
+         ctype[cell_count] = elem_type[i];
          ++cell_count;
       }
       else
@@ -218,28 +270,29 @@ void Grid::write_vtk(const string grid_file)
    vtk << "POINTS  " << n_vertex << "  float" << endl;
 
    for(unsigned int i=0; i<n_vertex; ++i)
-      vtk << coord[i*dim] << " "
-          << coord[i*dim+1] << " "
-          << 0.0 << endl;
+   {
+      auto x = get_coord(i);
+      vtk << x[0] << " " << x[1] << " " << 0.0 << endl;
+   }
 
    vtk << "CELLS  " << n_cell << " " << 4 * n_tri + 5 * n_quad << endl;
    for(unsigned int i=0; i<n_cell; ++i)
    {
-      vtk << cell1[i+1]-cell1[i]; // number of vertices
-      for(unsigned int j=cell1[i]; j<cell1[i+1]; ++j)
-         vtk << "  " << cell2[j];
+      auto cell = get_cell_vertices(i);
+      vtk << cell.first;
+      for(unsigned int j=0; j<cell.first; ++j)
+         vtk << "  " << cell.second[j];
       vtk << endl;
    }
 
    vtk << "CELL_TYPES  " << n_cell << endl;
    for(unsigned int i=0; i<n_cell; ++i)
    {
-      unsigned int nv = cell1[i+1] - cell1[i];
-      if(nv == 3) vtk << 5 << endl;
-      else if(nv == 4) vtk << 9 << endl;
+      if(ctype[i] == 2) vtk << 5 << endl;
+      else if(ctype[i] == 3) vtk << 9 << endl;
       else
       {
-         cout << "Unknown nv = " << nv << endl;
+         cout << "Unknown ctype = " << ctype[i] << endl;
          exit(0);
       }
    }

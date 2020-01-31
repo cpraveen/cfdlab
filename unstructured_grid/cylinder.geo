@@ -1,8 +1,8 @@
 r = 1.0;  // cylinder radius
 R = 2.0; // outer boundary radius
 
-n1 = 100;
-n2 = 100;
+n1 = 50;
+n2 = 50;
 p  = 1.01;
 
 Point(1) = { 0, 0, 0};
