@@ -12,6 +12,7 @@ public:
    ~Grid ();
    void read_gmsh(const string grid_file);
    void write_vtk(const string grid_file);
+   void construct_esup();
    void compute_carea();
 
    unsigned int get_n_vertex()
@@ -51,9 +52,9 @@ public:
 
    std::pair<unsigned int,unsigned int*> get_cell_vertices(unsigned int i)
    {
-      unsigned int start = cell1[i];
-      unsigned int end = cell1[i+1];
-      return std::make_pair(end-start,&cell2[start]);
+      unsigned int start = cell2[i];
+      unsigned int end = cell2[i+1];
+      return std::make_pair(end-start,&cell1[start]);
    }
 
 private:
@@ -61,6 +62,7 @@ private:
    unsigned int n_vertex, n_cell, n_tri, n_quad, n_bface;
    double       *coord;
    unsigned int *cell1, *cell2;
+   unsigned int *esup1, *esup2;
    unsigned int *bface;
    int          *bface_type;
    int          *ctype;
@@ -212,13 +214,13 @@ void Grid::read_gmsh(const string grid_file)
    for(unsigned int i=0; i<elem1[n_elem]; ++i)
       --elem2[i];
 
-   cell1 = new unsigned int[n_cell+1];
-   cell2 = new unsigned int[3*n_tri + 4*n_quad];
+   cell1 = new unsigned int[3*n_tri + 4*n_quad];
+   cell2 = new unsigned int[n_cell+1];
    bface = new unsigned int[2*n_bface];
    bface_type = new int[n_bface];
    ctype = new int[n_cell];
 
-   cell1[0] = 0;
+   cell2[0] = 0;
    unsigned int bface_count = 0;
    unsigned int cell_count = 0;
 
@@ -233,9 +235,9 @@ void Grid::read_gmsh(const string grid_file)
       }
       else if(elem_type[i] == 2 || elem_type[i] == 3) // tri and quad
       {
-         cell1[cell_count+1] = cell1[cell_count] + elem1[i+1] - elem1[i];
+         cell2[cell_count+1] = cell2[cell_count] + elem1[i+1] - elem1[i];
          for(unsigned int j=0; j<elem1[i+1]-elem1[i]; ++j)
-            cell2[cell1[cell_count]+j] = elem2[elem1[i]+j];
+            cell1[cell2[cell_count]+j] = elem2[elem1[i]+j];
          ctype[cell_count] = elem_type[i];
          ++cell_count;
       }
