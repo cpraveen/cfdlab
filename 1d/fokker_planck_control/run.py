@@ -1,3 +1,10 @@
+"""
+To run without control
+   python ./run.py nocontrol
+To run with control
+   python ./run.py
+   python plot_opt.py
+"""
 import os
 import sys
 import numpy as np
@@ -32,6 +39,7 @@ def cost_gradient(u):
     g = np.loadtxt('gradient.dat')
     return g
 
+#------------------------------------------------------------------------------
 nint  = 10
 T     = 5.0
 u     = np.array([0.0, 0.0])  # Initial control
