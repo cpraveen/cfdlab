@@ -16,7 +16,7 @@ usage () {
    echo >&2 "usage: $PN <spack view dir> <deal.II install dir>
 
    Configure deal.II using dependencies installed via Spack view
-   example: $PN /opt/spack /home/praveen/Applications/deal.II/install"
+   example: sh $PN /opt/spack /home/praveen/Applications/deal.II/install"
 
     exit 1
 }

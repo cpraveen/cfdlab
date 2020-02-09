@@ -1,7 +1,23 @@
 #!/bin/bash
 
+PN=`basename "$0"`
+
+usage () {
+   echo >&2 "usage: $PN <spack view dir>
+
+   Install spack view into specified directory.
+   example: sh $PN /opt/spack"
+
+    exit 1
+}
+
+if [ $# -lt 1 ]
+then
+	usage
+fi
+
 # Set this to your actual spack view dir
-SPACK_VIEW=/opt/spack
+SPACK_VIEW=$1
 
 COMMAND="spack view -v -d no"
 ACTION=symlink
