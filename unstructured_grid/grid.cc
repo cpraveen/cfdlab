@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cassert>
 #include <utility> // std::pair, std::make_pair
 
 #include "grid.h"
@@ -16,11 +17,13 @@ Grid::Grid()
 // desrructor
 Grid::~Grid()
 {
-   delete[] coord;
-   delete[] cell1;
-   delete[] cell2;
-   delete[] bface;
-   delete[] bface_type;
+   if(!coord) delete[] coord;
+   if(!cell1) delete[] cell1;
+   if(!cell2) delete[] cell2;
+   if(!bface) delete[] bface;
+   if(!bface_type) delete[] bface_type;
+   if(!esup1) delete[] esup1;
+   if(!esup2) delete[] esup2;
 }
 
 void Grid::read_gmsh(const string grid_file)
@@ -32,8 +35,8 @@ void Grid::read_gmsh(const string grid_file)
    cout << "Reading gmsh grid file " << grid_file << endl;
 
    ifstream file;
-   file.open (grid_file.c_str());
-   assert ( file.is_open() );
+   file.open(grid_file.c_str());
+   assert(file.is_open());
 
    string line;
    int tag;
@@ -43,13 +46,13 @@ void Grid::read_gmsh(const string grid_file)
    // Skip some lines
    file >> line;
    file >> version >> tag >> tag;
-   assert( version == 2.2 );
+   assert(version == 2.2);
    file >> line;
    file >> line;
 
    // Read vertices
    file >> n_vertex;
-   assert (n_vertex > 0);
+   assert(n_vertex > 0);
    cout << "Number of vertices = " << n_vertex << endl;
    coord = new double[dim*n_vertex];
 
@@ -65,7 +68,7 @@ void Grid::read_gmsh(const string grid_file)
 
    // Read cells
    file >> n_elem;
-   assert (n_elem > 0);
+   assert(n_elem > 0);
    cout << "Numbers of elements = " << n_elem << endl;
 
    // for triangle and quad only
@@ -84,7 +87,7 @@ void Grid::read_gmsh(const string grid_file)
            >> ntags;
 
       // Some gmsh files have 2 and some have 3 tags
-      assert( ntags==2 || ntags==3 );
+      assert(ntags==2 || ntags==3);
 
       if(elem_type[i] == 1) // Line face
       {
@@ -94,7 +97,7 @@ void Grid::read_gmsh(const string grid_file)
             file >> tag;
 
          elem1[i+1] = elem1[i] + 2;
-         elem2.resize (elem1[i+1]);
+         elem2.resize(elem1[i+1]);
          file >> elem2[elem1[i]]
               >> elem2[elem1[i]+1];
          ++n_bface;
@@ -106,7 +109,7 @@ void Grid::read_gmsh(const string grid_file)
             file >> tag ; // Dummy tags
 
          elem1[i+1] = elem1[i] + 3;
-         elem2.resize (elem1[i+1]);
+         elem2.resize(elem1[i+1]);
          file >> elem2[elem1[i]]
               >> elem2[elem1[i]+1]
               >> elem2[elem1[i]+2];
@@ -119,7 +122,7 @@ void Grid::read_gmsh(const string grid_file)
             file >> tag ; // Dummy tags
 
          elem1[i+1] = elem1[i] + 4;
-         elem2.resize (elem1[i+1]);
+         elem2.resize(elem1[i+1]);
          file >> elem2[elem1[i]]
               >> elem2[elem1[i]+1]
               >> elem2[elem1[i]+2]
@@ -130,7 +133,7 @@ void Grid::read_gmsh(const string grid_file)
       {
          cout << "Unknown element type !!!" << endl;
          cout << "   Element type =" << elem_type[i] << endl;
-         exit (0);
+         exit(0);
       }
    }
    file.close();
@@ -142,9 +145,9 @@ void Grid::read_gmsh(const string grid_file)
    cout << "Number of quadrilaterals  = " << n_quad << endl;
    cout << "Total number of cells     = " << n_cell << endl;
 
-   assert (n_cell > 0);
-   assert (n_bface > 0);
-   assert (elem1[n_elem] == 2*n_bface + 3*n_tri + 4*n_quad);
+   assert(n_cell > 0);
+   assert(n_bface > 0);
+   assert(elem1[n_elem] == 2*n_bface + 3*n_tri + 4*n_quad);
 
    // gmsh vertex numbering starts at 1, decrease by 1
    for(unsigned int i=0; i<elem1[n_elem]; ++i)
@@ -199,7 +202,7 @@ void Grid::write_vtk(const string grid_file)
 {
    // Save vtk file
    ofstream vtk;
-   vtk.open (grid_file);
+   vtk.open(grid_file);
 
    vtk << "# vtk DataFile Version 3.0" << endl;
    vtk << "Test file" << endl;
@@ -239,15 +242,61 @@ void Grid::write_vtk(const string grid_file)
    cout << "Wrote " << grid_file << endl;
 }
 
-// Find cells surround a point
+// Find cells surrounding a point
+// See Lohner: section xxx
 void Grid::construct_esup()
 {
+   cout << "Constructing elements surrounding point\n";
+
+   esup2 = new unsigned int[n_vertex+1];
+   for(unsigned int i=0; i<n_vertex+1; ++i) // Initialize esup2
+   {
+      esup2[i] = 0;
+   }
+
+   for(unsigned int icell=0; icell<n_cell; ++icell) // Loop over all the cells
+   {
+      auto cell = get_cell_vertices(icell);
+      for(unsigned int ipoint=0; ipoint<cell.first; ++ipoint)  //Loop over nodes of the cell
+      {
+         ++esup2[cell.second[ipoint]+1]; // Count the cells surrounding the node
+      }
+   }
+
+   for(unsigned int i=0; i<n_vertex; ++i) // Add the previous element to create the esup2
+   {
+      esup2[i+1] += esup2[i];
+   }
+
+   esup1 = new unsigned int[esup2[n_vertex]]; // Create and initialize esup1
+   for(unsigned int i=0; i<esup2[n_vertex]; ++i)
+   {
+      esup1[i] = 0;
+   }
+
+   for(unsigned int icell=0; icell<n_cell; ++icell)
+   {
+      auto cell = get_cell_vertices(icell);
+      for(unsigned int ipoint=0; ipoint<cell.first; ++ipoint)
+      {
+         unsigned int gnode = cell.second[ipoint]; // Get the global node number
+         unsigned int istor = esup2[gnode]; // location in esup1 where the element will be stored
+         esup1[istor] = icell;
+         ++esup2[gnode];
+      }
+   }
+
+   for(unsigned int i=n_vertex; i>0; i--)
+   {
+      esup2[i] = esup2[i-1]; // reshuffle the esup2
+   }
+   esup2[0] = 0;
 
 }
 
-// Find pointss surround a point
+// Find points surrounding a point
 // If all_points==false, find only points connected by an edge.
 void Grid::construct_psup(bool all_points)
 {
-
+   cout << "Constructing points surrounding point\n";
 }

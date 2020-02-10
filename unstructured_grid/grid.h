@@ -51,21 +51,21 @@ public:
       return carea[i];
    }
 
-   std::pair<unsigned int,unsigned int*> get_cell_vertices(unsigned int i)
+   std::pair<unsigned int,const unsigned int*> get_cell_vertices(unsigned int i)
    {
       unsigned int start = cell2[i];
       unsigned int end = cell2[i+1];
       return std::make_pair(end-start,&cell1[start]);
    }
 
-   std::pair<unsigned int,unsigned int*> get_esup(unsigned int i)
+   std::pair<unsigned int,const unsigned int*> get_esup(unsigned int i)
    {
       unsigned int start = esup2[i];
       unsigned int end = esup2[i+1];
       return std::make_pair(end-start,&esup1[start]);
    }
 
-   std::pair<unsigned int,unsigned int*> get_psup(unsigned int i)
+   std::pair<unsigned int,const unsigned int*> get_psup(unsigned int i)
    {
       unsigned int start = psup2[i];
       unsigned int end = psup2[i+1];
