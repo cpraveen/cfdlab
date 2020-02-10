@@ -79,12 +79,14 @@ private:
    unsigned int *cell1, *cell2;
    unsigned int *esup1, *esup2;
    unsigned int *psup1, *psup2;
-   unsigned int *bface;
+   unsigned int *bface, *bface_cell;
    int          *bface_type;
+   double*      *bface_norm;
    int          *ctype;
    double       *carea;
+   // Interior faces
    double       *flen;  // length of face
    unsigned int *face;  // face
    double       *fnorm; // unit normal to face
-   unsigned int *fnbr;
+   unsigned int *fcell;
 };
