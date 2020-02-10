@@ -46,9 +46,19 @@ public:
       return &coord[i*dim];
    }
 
-   double get_carea(unsigned int i)
+   double get_cell_area(unsigned int i)
    {
       return carea[i];
+   }
+
+   const double* get_face_normal(unsigned int i)
+   {
+      return &fnorm[i*dim];
+   }
+
+   const double* get_bface_normal(unsigned int i)
+   {
+      return &bface_norm[i*dim];
    }
 
    std::pair<unsigned int,const unsigned int*> get_cell_vertices(unsigned int i)
@@ -73,20 +83,28 @@ public:
    }
 
 private:
-   int          dim;
+   const int    dim = 2;
    unsigned int n_vertex, n_cell, n_tri, n_quad, n_bface;
    double       *coord;
+
+   // cell data
    unsigned int *cell1, *cell2;
-   unsigned int *esup1, *esup2;
-   unsigned int *psup1, *psup2;
-   unsigned int *bface, *bface_cell;
-   int          *bface_type;
-   double*      *bface_norm;
    int          *ctype;
    double       *carea;
+
+   // connectivity information
+   unsigned int *esup1, *esup2;
+   unsigned int *psup1, *psup2;
+
+   // boundary face data
+   unsigned int *bface;      // vertices forming the face
+   unsigned int *bface_cell; // cell adjacent to boundary face
+   int          *bface_type; // type read from grid file, used for bc
+   double       *bface_norm; // unit outward normal
+
    // Interior faces
    double       *flen;  // length of face
-   unsigned int *face;  // face
+   unsigned int *face;  // vertex numbers for each face
    double       *fnorm; // unit normal to face
-   unsigned int *fcell;
+   unsigned int *fcell; // cells adjacent to face
 };

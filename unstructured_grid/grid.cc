@@ -11,7 +11,6 @@ using namespace std;
 // constructor
 Grid::Grid()
 {
-   dim = 2;
 }
 
 // desrructor
