@@ -271,7 +271,7 @@ void Grid::construct_esup()
    esup1 = new unsigned int[esup2[n_vertex]]; // Create and initialize esup1
    for(unsigned int i=0; i<esup2[n_vertex]; ++i)
    {
-      esup1[i] = 0;
+      esup1[i] = 0; // not really required
    }
 
    for(unsigned int icell=0; icell<n_cell; ++icell)
@@ -286,7 +286,7 @@ void Grid::construct_esup()
       }
    }
 
-   for(unsigned int i=n_vertex; i>0; i--)
+   for(unsigned int i=n_vertex; i>0; --i)
    {
       esup2[i] = esup2[i-1]; // reshuffle the esup2
    }

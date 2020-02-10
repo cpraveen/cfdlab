@@ -41,7 +41,7 @@ public:
       return n_bface;
    }
 
-   double* get_coord(unsigned int i)
+   const double* get_coord(unsigned int i)
    {
       return &coord[i*dim];
    }
