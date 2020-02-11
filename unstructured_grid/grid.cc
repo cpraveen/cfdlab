@@ -11,20 +11,26 @@ using namespace std;
 // constructor
 Grid::Grid()
 {
+   has_esup = false;
+   has_psup = false;
 }
 
 // desrructor
 Grid::~Grid()
 {
-   if(!coord) delete[] coord;
-   if(!cell1) delete[] cell1;
-   if(!cell2) delete[] cell2;
-   if(!bface) delete[] bface;
-   if(!bface_type) delete[] bface_type;
-   if(!esup1) delete[] esup1;
-   if(!esup2) delete[] esup2;
+   if(!coord) delete [] coord;
+   if(!cell1) delete [] cell1;
+   if(!cell2) delete [] cell2;
+   if(!bface) delete [] bface;
+   if(!bface_type) delete [] bface_type;
+   if(!esup1) delete [] esup1;
+   if(!esup2) delete [] esup2;
+   if(!psup1) delete [] psup1;
+   if(!psup2) delete [] psup2;
 }
 
+// Read mesh from file in gmsh format.
+// Currently it can only read msh2 format.
 void Grid::read_gmsh(const string grid_file)
 {
    // Temporary arrays
@@ -245,7 +251,8 @@ void Grid::write_vtk(const string grid_file)
 // See Lohner: section xxx
 void Grid::construct_esup()
 {
-   cout << "Constructing elements surrounding point\n";
+   if(has_esup) return;
+   cout << "Constructing elements surrounding point ... ";
 
    esup2 = new unsigned int[n_vertex+1];
    for(unsigned int i=0; i<n_vertex+1; ++i) // Initialize esup2
@@ -290,12 +297,75 @@ void Grid::construct_esup()
       esup2[i] = esup2[i-1]; // reshuffle the esup2
    }
    esup2[0] = 0;
-
+   has_esup = true;
+   cout << "Done\n";
 }
 
 // Find points surrounding a point
 // If all_points==false, find only points connected by an edge.
-void Grid::construct_psup(bool all_points)
+void Grid::construct_psup(const bool all_points)
 {
-   cout << "Constructing points surrounding point\n";
+   if(has_psup) return;
+   construct_esup(); // psup needs esup data
+   cout << "Constructing points surrounding point ... ";
+
+   unsigned int *lpoin; // Help array to avoid duplication from neighbouring cells
+   std::vector<unsigned int> psup1_temp(0);  // temporary vector to allow resize function
+   unsigned int istor = 0, gnode=0;
+   psup2 = new unsigned int[n_vertex+1];
+   lpoin = new unsigned int[n_vertex];
+
+   // Initialize
+   for(unsigned int i=0; i<n_vertex; ++i)
+   {
+      psup2[i] = 0;
+      lpoin[i] = 0;
+   }
+   psup2[n_vertex] = 0;
+   
+   for(unsigned int ipoint=0; ipoint<n_vertex; ++ipoint) // Loop over all the nodes
+   {
+      auto esup = get_esup(ipoint); // get cells surrounding the node
+      for(unsigned int icell=0; icell<esup.first; ++icell) // Loop over cells surrounding node
+      {
+         auto cell = get_cell_vertices(esup.second[icell]);
+         for(unsigned int jpoint=0; jpoint<cell.first; ++jpoint) // Loop over nodes of cell
+         {
+            gnode = cell.second[jpoint];  // global node number
+            if(gnode != ipoint && lpoin[gnode] != ipoint+1) // check for duplication
+            {
+               if(all_points == true) // get all the points surrounding the node
+               {
+                  psup1_temp.resize(psup1_temp.size()+1);
+                  psup1_temp[istor] = gnode;
+                  lpoin[gnode] = ipoint+1; // using ipoint+1 as 0 is the initialized value
+                  ++istor;
+               }
+               else
+               {
+                  int prev_node = jpoint-1, next_node = (jpoint+1) % cell.first;
+                  if(prev_node < 0) prev_node = cell.first-1;
+                  // Check if connected by edge
+                  if(cell.second[prev_node] == ipoint || cell.second[next_node] == ipoint)
+                  {
+                     psup1_temp.resize(psup1_temp.size()+1);
+                     psup1_temp[istor] = gnode;
+                     lpoin[gnode] = ipoint+1;
+                     ++istor;
+                  }
+               }
+            }
+         }
+      }
+      psup2[ipoint+1] = istor;
+   }
+   // Copy data from psup1_temp to psup1
+   psup1 = new unsigned int[psup2[n_vertex]];
+   for(unsigned int i=0; i<psup1_temp.size(); ++i)
+      psup1[i] = psup1_temp[i];
+
+   psup1_temp.resize(0);
+   delete [] lpoin;
+   has_psup = true;
+   cout << "Done\n";
 }

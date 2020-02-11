@@ -6,4 +6,5 @@ int main()
    grid.read_gmsh("cylinder.msh");
    grid.write_vtk("cylinder.vtk");
    grid.construct_esup();
+   grid.construct_psup();
 }

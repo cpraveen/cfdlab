@@ -13,7 +13,7 @@ public:
    void read_gmsh(const string grid_file);
    void write_vtk(const string grid_file);
    void construct_esup();
-   void construct_psup(bool all_points=true);
+   void construct_psup(const bool all_points=true);
    void compute_carea();
 
    unsigned int get_n_vertex()
@@ -107,4 +107,7 @@ private:
    unsigned int *face;  // vertex numbers for each face
    double       *fnorm; // unit normal to face
    unsigned int *fcell; // cells adjacent to face
+
+   bool         has_esup;
+   bool         has_psup;
 };
