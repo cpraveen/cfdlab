@@ -222,27 +222,32 @@ PetscErrorCode ComputeResidual(TS ts,PetscReal t,Vec U,Vec R,void *ctx)
       {
          PetscReal *Xl = &(info->X0[supp[0]*dim]);
 
-         //ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
-         ul = &Pl[supp[0]];
+         ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
+         //ul = &Pl[supp[0]];
          boundary_value(Xf, ur);
          numerical_flux(normal_speed, ul, ur, &Flux);
          ierr = DMPlexPointGlobalRef(dm,supp[0],Rarray,&r);CHKERRQ(ierr);
          if(r) *r -= Flux * info->V1[p-pStart] / info->V0[supp[0]];
       }
-      else // Interior face
+      else if(ss==2) // Interior face
       {
          PetscReal *Xl = &(info->X0[supp[0]*dim]);
          PetscReal *Xr = &(info->X0[supp[1]*dim]);
 
-         //ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
-         //ierr = DMPlexPointGlobalRef(dm,supp[1],Pl,&ur);CHKERRQ(ierr);
-         ul = &Pl[supp[0]];
-         ur = &Pl[supp[1]];
+         ierr = DMPlexPointGlobalRef(dm,supp[0],Pl,&ul);CHKERRQ(ierr);
+         ierr = DMPlexPointGlobalRef(dm,supp[1],Pl,&ur);CHKERRQ(ierr);
+         //ul = &Pl[supp[0]];
+         //ur = &Pl[supp[1]];
          numerical_flux(normal_speed, ul, ur, &Flux);
          ierr = DMPlexPointGlobalRef(dm,supp[0],Rarray,&r);CHKERRQ(ierr);
          if(r) *r -= Flux * info->V1[p-pStart] / info->V0[supp[0]];
          ierr = DMPlexPointGlobalRef(dm,supp[1],Rarray,&r);CHKERRQ(ierr);
          if(r) *r += Flux * info->V1[p-pStart] / info->V0[supp[1]];
+      }
+      else
+      {
+         PetscPrintf(PETSC_COMM_WORLD,"Found more than 2 face neighbours\n");
+         exit(0);
       }
    }
 
