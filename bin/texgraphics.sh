@@ -1,8 +1,11 @@
 #!/bin/bash
 #
-# copygraphics.sh texfile directory
+# Usage
+#    texgraphics.sh <tex file>
+#    texgraphics *.tex
+#    texgraphics.sh paper1.tex paper2.tex ...
 #
-fnames=`grep includegraphics $1 | sed 's/^[^{]*{\([^{}]*\)}.*/\1/'`
+fnames=`grep includegraphics $@ | sed 's/^[^{]*{\([^{}]*\)}.*/\1/'`
 files=
 for f in $fnames
 do
