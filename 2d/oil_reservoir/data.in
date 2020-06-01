@@ -1,0 +1,20 @@
+flux      dflu
+order     2
+max_iter  2200
+save_freq 25
+cfl       0.5
+cinlet    0.0
+pinlet    1.0
+poutlet   0.0
+mu_oil    10.0
+d_water   1.0
+d_oil     0.5
+gravity   0.0
+xrange    0.0  1.0
+yrange    0.0  1.0
+101  101
+4
+  1    11    1    1  1
+  1     1    1   11  1
+ 91   101  101  101  2
+101  101    91  101  2

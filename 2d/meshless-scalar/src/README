@@ -1,0 +1,18 @@
+2-d meshless solver for scalar advection equation on a rectagular domain with
+periodic boundary conditions in both x and y-directions.
+
+* Cartesian point distribution
+* Points coordinates can be perturbed
+* Standard four-point stencil (i-1,j), (i+1,j), (i,j-1), (i,j+1)
+* MUSCL reconstruction
+* Advection velocity can be set in AdvecVel.f by introducing a new veltype.
+* Initial condition can be set in the function InitCond in file SetInitCond.f 
+  by introducing a new ictype.
+* If you have gnuplot and gifsicle, you can generate an animation, see the
+  variables makeanim and animinterval.
+
+COMPILATION
+
+Check the fortran compiler variable FC in "makefile"
+Then, type "make" to compile. It compiles all the *.f files in the directory.
+So make sure you do not drop in any irrelevant or duplicate files.
