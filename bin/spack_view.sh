@@ -52,6 +52,7 @@ dolink gmsh
 dolink gsl
 dolink hdf5
 dolink metis
+dolink mpich
 dolink muparser
 dolink mumps
 dolink nanoflann
