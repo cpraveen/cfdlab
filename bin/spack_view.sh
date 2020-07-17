@@ -62,6 +62,7 @@ dolink netlib-scalapack
 dolink oce
 dolink openblas
 dolink openmpi
+dolink parmetis
 dolink p4est
 dolink petsc
 dolink slepc
