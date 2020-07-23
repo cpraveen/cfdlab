@@ -16,8 +16,9 @@ const double gas_gamma = 1.4;
 const double gas_const = 1.0;
 double dx, dy;
 
-typedef enum { flux_central, flux_kepec2 } FluxScheme;
-const char *const FluxSchemes[] = {"central", "kepec2", "FluxScheme", "flux_", NULL};
+typedef enum { flux_central, flux_kepec2, flux_kepec4 } FluxScheme;
+const char *const FluxSchemes[] = {"central", "kepec2", "kepec4", 
+                                   "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
 const char *const Problems[] = {"vortex", "density", "Problem", "prob_", NULL};
@@ -171,6 +172,21 @@ void numflux2(const double *Ul, const double *Ur,
    flux[3] = 0.5 * (1.0/((gas_gamma-1.0)*logb) - q2) * flux[0]
              + u*flux[1] + v*flux[2];
 }
+
+// 4th order KEPEC flux
+void numflux4(const double *Ull, const double *Ul, 
+              const double *Ur, const double *Urr,
+              const double nx, const double ny,
+              double *flux)
+{
+   double flux1[nvar], flux2[nvar], flux3[nvar];
+   numflux2(Ul,Ur,nx,ny,flux1);
+   numflux2(Ull,Ur,nx,ny,flux2);
+   numflux2(Ul,Urr,nx,ny,flux3);
+   for(int i=0; i<nvar; ++i)
+      flux[i] = (4.0/3.0)*flux1[i] - (1.0/6.0)*flux2[i] - (1.0/6.0)*flux3[i];
+}
+
 //------------------------------------------------------------------------------
 PetscErrorCode savesol(double t, DM da, Vec ug)
 {
@@ -384,6 +400,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             avgflux(u[j][i-1], u[j][i], 1.0, 0.0, flux);
          else if(ctx->flux_scheme == flux_kepec2)
             numflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
+         else if(ctx->flux_scheme == flux_kepec4)
+            numflux4(u[j][i-2], u[j][i-1], u[j][i], u[j][i+1], 1.0, 0.0, flux);
          else
          {
             PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!");
@@ -418,6 +436,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             avgflux(u[j-1][i], u[j][i], 0.0, 1.0, flux);
          else if(ctx->flux_scheme == flux_kepec2)
             numflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
+         else if(ctx->flux_scheme == flux_kepec4)
+            numflux4(u[j-2][i], u[j-1][i], u[j][i], u[j+1][i], 0.0, 1.0, flux);
          else
          {
             PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!");
