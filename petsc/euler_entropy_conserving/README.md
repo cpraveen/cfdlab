@@ -7,7 +7,7 @@ This makes use of time stepping schemes in Petsc. To solve du/dt = R(t,u) you mu
 Some options
 ```
 -problem  vortex | density
--flux     central | kepec2 | kepec4
+-flux     central | kepec2 | kepec4 | kep2
 ```
 
 First compile the code
