@@ -16,8 +16,8 @@ const double gas_gamma = 1.4;
 const double gas_const = 1.0;
 double dx, dy;
 
-typedef enum { flux_central, flux_kepec2, flux_kepec4, flux_kep2 } FluxScheme;
-const char *const FluxSchemes[] = {"central", "kepec2", "kepec4", "kep2",
+typedef enum { flux_central,flux_kepec2,flux_kepec4,flux_kep2,flux_nkep2 } FluxScheme;
+const char *const FluxSchemes[] = {"central","kepec2","kepec4","kep2","nkep2",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
@@ -187,7 +187,7 @@ void numflux4(const double *Ull, const double *Ul,
       flux[i] = (4.0/3.0)*flux1[i] - (1.0/6.0)*flux2[i] - (1.0/6.0)*flux3[i];
 }
 
-// Approximately entropy conservative scheme
+// KEP flux of Jameson
 void kepflux2(const double *Ul, const double *Ur,
                const double nx, const double ny,
                double *flux)
@@ -220,7 +220,31 @@ void kepflux2(const double *Ul, const double *Ur,
    flux[2] = p * ny + v * flux[0];
    flux[3] = r * H * un;
 }
+//------------------------------------------------------------------------------
+// New KEP flux
+void nkepflux2(const double *Ul, const double *Ur,
+               const double nx, const double ny,
+               double *flux)
+{
+   double ql[nvar], qr[nvar];
+   con2prim(Ul, ql);
+   con2prim(Ur, qr);
 
+   double r = 0.5 * (ql[0] + qr[0]);
+   double u = 0.5 * (ql[1] + qr[1]);
+   double v = 0.5 * (ql[2] + qr[2]);
+   double p = 0.5 * (ql[3] + qr[3]);
+   double E = p/(gas_gamma-1.0) + 0.5*r*(u*u + v*v);
+
+   // Rotated velocity
+   double un = u * nx + v * ny;
+
+   // Centered flux
+   flux[0] = r * un;
+   flux[1] = p * nx + u * flux[0];
+   flux[2] = p * ny + v * flux[0];
+   flux[3] = (E + p) * un;
+}
 //------------------------------------------------------------------------------
 PetscErrorCode savesol(double t, DM da, Vec ug)
 {
@@ -438,6 +462,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             numflux4(u[j][i-2], u[j][i-1], u[j][i], u[j][i+1], 1.0, 0.0, flux);
          else if(ctx->flux_scheme == flux_kep2)
             kepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
+         else if(ctx->flux_scheme == flux_nkep2)
+            nkepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
          else
          {
             PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!\n");
@@ -476,6 +502,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             numflux4(u[j-2][i], u[j-1][i], u[j][i], u[j+1][i], 0.0, 1.0, flux);
          else if(ctx->flux_scheme == flux_kep2)
             kepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
+         else if(ctx->flux_scheme == flux_nkep2)
+            nkepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
          else
          {
             PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!");
