@@ -234,7 +234,7 @@ void nkepflux2(const double *Ul, const double *Ur,
    double u = 0.5 * (ql[1] + qr[1]);
    double v = 0.5 * (ql[2] + qr[2]);
    double p = 0.5 * (ql[3] + qr[3]);
-   double E = p/(gas_gamma-1.0) + 0.5*r*(u*u + v*v);
+   double E = 0.5 * (Ul[3] + Ur[3]);
 
    // Rotated velocity
    double un = u * nx + v * ny;
