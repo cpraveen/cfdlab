@@ -16,9 +16,10 @@ const double gas_gamma = 1.4;
 const double gas_const = 1.0;
 double dx, dy;
 
-typedef enum { flux_central,flux_kepec2,flux_kepec4,flux_kep2,flux_nkep2,flux_kg2 } FluxScheme;
-const char *const FluxSchemes[] = {"central","kepec2","kepec4","kep2","nkep2",
-                                   "kg2",
+typedef enum { flux_central,flux_kepec2,flux_kepec4,flux_kep2,flux_mkep2,
+               flux_mkep4,flux_kg2 } FluxScheme;
+const char *const FluxSchemes[] = {"central","kepec2","kepec4","kep2","mkep2",
+                                   "mkep4","kg2",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
@@ -223,7 +224,7 @@ void kepflux2(const double *Ul, const double *Ur,
 }
 //------------------------------------------------------------------------------
 // New KEP flux
-void nkepflux2(const double *Ul, const double *Ur,
+void mkepflux2(const double *Ul, const double *Ur,
                const double nx, const double ny,
                double *flux)
 {
@@ -245,6 +246,19 @@ void nkepflux2(const double *Ul, const double *Ur,
    flux[1] = p * nx + u * flux[0];
    flux[2] = p * ny + v * flux[0];
    flux[3] = (E + p) * un;
+}
+// 4th order modified KEP flux
+void mkepflux4(const double *Ull, const double *Ul,
+               const double *Ur, const double *Urr,
+               const double nx, const double ny,
+               double *flux)
+{
+   double flux1[nvar], flux2[nvar], flux3[nvar];
+   mkepflux2(Ul, Ur, nx, ny, flux1);
+   mkepflux2(Ull, Ur, nx, ny, flux2);
+   mkepflux2(Ul, Urr, nx, ny, flux3);
+   for (int i = 0; i < nvar; ++i)
+      flux[i] = (4.0 / 3.0) * flux1[i] - (1.0 / 6.0) * flux2[i] - (1.0 / 6.0) * flux3[i];
 }
 // Kennedy and Gruber flux
 void kgflux2(const double *Ul, const double *Ur,
@@ -490,8 +504,10 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             numflux4(u[j][i-2], u[j][i-1], u[j][i], u[j][i+1], 1.0, 0.0, flux);
          else if(ctx->flux_scheme == flux_kep2)
             kepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
-         else if(ctx->flux_scheme == flux_nkep2)
-            nkepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
+         else if(ctx->flux_scheme == flux_mkep2)
+            mkepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
+         else if(ctx->flux_scheme == flux_mkep4)
+            mkepflux4(u[j][i-2], u[j][i-1], u[j][i], u[j][i+1], 1.0, 0.0, flux);
          else if(ctx->flux_scheme == flux_kg2)
             kgflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
          else
@@ -532,8 +548,10 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             numflux4(u[j-2][i], u[j-1][i], u[j][i], u[j+1][i], 0.0, 1.0, flux);
          else if(ctx->flux_scheme == flux_kep2)
             kepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
-         else if(ctx->flux_scheme == flux_nkep2)
-            nkepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
+         else if(ctx->flux_scheme == flux_mkep2)
+            mkepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
+         else if(ctx->flux_scheme == flux_mkep4)
+            mkepflux4(u[j-2][i], u[j-1][i], u[j][i], u[j+1][i], 0.0, 1.0, flux);
          else if(ctx->flux_scheme == flux_kg2)
             kgflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
          else
