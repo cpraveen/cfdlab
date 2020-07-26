@@ -16,8 +16,9 @@ const double gas_gamma = 1.4;
 const double gas_const = 1.0;
 double dx, dy;
 
-typedef enum { flux_central,flux_kepec2,flux_kepec4,flux_kep2,flux_nkep2 } FluxScheme;
+typedef enum { flux_central,flux_kepec2,flux_kepec4,flux_kep2,flux_nkep2,flux_kg2 } FluxScheme;
 const char *const FluxSchemes[] = {"central","kepec2","kepec4","kep2","nkep2",
+                                   "kg2",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
@@ -245,6 +246,33 @@ void nkepflux2(const double *Ul, const double *Ur,
    flux[2] = p * ny + v * flux[0];
    flux[3] = (E + p) * un;
 }
+// Kennedy and Gruber flux
+void kgflux2(const double *Ul, const double *Ur,
+             const double nx, const double ny,
+             double *flux)
+{
+   double ql[nvar], qr[nvar];
+   con2prim(Ul, ql);
+   con2prim(Ur, qr);
+
+   double el = Ul[3]/Ul[0];
+   double er = Ur[3]/Ur[0];
+
+   double r = 0.5 * (ql[0] + qr[0]);
+   double u = 0.5 * (ql[1] + qr[1]);
+   double v = 0.5 * (ql[2] + qr[2]);
+   double p = 0.5 * (ql[3] + qr[3]);
+   double e = 0.5 * (el + er);
+
+   // Rotated velocity
+   double un = u * nx + v * ny;
+
+   // Centered flux
+   flux[0] = r * un;
+   flux[1] = p * nx + u * flux[0];
+   flux[2] = p * ny + v * flux[0];
+   flux[3] = (r * e + p) * un;
+}
 //------------------------------------------------------------------------------
 PetscErrorCode savesol(double t, DM da, Vec ug)
 {
@@ -464,6 +492,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             kepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
          else if(ctx->flux_scheme == flux_nkep2)
             nkepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
+         else if(ctx->flux_scheme == flux_kg2)
+            kgflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
          else
          {
             PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!\n");
@@ -504,6 +534,8 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             kepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
          else if(ctx->flux_scheme == flux_nkep2)
             nkepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
+         else if(ctx->flux_scheme == flux_kg2)
+            kgflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
          else
          {
             PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!");
