@@ -16,10 +16,10 @@ const double gas_gamma = 1.4;
 const double gas_const = 1.0;
 double dx, dy;
 
-typedef enum { flux_central,flux_kepec2,flux_kepec4,flux_kep2,flux_mkep2,
-               flux_mkep4,flux_kg2 } FluxScheme;
-const char *const FluxSchemes[] = {"central","kepec2","kepec4","kep2","mkep2",
-                                   "mkep4","kg2",
+typedef enum { flux_central,flux_kepec,flux_kep,flux_mkep,
+               flux_kg,flux_ducros } FluxScheme;
+const char *const FluxSchemes[] = {"central","kepec","kep","mkep",
+                                   "kg","ducros",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
@@ -28,7 +28,7 @@ const char *const Problems[] = {"vortex", "density", "Problem", "prob_", NULL};
 typedef struct
 {
    PetscReal dt, cfl, Tf;
-   PetscInt  max_steps, si;
+   PetscInt  order, max_steps, si;
    FluxScheme flux_scheme;
 } AppCtx;
 
@@ -39,12 +39,13 @@ extern PetscErrorCode Monitor(TS,PetscInt,PetscReal,Vec,void*);
 void initcond_vortex(const double x, const double y, double *Prim)
 {
    const double M = 0.5;
-   const double alpha = 45.0;
+   const double alpha = M_PI*(45.0/180.0);
    const double beta = 5.0;
    const double r2 = x*x + y*y;
-   Prim[0] =  pow(1.0 - (gas_gamma-1.0)*(beta*beta)/(8.0*gas_gamma*M_PI*M_PI)*exp(1-r2), (1.0/(gas_gamma-1.0)));
-   Prim[1] =  M*cos(alpha*M_PI/180.0) - beta/(2.0*M_PI)*y*exp(0.5*(1.0-r2));
-   Prim[2] =  M*sin(alpha*M_PI/180.0) + beta/(2.0*M_PI)*x*exp(0.5*(1.0-r2));
+   const double T =  1.0 - (gas_gamma-1.0)*(beta*beta)/(8.0*gas_gamma*M_PI*M_PI)*exp(1-r2);
+   Prim[0] =  pow(T, 1.0/(gas_gamma-1.0));
+   Prim[1] =  M*cos(alpha) - beta/(2.0*M_PI)*y*exp(0.5*(1.0-r2));
+   Prim[2] =  M*sin(alpha) + beta/(2.0*M_PI)*x*exp(0.5*(1.0-r2));
    Prim[3] =  pow(Prim[0],gas_gamma);
 }
 
@@ -140,9 +141,9 @@ double logavg(double a, double b)
 }
 
 // KEPEC flux
-void numflux2(const double *Ul, const double *Ur,
-              const double nx, const double ny,
-              double *flux)
+void kepecflux(const double *Ul, const double *Ur,
+               const double nx, const double ny,
+               double *flux)
 {
    double ql[nvar], qr[nvar];
    con2prim(Ul, ql);
@@ -175,24 +176,10 @@ void numflux2(const double *Ul, const double *Ur,
              + u*flux[1] + v*flux[2];
 }
 
-// 4th order KEPEC flux
-void numflux4(const double *Ull, const double *Ul, 
-              const double *Ur, const double *Urr,
-              const double nx, const double ny,
-              double *flux)
-{
-   double flux1[nvar], flux2[nvar], flux3[nvar];
-   numflux2(Ul,Ur,nx,ny,flux1);
-   numflux2(Ull,Ur,nx,ny,flux2);
-   numflux2(Ul,Urr,nx,ny,flux3);
-   for(int i=0; i<nvar; ++i)
-      flux[i] = (4.0/3.0)*flux1[i] - (1.0/6.0)*flux2[i] - (1.0/6.0)*flux3[i];
-}
-
 // KEP flux of Jameson
-void kepflux2(const double *Ul, const double *Ur,
-               const double nx, const double ny,
-               double *flux)
+void kepflux(const double *Ul, const double *Ur,
+             const double nx, const double ny,
+             double *flux)
 {
    double ql[nvar], qr[nvar];
    con2prim(Ul, ql);
@@ -224,9 +211,9 @@ void kepflux2(const double *Ul, const double *Ur,
 }
 //------------------------------------------------------------------------------
 // New KEP flux
-void mkepflux2(const double *Ul, const double *Ur,
-               const double nx, const double ny,
-               double *flux)
+void mkepflux(const double *Ul, const double *Ur,
+              const double nx, const double ny,
+              double *flux)
 {
    double ql[nvar], qr[nvar];
    con2prim(Ul, ql);
@@ -247,23 +234,11 @@ void mkepflux2(const double *Ul, const double *Ur,
    flux[2] = p * ny + v * flux[0];
    flux[3] = (E + p) * un;
 }
-// 4th order modified KEP flux
-void mkepflux4(const double *Ull, const double *Ul,
-               const double *Ur, const double *Urr,
-               const double nx, const double ny,
-               double *flux)
-{
-   double flux1[nvar], flux2[nvar], flux3[nvar];
-   mkepflux2(Ul, Ur, nx, ny, flux1);
-   mkepflux2(Ull, Ur, nx, ny, flux2);
-   mkepflux2(Ul, Urr, nx, ny, flux3);
-   for (int i = 0; i < nvar; ++i)
-      flux[i] = (4.0 / 3.0) * flux1[i] - (1.0 / 6.0) * flux2[i] - (1.0 / 6.0) * flux3[i];
-}
+//------------------------------------------------------------------------------
 // Kennedy and Gruber flux
-void kgflux2(const double *Ul, const double *Ur,
-             const double nx, const double ny,
-             double *flux)
+void kgflux(const double *Ul, const double *Ur,
+            const double nx, const double ny,
+            double *flux)
 {
    double ql[nvar], qr[nvar];
    con2prim(Ul, ql);
@@ -287,6 +262,115 @@ void kgflux2(const double *Ul, const double *Ur,
    flux[2] = p * ny + v * flux[0];
    flux[3] = (r * e + p) * un;
 }
+//------------------------------------------------------------------------------
+// Ducros flux
+void ducrosflux(const double *Ul, const double *Ur,
+                const double nx, const double ny,
+                double *flux)
+{
+   double ql[nvar], qr[nvar];
+   con2prim(Ul, ql);
+   con2prim(Ur, qr);
+
+   double r = 0.5 * (ql[0] + qr[0]);
+   double u = 0.5 * (ql[1] + qr[1]);
+   double v = 0.5 * (ql[2] + qr[2]);
+   double p = 0.5 * (ql[3] + qr[3]);
+   double ru= 0.5 * (Ul[1] + Ur[1]);
+   double rv= 0.5 * (Ul[2] + Ur[2]);
+   double E = 0.5 * (Ul[3] + Ur[3]);
+
+   // Rotated velocity
+   double un = u * nx + v * ny;
+
+   // Centered flux
+   flux[0] = r * un;
+   flux[1] = p * nx + ru * un;
+   flux[2] = p * ny + rv * un;
+   flux[3] = (E + p) * un;
+}
+//------------------------------------------------------------------------------
+void numflux(const FluxScheme flux_scheme,
+             const int order,
+             const double *Ull, const double *Ul,
+             const double *Ur, const double *Urr,
+             const double nx, const double ny,
+             double *flux)
+{
+   if(order == 2)
+   {
+      if (flux_scheme == flux_central)
+         avgflux(Ul, Ur, nx, ny, flux);
+      else if (flux_scheme == flux_kep)
+         kepflux(Ul, Ur, nx, ny, flux);
+      else if (flux_scheme == flux_kepec)
+         kepecflux(Ul, Ur, nx, ny, flux);
+      else if (flux_scheme == flux_mkep)
+         mkepflux(Ul, Ur, nx, ny, flux);
+      else if (flux_scheme == flux_kg)
+         kgflux(Ul, Ur, nx, ny, flux);
+      else if (flux_scheme == flux_ducros)
+         ducrosflux(Ul, Ur, nx, ny, flux);
+      else
+      {
+         PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
+         exit(0);
+      }
+   }
+   else if(order == 4)
+   {
+      double flux1[nvar], flux2[nvar], flux3[nvar];
+      if (flux_scheme == flux_central)
+      {
+         avgflux(Ul, Ur, nx, ny, flux1);
+         avgflux(Ull, Ur, nx, ny, flux2);
+         avgflux(Ul, Urr, nx, ny, flux3);
+      }
+      else if (flux_scheme == flux_kep)
+      {
+         kepflux(Ul, Ur, nx, ny, flux1);
+         kepflux(Ull, Ur, nx, ny, flux2);
+         kepflux(Ul, Urr, nx, ny, flux3);
+      }
+      else if (flux_scheme == flux_kepec)
+      {
+         kepecflux(Ul, Ur, nx, ny, flux1);
+         kepecflux(Ull, Ur, nx, ny, flux2);
+         kepecflux(Ul, Urr, nx, ny, flux3);
+      }
+      else if (flux_scheme == flux_mkep)
+      {
+         mkepflux(Ul, Ur, nx, ny, flux1);
+         mkepflux(Ull, Ur, nx, ny, flux2);
+         mkepflux(Ul, Urr, nx, ny, flux3);
+      }
+      else if (flux_scheme == flux_kg)
+      {
+         kgflux(Ul, Ur, nx, ny, flux1);
+         kgflux(Ull, Ur, nx, ny, flux2);
+         kgflux(Ul, Urr, nx, ny, flux3);
+      }
+      else if (flux_scheme == flux_ducros)
+      {
+         ducrosflux(Ul, Ur, nx, ny, flux1);
+         ducrosflux(Ull, Ur, nx, ny, flux2);
+         ducrosflux(Ul, Urr, nx, ny, flux3);
+      }
+      else
+      {
+         PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
+         exit(0);
+      }
+      for (int i = 0; i < nvar; ++i)
+         flux[i] = (4.0 / 3.0) * flux1[i] - (1.0 / 6.0) * flux2[i] - (1.0 / 6.0) * flux3[i];
+   }
+   else
+   {
+      PetscPrintf(PETSC_COMM_WORLD,"numflux: order is not implemented\n");
+      exit(0);
+   }
+}
+
 //------------------------------------------------------------------------------
 PetscErrorCode savesol(double t, DM da, Vec ug)
 {
@@ -366,14 +450,15 @@ int main(int argc, char *argv[])
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetEnum(NULL,NULL,"-flux",FluxSchemes,(PetscEnum *)&ctx.flux_scheme, NULL);
+   ierr = PetscOptionsGetInt(NULL,NULL,"-order",&ctx.order,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetEnum(NULL,NULL,"-problem",Problems,(PetscEnum *)&problem, NULL);
 
    if(problem == prob_vortex)
    {
-      xmin = -5.0;
-      xmax = +5.0;
-      ymin = -5.0;
-      ymax = +5.0;
+      xmin = -10.0;
+      xmax = +10.0;
+      ymin = -10.0;
+      ymax = +10.0;
    }
    else if(problem == prob_density)
    {
@@ -496,25 +581,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       for(j=jbeg; j<jbeg+nlocy; ++j)
       {
          // face between i-1, i
-         if(ctx->flux_scheme == flux_central)
-            avgflux(u[j][i-1], u[j][i], 1.0, 0.0, flux);
-         else if(ctx->flux_scheme == flux_kepec2)
-            numflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
-         else if(ctx->flux_scheme == flux_kepec4)
-            numflux4(u[j][i-2], u[j][i-1], u[j][i], u[j][i+1], 1.0, 0.0, flux);
-         else if(ctx->flux_scheme == flux_kep2)
-            kepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
-         else if(ctx->flux_scheme == flux_mkep2)
-            mkepflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
-         else if(ctx->flux_scheme == flux_mkep4)
-            mkepflux4(u[j][i-2], u[j][i-1], u[j][i], u[j][i+1], 1.0, 0.0, flux);
-         else if(ctx->flux_scheme == flux_kg2)
-            kgflux2(u[j][i-1], u[j][i], 1.0, 0.0, flux);
-         else
-         {
-            PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!\n");
-            exit(0);
-         }
+         numflux(ctx->flux_scheme, ctx->order, u[j][i-2], u[j][i-1], u[j][i], u[j][i+1], 1.0, 0.0, flux);
          if(i==ibeg)
          {
             for(d=0; d<nvar; ++d)
@@ -540,25 +607,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
       for(i=ibeg; i<ibeg+nlocx; ++i)
       {
          // face between j-1, j
-         if(ctx->flux_scheme == flux_central)
-            avgflux(u[j-1][i], u[j][i], 0.0, 1.0, flux);
-         else if(ctx->flux_scheme == flux_kepec2)
-            numflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
-         else if(ctx->flux_scheme == flux_kepec4)
-            numflux4(u[j-2][i], u[j-1][i], u[j][i], u[j+1][i], 0.0, 1.0, flux);
-         else if(ctx->flux_scheme == flux_kep2)
-            kepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
-         else if(ctx->flux_scheme == flux_mkep2)
-            mkepflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
-         else if(ctx->flux_scheme == flux_mkep4)
-            mkepflux4(u[j-2][i], u[j-1][i], u[j][i], u[j+1][i], 0.0, 1.0, flux);
-         else if(ctx->flux_scheme == flux_kg2)
-            kgflux2(u[j-1][i], u[j][i], 0.0, 1.0, flux);
-         else
-         {
-            PetscPrintf(PETSC_COMM_WORLD,"Unknown flux !!!");
-            exit(0);
-         }
+         numflux(ctx->flux_scheme, ctx->order, u[j-2][i], u[j-1][i], u[j][i], u[j+1][i], 0.0, 1.0, flux);
          if(j==jbeg)
          {
             for(d=0; d<nvar; ++d)
