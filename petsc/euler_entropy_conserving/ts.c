@@ -17,9 +17,9 @@ const double gas_const = 1.0;
 double dx, dy;
 
 typedef enum { flux_central,flux_kepec,flux_kep,flux_mkep,
-               flux_kg,flux_ducros } FluxScheme;
+               flux_kg,flux_ducros,flux_mkepec } FluxScheme;
 const char *const FluxSchemes[] = {"central","kepec","kep","mkep",
-                                   "kg","ducros",
+                                   "kg","ducros","mkepec",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
@@ -176,6 +176,65 @@ void kepecflux(const double *Ul, const double *Ur,
              + u*flux[1] + v*flux[2];
 }
 
+// Modified KEPEC flux
+void mkepecflux(const double *Ul, const double *Ur,
+                const double nx, const double ny,
+                double *flux)
+{
+   double ql[nvar], qr[nvar];
+   con2prim(Ul, ql);
+   con2prim(Ur, qr);
+
+   double ql2 = pow(ql[1], 2) + pow(ql[2], 2);
+   double bl = 0.5 * ql[0] / ql[3];
+
+   double qr2 = pow(qr[1], 2) + pow(qr[2], 2);
+   double br = 0.5 * qr[0] / qr[3];
+
+   double u = 0.5 * (ql[1] + qr[1]);
+   double v = 0.5 * (ql[2] + qr[2]);
+   double q2 = 0.5 * (ql2 + qr2);
+
+   double ra = 0.5 * (ql[0] + qr[0]);
+   double ba = 0.5 * (bl + br);
+
+   // Rotated velocity
+   double un = u * nx + v * ny;
+
+   // Relative pressure difference
+   const double r1 = 0.005;
+   const double r2 = 0.01;
+   double dp = 2.0*fabs(qr[3] - ql[3])/(ql[3] + qr[3]);
+   double p, logr, logb;
+   if(dp < r1) // use arithmetic average
+   {
+      p = 0.5*(ql[3] + qr[3]);
+      logb = ba;
+      logr = ra;
+   }
+   else
+   {
+      logr = logavg(ql[0], qr[0]);
+      logb = logavg(bl, br);
+      p = 0.5 * ra / ba;
+      if(dp < r2) // r1 <= dp <= r2: blend between average and KEPEC
+      {
+         double x = (dp - r1)/(r2 - r1);
+         double theta = 0.5*(1.0 + cos(M_PI*(x-1.0)));
+         double p1 = 0.5*(ql[3] + qr[3]);
+         p = theta * p + (1.0 - theta) * p1;
+         logr = theta * logr + (1.0 - theta)* ra;
+         logb = theta * logb + (1.0 - theta)* ba;
+      }
+   }
+
+   // Centered flux
+   flux[0] = logr * un;
+   flux[1] = p * nx + u * flux[0];
+   flux[2] = p * ny + v * flux[0];
+   flux[3] = 0.5 * (1.0 / ((gas_gamma - 1.0) * logb) - q2) * flux[0] + u * flux[1] + v * flux[2];
+}
+
 // KEP flux of Jameson
 void kepflux(const double *Ul, const double *Ur,
              const double nx, const double ny,
@@ -311,6 +370,8 @@ void numflux(const FluxScheme flux_scheme,
          kgflux(Ul, Ur, nx, ny, flux);
       else if (flux_scheme == flux_ducros)
          ducrosflux(Ul, Ur, nx, ny, flux);
+      else if (flux_scheme == flux_mkepec)
+         mkepecflux(Ul, Ur, nx, ny, flux);
       else
       {
          PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
@@ -355,6 +416,12 @@ void numflux(const FluxScheme flux_scheme,
          ducrosflux(Ul, Ur, nx, ny, flux1);
          ducrosflux(Ull, Ur, nx, ny, flux2);
          ducrosflux(Ul, Urr, nx, ny, flux3);
+      }
+      else if (flux_scheme == flux_mkepec)
+      {
+         mkepecflux(Ul, Ur, nx, ny, flux1);
+         mkepecflux(Ull, Ur, nx, ny, flux2);
+         mkepecflux(Ul, Urr, nx, ny, flux3);
       }
       else
       {
