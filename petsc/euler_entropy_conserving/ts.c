@@ -439,6 +439,32 @@ void numflux(const FluxScheme flux_scheme,
 }
 
 //------------------------------------------------------------------------------
+PetscErrorCode compute_global(DM da, Vec ug, PetscReal *global)
+{
+   PetscErrorCode ierr;
+   PetscScalar    ***u;
+   PetscInt       i, j, ibeg, jbeg, nlocx, nlocy;
+   PetscReal      local[2];
+   ierr = DMDAVecGetArrayDOFRead(da, ug, &u); CHKERRQ(ierr);
+   ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
+   for(i=0; i<2; ++i)
+      local[i] = 0.0;
+   for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(i=ibeg; i<ibeg+nlocx; ++i)
+      {
+         double prim[nvar];
+         con2prim(u[j][i], prim);
+         local[0] += 0.5 * prim[0] * (pow(prim[1],2) + pow(prim[2],2));
+         local[1] += -prim[0] * (log(prim[3]) - gas_gamma * log(prim[0]));
+      }
+   for(i=0; i<2; ++i)
+      local[i] *= dx * dy;
+   // sum over all procs
+   MPI_Reduce(local, global, 2, MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+   ierr = DMDAVecRestoreArrayDOFRead(da, ug, &u); CHKERRQ(ierr);
+   PetscFunctionReturn(0);
+}
+//------------------------------------------------------------------------------
 PetscErrorCode savesol(double t, DM da, Vec ug)
 {
    PetscErrorCode ierr;
@@ -715,14 +741,15 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    AppCtx*        ctx = (AppCtx*) ptr;
    DM             da;
    PetscInt       i, j, ibeg, jbeg, nlocx, nlocy;
-   PetscReal      dtlocal, dtglobal;
+   PetscReal      global[2], dtlocal, dtglobal;
    PetscScalar    ***u;
    PetscErrorCode ierr;
 
    if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
-   PetscPrintf(PETSC_COMM_WORLD,"iter, t = %d, %e\n", step, time);
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
+   ierr = compute_global(da, U, global); CHKERRQ(ierr);
+   PetscPrintf(PETSC_COMM_WORLD,"it,t,ke,ent= %d %18.10e %18.10e %18.10e\n", step, time, global[0], global[1]);
 
    if(step > 0 && (step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13))
    {
