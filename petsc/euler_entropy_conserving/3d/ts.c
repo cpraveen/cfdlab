@@ -37,7 +37,7 @@ extern PetscErrorCode RHSFunction(TS,PetscReal,Vec,Vec,void*);
 extern PetscErrorCode Monitor(TS,PetscInt,PetscReal,Vec,void*);
 
 // Isentropic vortex
-void initcond_vortex(const double x, const double y, double *Prim)
+void initcond_vortex(const double x, const double y, const double z, double *Prim)
 {
    const double M = 0.5;
    const double alpha = M_PI*(45.0/180.0);
@@ -47,16 +47,18 @@ void initcond_vortex(const double x, const double y, double *Prim)
    Prim[0] =  pow(T, 1.0/(gas_gamma-1.0));
    Prim[1] =  M*cos(alpha) - beta/(2.0*M_PI)*y*exp(0.5*(1.0-r2));
    Prim[2] =  M*sin(alpha) + beta/(2.0*M_PI)*x*exp(0.5*(1.0-r2));
-   Prim[3] =  pow(Prim[0],gas_gamma);
+   Prim[3] = 0.0;
+   Prim[4] =  pow(Prim[0],gas_gamma);
 }
 
 // Density profile
-void initcond_density(const double x, const double y, double *Prim)
+void initcond_density(const double x, const double y, const double z, double *Prim)
 {
-   Prim[0] = 1.0 + 0.98 * sin(2.0 * M_PI*(x + y));
+   Prim[0] = 1.0 + 0.98 * sin(2.0 * M_PI*(x + y + z));
    Prim[1] = 0.1;
    Prim[2] = 0.2;
-   Prim[3] = 20.0;
+   Prim[3] = 0.2;
+   Prim[4] = 20.0;
 }
 
 // Conserved to primitive variables
@@ -76,7 +78,7 @@ void prim2con(const double *Prim, double *Con)
   Con[1] = Prim[0]*Prim[1];
   Con[2] = Prim[0]*Prim[2];
   Con[3] = Prim[0]*Prim[3];
-  Con[4] = 0.5*Prim[0]*(pow(Prim[1],2) + pow(Prim[2],2) + pow(Prim[3],2)) + Prim[3]/(gas_gamma-1.0);
+  Con[4] = 0.5*Prim[0]*(pow(Prim[1],2) + pow(Prim[2],2) + pow(Prim[3],2)) + Prim[4]/(gas_gamma-1.0);
 }
 
 // Compute maximum eigenvalue in direction (nx,ny)
@@ -461,21 +463,22 @@ void numflux(const FluxScheme flux_scheme,
 PetscErrorCode compute_global(DM da, Vec ug, PetscReal *global)
 {
    PetscErrorCode ierr;
-   PetscScalar    ***u;
-   PetscInt       i, j, ibeg, jbeg, nlocx, nlocy;
+   PetscScalar    ****u;
+   PetscInt       i, j, k, ibeg, jbeg, kbeg, nlocx, nlocy, nlocz;
    PetscReal      local[2];
    ierr = DMDAVecGetArrayDOFRead(da, ug, &u); CHKERRQ(ierr);
-   ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
+   ierr = DMDAGetCorners(da, &ibeg, &jbeg, &kbeg, &nlocx, &nlocy, &nlocz); CHKERRQ(ierr);
    for(i=0; i<2; ++i)
       local[i] = 0.0;
-   for(j=jbeg; j<jbeg+nlocy; ++j)
-      for(i=ibeg; i<ibeg+nlocx; ++i)
-      {
-         double prim[nvar];
-         con2prim(u[j][i], prim);
-         local[0] += 0.5 * prim[0] * (pow(prim[1],2) + pow(prim[2],2) + pow(prim[3],2));
-         local[1] += -prim[0] * (log(prim[4]) - gas_gamma * log(prim[0]));
-      }
+   for(k=kbeg; k<kbeg+nlocz; ++k)
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+         for(i=ibeg; i<ibeg+nlocx; ++i)
+         {
+            double prim[nvar];
+            con2prim(u[k][j][i], prim);
+            local[0] += 0.5 * prim[0] * (pow(prim[1],2) + pow(prim[2],2) + pow(prim[3],2));
+            local[1] += -prim[0] * (log(prim[4]) - gas_gamma * log(prim[0]));
+         }
    for(i=0; i<2; ++i)
       local[i] *= dx * dy * dz;
    // sum over all procs
@@ -492,7 +495,7 @@ PetscErrorCode savesol(double t, DM da, Vec ug)
    PetscInt       i, j, k, nx, ny, nz, ibeg, jbeg, kbeg, nlocx, nlocy, nlocz;
    FILE           *fp;
    Vec            ul;
-   PetscScalar    ***u;
+   PetscScalar    ****u;
    static int     c = 0;
 
    ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
@@ -510,7 +513,7 @@ PetscErrorCode savesol(double t, DM da, Vec ug)
    sprintf(filename, "sol-%03d-%03d.plt", c, rank);
    fp = fopen(filename,"w");
    fprintf(fp, "TITLE = \"3D compressible flow\"\n");
-   fprintf(fp, "VARIABLES = x, y, rho, u, v, w, p\n");
+   fprintf(fp, "VARIABLES = x, y, z, rho, u, v, w, p\n");
    fprintf(fp, "ZONE STRANDID=1,SOLUTIONTIME=%e,I=%d,J=%d,K=%d,DATAPACKING=POINT\n", 
            t,iend-ibeg,jend-jbeg,kend-kbeg);
    for(k=kbeg; k<kend; ++k)
@@ -521,7 +524,7 @@ PetscErrorCode savesol(double t, DM da, Vec ug)
             PetscReal y = ymin + j*dy + 0.5*dy;
             PetscReal z = zmin + k*dz + 0.5*dz;
             double prim[nvar];
-            con2prim(u[j][i], prim);
+            con2prim(u[k][j][i], prim);
             fprintf(fp, "%e %e %e %e %e %e %e %e\n", x, y, z, prim[0], prim[1],
                     prim[2], prim[3], prim[4]);
          }
@@ -537,7 +540,7 @@ PetscErrorCode savesol(double t, DM da, Vec ug)
 int main(int argc, char *argv[])
 {
    // some parameters that can overwritten from command line
-   PetscInt  nx  = 50, ny=50, nz=50; // use -da_grid_x, -da_grid_y, -da_grid_z to override these
+   PetscInt  nx=50, ny=50, nz=50; // use -da_grid_x, -da_grid_y, -da_grid_z to override these
    
    PetscErrorCode ierr;
    AppCtx      ctx;
@@ -547,7 +550,7 @@ int main(int argc, char *argv[])
    PetscInt    i, j, k, ibeg, jbeg, kbeg, nlocx, nlocy, nlocz;
    PetscMPIInt rank, size;
    PetscReal   dtglobal, dtlocal = 1.0e20;
-   PetscScalar ***u;
+   PetscScalar ****u;
    Problem     problem;
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
@@ -576,6 +579,8 @@ int main(int argc, char *argv[])
       xmax = +10.0;
       ymin = -10.0;
       ymax = +10.0;
+      zmin = -10.0;
+      zmax = +10.0;
    }
    else if(problem == prob_density)
    {
@@ -583,6 +588,8 @@ int main(int argc, char *argv[])
       xmax = +1.0;
       ymin = -1.0;
       ymax = +1.0;
+      zmin = -1.0;
+      zmax = +1.0;
    }
    else
    {
@@ -614,14 +621,15 @@ int main(int argc, char *argv[])
          for(i=ibeg; i<ibeg+nlocx; ++i)
          {
             PetscReal x = xmin + i*dx + 0.5*dx;
-            PetscReal y = ymin + j*dy + 0.5*dy; 
+            PetscReal y = ymin + j*dy + 0.5*dy;
+            PetscReal z = zmin + k*dz + 0.5*dz;
             PetscReal prim[nvar];
             if(problem == prob_vortex)
-               initcond_vortex(x, y, prim);
+               initcond_vortex(x, y, z, prim);
             else if(problem == prob_density)
-               initcond_density(x, y, prim);
-            prim2con(prim, u[j][i]);
-            dtlocal = min(dtlocal, dt_local(u[j][i]));
+               initcond_density(x, y, z, prim);
+            prim2con(prim, u[k][j][i]);
+            dtlocal = min(dtlocal, dt_local(u[k][j][i]));
       }
    ierr = DMDAVecRestoreArrayDOF(da, ug, &u); CHKERRQ(ierr);
    MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
@@ -699,9 +707,10 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
                res[k][j][i][d] = 0;
 
    // x fluxes
+   const double xarea = dy * dz;
    for(k=kbeg; k<kbeg+nlocz; ++k)
-      for(i=ibeg; i<ibeg+nlocx+1; ++i)
-         for(j=jbeg; j<jbeg+nlocy; ++j)
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+         for(i=ibeg; i<ibeg+nlocx+1; ++i)
          {
             // face between i-1, i
             numflux(ctx->flux_scheme, ctx->order, u[k][j][i-2], u[k][j][i-1], 
@@ -709,24 +718,25 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             if(i==ibeg)
             {
                for(d=0; d<nvar; ++d)
-                  res[k][j][i][d] -= dy * flux[d];
+                  res[k][j][i][d] -= xarea * flux[d];
             }
             else if(i==ibeg+nlocx)
             {
                for(d=0; d<nvar; ++d)
-                  res[k][j][i-1][d] += dy * flux[d];
+                  res[k][j][i-1][d] += xarea * flux[d];
             }
             else
             {
                for(d=0; d<nvar; ++d)
                {
-                  res[k][j][i][d]   -= dy * flux[d];
-                  res[k][j][i-1][d] += dy * flux[d];
+                  res[k][j][i][d]   -= xarea * flux[d];
+                  res[k][j][i-1][d] += xarea * flux[d];
                }
             }
          }
 
    // y fluxes
+   const double yarea = dx * dz;
    for(k=kbeg; k<kbeg+nlocz; ++k)
       for(j=jbeg; j<jbeg+nlocy+1; ++j)
          for(i=ibeg; i<ibeg+nlocx; ++i)
@@ -737,22 +747,52 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
             if(j==jbeg)
             {
                for(d=0; d<nvar; ++d)
-                  res[k][j][i][d] -= dx * flux[d];
+                  res[k][j][i][d] -= yarea * flux[d];
             }
             else if(j==jbeg+nlocy)
             {
                for(d=0; d<nvar; ++d)
-                  res[k][j-1][i][d] += dx * flux[d];
+                  res[k][j-1][i][d] += yarea * flux[d];
             }
             else
             {
                for(d=0; d<nvar; ++d)
                {
-                  res[k][j][i][d]   -= dx * flux[d];
-                  res[k][j-1][i][d] += dx * flux[d];
+                  res[k][j][i][d]   -= yarea * flux[d];
+                  res[k][j-1][i][d] += yarea * flux[d];
                }
             }
          }
+
+   // z fluxes
+   const double zarea = dx * dy;
+   for(k=kbeg; k<kbeg+nlocz+1; ++k)
+      for(j=jbeg; j<jbeg+nlocy; ++j)
+         for(i=ibeg; i<ibeg+nlocx; ++i)
+         {
+            // face between k-1, k
+            numflux(ctx->flux_scheme, ctx->order, u[k-2][j][i], u[k-1][j][i],
+                    u[k][j][i], u[k+1][j][i], 0.0, 0.0, 1.0, flux);
+            if(k==kbeg)
+            {
+               for(d=0; d<nvar; ++d)
+                  res[k][j][i][d] -= zarea * flux[d];
+            }
+            else if(k==kbeg+nlocz)
+            {
+               for(d=0; d<nvar; ++d)
+                  res[k-1][j][i][d] += zarea * flux[d];
+            }
+            else
+            {
+               for(d=0; d<nvar; ++d)
+               {
+                  res[k][j][i][d]   -= zarea * flux[d];
+                  res[k-1][j][i][d] += zarea * flux[d];
+               }
+            }
+         }
+
 
    lam = 1.0/(dx*dy*dz);
    for(k=kbeg; k<kbeg+nlocz; ++k)
@@ -774,9 +814,9 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
 {
    AppCtx*        ctx = (AppCtx*) ptr;
    DM             da;
-   PetscInt       i, j, ibeg, jbeg, nlocx, nlocy;
+   PetscInt       i, j, k, ibeg, jbeg, kbeg, nlocx, nlocy, nlocz;
    PetscReal      global[2], dtlocal, dtglobal;
-   PetscScalar    ***u;
+   PetscScalar    ****u;
    PetscErrorCode ierr;
 
    if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
@@ -797,15 +837,16 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    // Compute time step based on cfl
    if(ctx->cfl > 0)
    {
-      ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
+      ierr = DMDAGetCorners(da, &ibeg, &jbeg, &kbeg, &nlocx, &nlocy, &nlocz); CHKERRQ(ierr);
       ierr = DMDAVecGetArrayDOFRead(da, U, &u); CHKERRQ(ierr);
 
       dtlocal = 1.0e20;
-      for(j=jbeg; j<jbeg+nlocy; ++j)
-         for(i=ibeg; i<ibeg+nlocx; ++i)
-         {
-            dtlocal = min(dtlocal, dt_local(u[j][i]));
-         }
+      for(k=kbeg; k<kbeg+nlocz; ++k)
+         for(j=jbeg; j<jbeg+nlocy; ++j)
+            for(i=ibeg; i<ibeg+nlocx; ++i)
+            {
+               dtlocal = min(dtlocal, dt_local(u[k][j][i]));
+            }
       ierr = DMDAVecRestoreArrayDOFRead(da, U, &u); CHKERRQ(ierr);
       MPI_Allreduce(&dtlocal, &dtglobal, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
       dtglobal *= ctx->cfl;
