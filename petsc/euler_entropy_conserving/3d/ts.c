@@ -23,8 +23,8 @@ const char *const FluxSchemes[] = {"central","kepec","kep","mkep",
                                    "kg","ducros","mkepec",
                                    "FluxScheme", "flux_", NULL};
 
-typedef enum { prob_vortex, prob_density } Problem;
-const char *const Problems[] = {"vortex", "density", "Problem", "prob_", NULL};
+typedef enum { prob_vortex,prob_density,prob_tgv } Problem;
+const char *const Problems[] = {"vortex","density","tgv","Problem","prob_",NULL};
 
 typedef struct
 {
@@ -59,6 +59,22 @@ void initcond_density(const double x, const double y, const double z, double *Pr
    Prim[2] = 0.2;
    Prim[3] = 0.2;
    Prim[4] = 20.0;
+}
+
+// Taylor-Green vortex
+void initcond_tgv(const double x, const double y, const double z, double *Prim)
+{
+   double L = 1.0;
+   double V0 = 1.0;
+   double rho0 = 1.0;
+   double M = 0.1;
+   double p0 = V0*V0*rho0/(M*M*gas_gamma);
+
+   Prim[0] =  rho0;
+   Prim[1] =  V0*sin(x/L)*cos(y/L)*cos(z/L);;
+   Prim[2] = -V0*cos(x/L)*sin(y/L)*cos(z/L);;
+   Prim[3] =  0.0;
+   Prim[4] =  p0 + (rho0*V0*V0)/16.0*(cos(2*x/L) + cos(2*y/L)) * (cos(2*z/L) + 2.0);
 }
 
 // Conserved to primitive variables
@@ -591,6 +607,15 @@ int main(int argc, char *argv[])
       zmin = -1.0;
       zmax = +1.0;
    }
+   else if(problem == prob_tgv)
+   {
+      xmin = 0.0;
+      xmax = 2.0*M_PI;
+      ymin = 0.0;
+      ymax = 2.0*M_PI;
+      zmin = 0.0;
+      zmax = 2.0*M_PI;
+   }
    else
    {
       PetscPrintf(PETSC_COMM_WORLD,"Unknown problem\n");
@@ -628,6 +653,8 @@ int main(int argc, char *argv[])
                initcond_vortex(x, y, z, prim);
             else if(problem == prob_density)
                initcond_density(x, y, z, prim);
+            else if(problem == prob_tgv)
+               initcond_tgv(x, y, z, prim);
             prim2con(prim, u[k][j][i]);
             dtlocal = min(dtlocal, dt_local(u[k][j][i]));
       }
