@@ -140,7 +140,7 @@ void avgflux(const double *Ul, const double *Ur,
   fluxr[1] = Pr[4]*nx + Pr[1]*fluxr[0];
   fluxr[2] = Pr[4]*ny + Pr[2]*fluxr[0];
   fluxr[3] = Pr[4]*nz + Pr[3]*fluxr[0];
-  fluxr[3] = (Ur[4]+Pr[4])*(Pr[1]*nx + Pr[2]*ny + Pr[3]*nz);
+  fluxr[4] = (Ur[4]+Pr[4])*(Pr[1]*nx + Pr[2]*ny + Pr[3]*nz);
 
   for(int i=0; i<nvar; ++i) flux[i] = 0.5*(fluxl[i] + fluxr[i]);
 }
