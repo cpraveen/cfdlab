@@ -45,7 +45,7 @@ sh ./merge.sh
 To use the classical RK4 scheme
 ```
 rm -f sol*.plt
-mpirun -np 4 ./ts -problem vortex -flux kepec-order 2 \
+mpirun -np 4 ./ts -problem vortex -flux kepec -order 2 \
                   -da_grid_x 100 -da_grid_y 100 \
                   -Tf 20.0 -cfl 0.8 -si 100 \
                   -ts_type rk -ts_rk_type 4 -ts_adapt_type none -ts_monitor 

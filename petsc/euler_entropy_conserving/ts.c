@@ -282,7 +282,9 @@ void mkepflux(const double *Ul, const double *Ur,
    double u = 0.5 * (ql[1] + qr[1]);
    double v = 0.5 * (ql[2] + qr[2]);
    double p = 0.5 * (ql[3] + qr[3]);
-   double E = 0.5 * (Ul[3] + Ur[3]);
+   double u2l = ql[1] * ql[1] + ql[2] * ql[2];
+   double u2r = qr[1] * qr[1] + qr[2] * qr[2];
+   double u2  = 0.5 * (u2l + u2r);
 
    // Rotated velocity
    double un = u * nx + v * ny;
@@ -291,7 +293,7 @@ void mkepflux(const double *Ul, const double *Ur,
    flux[0] = r * un;
    flux[1] = p * nx + u * flux[0];
    flux[2] = p * ny + v * flux[0];
-   flux[3] = (E + p) * un;
+   flux[3] = gas_gamma * p * un / (gas_gamma-1.0) + 0.5 * r * u2 * un;
 }
 //------------------------------------------------------------------------------
 // Kennedy and Gruber flux
