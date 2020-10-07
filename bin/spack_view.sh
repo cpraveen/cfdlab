@@ -41,6 +41,15 @@ rm -rf $SPACK_VIEW/.spack
 rm -rf $SPACK_VIEW/.spack-empty
 rm -rf $SPACK_VIEW/.nagged
 
+dolink gcc
+rm -f $SPACK_VIEW/bin/c++
+rm -f $SPACK_VIEW/bin/cpp
+
+read -p "Continue (y/n) ? " CONT
+if [ "$CONT" = "n" ]; then
+  exit
+fi
+
 dolink adol-c
 dolink arpack-ng
 dolink assimp
