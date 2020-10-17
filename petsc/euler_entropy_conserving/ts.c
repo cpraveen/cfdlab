@@ -50,12 +50,15 @@ void initcond_vortex(const double x, const double y, double *Prim)
 }
 
 // Density profile
+const double vx0 = 0.1;
+const double vy0 = 0.2;
+const double p0 = 20.0;
 void initcond_density(const double x, const double y, double *Prim)
 {
    Prim[0] = 1.0 + 0.98 * sin(2.0 * M_PI*(x + y));
-   Prim[1] = 0.1;
-   Prim[2] = 0.2;
-   Prim[3] = 20.0;
+   Prim[1] = vx0;
+   Prim[2] = vy0;
+   Prim[3] = p0;
 }
 
 // Conserved to primitive variables
