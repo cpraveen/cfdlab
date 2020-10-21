@@ -41,13 +41,16 @@ rm -rf $SPACK_VIEW/.spack
 rm -rf $SPACK_VIEW/.spack-empty
 rm -rf $SPACK_VIEW/.nagged
 
-dolink gcc
-rm -f $SPACK_VIEW/bin/c++
-rm -f $SPACK_VIEW/bin/cpp
+read -p "Link gcc (y/n) ? " CONT
+if [ "$CONT" = "y" ]; then
+   dolink gcc
+   rm -f $SPACK_VIEW/bin/c++
+   rm -f $SPACK_VIEW/bin/cpp
 
-read -p "Continue (y/n) ? " CONT
-if [ "$CONT" = "n" ]; then
-  exit
+   read -p "Continue (y/n) ? " CONT
+   if [ "$CONT" = "n" ]; then
+      exit
+   fi
 fi
 
 dolink adol-c
