@@ -51,8 +51,8 @@ void savesol(double *x, double *up, double *um)
    fclose(fp);
 }
 
-// Unlimited scheme
-void flux1(const double a, const double dt,
+// Unlimited scheme: compact stencil (-dx/2, +dx/2)
+void flux1a(const double a, const double dt,
            const double *up0, const double *um, double *up1, double *fl)
 {
    // update face values to n+1
@@ -79,6 +79,37 @@ void flux1(const double a, const double dt,
    {
       up1[n-1] = up1[0];
       fl[n-1]  = fl[0];
+   }
+}
+
+// Unlimited scheme: stencil (-dx,+dx)
+void flux1b(const double a, const double dt,
+           const double *up0, const double *um, double *up1, double *fl)
+{
+   // update face values to n+1
+   // left boundary
+   {
+      double ux = (up0[1] - up0[n-2]) / (2*dx);
+      double uxx = (up0[n-2] - 2.0 * up0[0] + up0[1]) / (dx * dx);
+      double ut = -a * ux;
+      double utt = a * a * uxx;
+      up1[0] = up0[0] + dt * ut + 0.5 * dt * dt * utt;
+      fl[0] = a * (up0[0] + 0.5 * dt * ut + dt * dt * utt / 6.0);
+   }
+   // interior faces
+   for (int i = 1; i < n - 1; ++i)
+   {
+      double ux = (up0[i+1] - up0[i-1]) / (2*dx);
+      double uxx = (up0[i-1] - 2.0 * up0[i] + up0[i+1]) / (dx * dx);
+      double ut = -a * ux;
+      double utt = a * a * uxx;
+      up1[i] = up0[i] + dt * ut + 0.5 * dt * dt * utt;
+      fl[i] = a * (up0[i] + 0.5 * dt * ut + dt * dt * utt / 6.0);
+   }
+   // right boundary
+   {
+      up1[n - 1] = up1[0];
+      fl[n - 1] = fl[0];
    }
 }
 
@@ -188,6 +219,8 @@ int main()
    for(i=0; i<m; ++i)
       fprintf(fp,"%e %e\n", 0.5*(x[i]+x[i+1]), ua[i]);
    fclose(fp);
+
+   savesol(x, up0, um);
 
    return 0;
 }
