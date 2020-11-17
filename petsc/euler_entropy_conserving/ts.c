@@ -55,9 +55,10 @@ const double vy0 = 0.2;
 const double p0 = 20.0;
 void initcond_density(const double x, const double y, double *Prim)
 {
-   Prim[0] = 1.0 + 0.98 * sin(2.0 * M_PI*(x + y));
-   Prim[1] = vx0;
-   Prim[2] = vy0;
+   const double eps = 0.0; // perturb velocity
+   Prim[0] = 1.0 + 0.98 * sin(2.0 * M_PI * (x + y));
+   Prim[1] = vx0 + eps * (sin(2 * M_PI * x) + sin(2 * M_PI * y));
+   Prim[2] = vy0 + eps * (cos(2 * M_PI * x) + cos(2 * M_PI * y));
    Prim[3] = p0;
 }
 
@@ -444,7 +445,7 @@ void numflux(const FluxScheme flux_scheme,
 }
 
 //------------------------------------------------------------------------------
-PetscErrorCode compute_global(DM da, Vec ug, PetscReal *global)
+PetscErrorCode compute_global(PetscReal time, DM da, Vec ug, PetscReal *global)
 {
    PetscErrorCode ierr;
    PetscScalar    ***u;
@@ -459,7 +460,21 @@ PetscErrorCode compute_global(DM da, Vec ug, PetscReal *global)
       {
          double prim[nvar];
          con2prim(u[j][i], prim);
-         local[0] += 0.5 * prim[0] * (pow(prim[1],2) + pow(prim[2],2));
+         if(0) // set to 1 for density wave test
+         {
+            PetscReal x = xmin + i * dx + 0.5 * dx;
+            PetscReal y = ymin + j * dy + 0.5 * dy;
+            double prim0[nvar];
+            initcond_density(x-vx0*time, y-vy0*time, prim0);
+            double dp = prim[3] - p0;
+            double dvx = prim[1] - vx0;
+            double dvy = prim[2] - vy0;
+            local[0] += 0.5*dp*dp/p0/gas_gamma + 0.5*prim0[0]*(dvx*dvx + dvy*dvy);
+         }
+         else
+         {
+            local[0] += 0.5 * prim[0] * (pow(prim[1],2) + pow(prim[2],2));
+         }
          local[1] += -prim[0] * (log(prim[3]) - gas_gamma * log(prim[0]));
       }
    for(i=0; i<2; ++i)
@@ -753,7 +768,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
-   ierr = compute_global(da, U, global); CHKERRQ(ierr);
+   ierr = compute_global(time, da, U, global); CHKERRQ(ierr);
    PetscPrintf(PETSC_COMM_WORLD,"it,t,ke,ent= %d %18.10e %18.10e %18.10e\n", step, time, global[0], global[1]);
 
    if(step > 0 && (step%ctx->si == 0 || PetscAbs(time-ctx->Tf) < 1.0e-13))
