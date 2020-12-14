@@ -132,6 +132,27 @@ void write_structured_grid(int ni,
    cout << "Wrote structured grid into struct.vtk" << endl;
 }
 
+void write_tecplot_grid(int ni,
+                        int nj,
+                        double **x,
+                        double **y,
+                        double **var,
+                        double t,
+                        int c)
+{
+   ofstream fout;
+   fout.open("struct.plt");
+   fout << "TITLE = \"Tecplot format\"" << endl;
+   fout << "VARIABLES = x, y, density" << endl;
+   fout << "ZONE STRANDID=1, SOLUTIONTIME=" << t << ", I=" << ni << ", J=" << nj
+        << ", DATAPACKING=POINT" << endl;
+   for(int j=0; j<nj; ++j)
+      for(int i=0; i<ni; ++i)
+         fout << x[i][j] << " " << y[i][j] << " " << var[i][j] << endl;
+
+   cout << "Wrote structured grid into struct.plt" << endl;
+}
+
 void test_structured_grid()
 {
    cout << "Saving structured grid\n";
@@ -164,6 +185,7 @@ void test_structured_grid()
       }
 
    write_structured_grid(nt, nr, x, y, var, 0.0, 0);
+   write_tecplot_grid(nt, nr, x, y, var, 0.0, 0);
 
    // deallocate memory
    for(int i=0; i<nt; ++i)
