@@ -5,7 +5,18 @@
 c++ vtk_struct.cc
 ./a.out
 ```
-This outputs a Cartesian grid and a structured grid in vtk format. Open them in Visit.
+This outputs a Cartesian grid and a structured grid in vtk format. A file in Tecplot format is also written. Open them in Visit.
+
+## Time dependent solution
+```
+c++ vtk_anim.cc
+./a.out
+```
+generate a sequence of files with time dependent solution. View them in Visit
+```
+visit -o sol*.vtk
+```
+and plot pseudocolor or contour plots.
 
 ## Gmsh unstructured grid
 ```
