@@ -8,7 +8,9 @@ void write_rectilinear_grid(int nx,
                             int ny,
                             double *x,
                             double *y,
-                            double **var)
+                            double **var,
+                            double t,
+                            int c)
 {
    int nz = 1; // We have a 2d grid
 
@@ -20,9 +22,9 @@ void write_rectilinear_grid(int nx,
    fout << "DATASET RECTILINEAR_GRID" << endl;
    fout << "FIELD FieldData 2" << endl;
    fout << "TIME 1 1 double" << endl;
-   fout << 0.0 << endl;
+   fout << t << endl;
    fout << "CYCLE 1 1 int" << endl;
-   fout << 1 << endl;
+   fout << c << endl;
    fout << "DIMENSIONS " << nx << " " << ny << " " << nz << endl;
    fout << "X_COORDINATES " << nx << " float" << endl;
    for(int i=0; i<nx; ++i)
@@ -77,7 +79,7 @@ void test_rectilinear_grid()
       {
          var[i][j] = sin(2.0*M_PI*x[i]) * sin(2.0*M_PI*y[j]);
       }
-   write_rectilinear_grid(nx, ny, x, y, var);
+   write_rectilinear_grid(nx, ny, x, y, var, 0.0, 0);
 
    // Deallocate memory here
    delete[] x;
@@ -91,7 +93,9 @@ void write_structured_grid(int ni,
                            int nj,
                            double **x,
                            double **y,
-                           double **var)
+                           double **var,
+                           double t,
+                           int c)
 {
    int nk = 1; // We have a 2d grid
 
@@ -103,9 +107,9 @@ void write_structured_grid(int ni,
    fout << "DATASET STRUCTURED_GRID" << endl;
    fout << "FIELD FieldData 2" << endl;
    fout << "TIME 1 1 double" << endl;
-   fout << 0.0 << endl;
+   fout << t << endl;
    fout << "CYCLE 1 1 int" << endl;
-   fout << 1 << endl;
+   fout << c << endl;
    fout << "DIMENSIONS " << ni << " " << nj << " " << nk << endl;
    fout << "POINTS " << ni*nj*nk << " float" << endl;
    for(int i=0; i<ni; ++i)
@@ -157,7 +161,7 @@ void test_structured_grid()
          var[i][j] = sin(2.0*M_PI*x[i][j]) * sin(2.0*M_PI*y[i][j]);
       }
 
-   write_structured_grid(nt, nr, x, y, var);
+   write_structured_grid(nt, nr, x, y, var, 0.0, 0);
 
    // deallocate memory
    for(int i=0; i<nt; ++i)
