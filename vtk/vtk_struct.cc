@@ -40,9 +40,10 @@ void write_rectilinear_grid(int nx,
    fout << "POINT_DATA " << nx*ny*nz << endl;
    fout << "SCALARS density float" << endl;
    fout << "LOOKUP_TABLE default" << endl;
-   for(int i=0; i<nx; ++i)
+   // no need for k-loop since nk=1
+   for(int j=0; j<ny; ++j)
    {
-      for(int j=0; j<ny; ++j)
+      for(int i=0; i<nx; ++i)
          fout << var[i][j] << " ";
       fout << endl;
    }
@@ -112,6 +113,7 @@ void write_structured_grid(int ni,
    fout << c << endl;
    fout << "DIMENSIONS " << ni << " " << nj << " " << nk << endl;
    fout << "POINTS " << ni*nj*nk << " float" << endl;
+   // no need for k-loop since nk=1
    for(int i=0; i<ni; ++i)
       for(int j=0; j<nj; ++j)
          fout << x[i][j] << " " << y[i][j] << " 0.0" << endl;
@@ -156,8 +158,8 @@ void test_structured_grid()
       {
          double t = tmin + i*dt;
          double r = rmin + j*dr;
-         x[i][j] = r * sin(t);
-         y[i][j] = r * cos(t);
+         x[i][j] = r * cos(t);
+         y[i][j] = r * sin(t);
          var[i][j] = sin(2.0*M_PI*x[i][j]) * sin(2.0*M_PI*y[i][j]);
       }
 
@@ -179,4 +181,5 @@ int main()
 {
    test_rectilinear_grid();
    test_structured_grid();
+   return 0;
 }
