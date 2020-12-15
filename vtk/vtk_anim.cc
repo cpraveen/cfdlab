@@ -5,11 +5,12 @@
 
 using namespace std;
 
-string get_filename(string base_name,
-                    int ndigits,
-                    int c)
+// Ex: get_filename("sol_",3,42) should return "sol_042.vtk"
+string get_filename(const string base_name,
+                    const int ndigits,
+                    const int c)
 {
-   if(c > pow(10,ndigits))
+   if(c > pow(10,ndigits)-1)
    {
       cout << "get_filename: Not enough digits !!!\n";
       cout << "ndigits= " << ndigits << endl;
@@ -18,33 +19,11 @@ string get_filename(string base_name,
    }
 
    string name = base_name;
-   // Improve the below part
-   if(c < 10)
-   {
-      for(int i=0; i<ndigits-1; ++i)
-         name += "0";
-   }
-   else if(c < 100)
-   {
-      for(int i=0; i<ndigits-2; ++i)
-         name += "0";
-   }
-   else if(c < 1000)
-   {
-      for(int i=0; i<ndigits-3; ++i)
-         name += "0";
-   }
-   else if(c < 10000)
-   {
-      for(int i=0; i<ndigits-4; ++i)
-         name += "0";
-   }
-   else
-   {
-      cout << "get_filename: Not implemented\n";
-      exit(0);
-   }
-
+   // first pad with zeros
+   int d = 1;
+   if(c > 0) d = int(floor(log10(c))) + 1;
+   for(int i=0; i<ndigits-d; ++i)
+      name += "0";
    name += to_string(c) + ".vtk";
    return name;
 }
