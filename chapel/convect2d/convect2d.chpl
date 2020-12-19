@@ -2,11 +2,13 @@
    weno5 reconstruction and periodic boundary conditions. 
    You need to use StencilDist which will be available in v1.14
    of Chapel. You can specify some command line options, e.g.,
-      ./a.out --n=100 --Tf=5.0 --cfl=0.4 --si=100
+      ./convect2d --n=100 --Tf=5.0 --cfl=0.4 --si=100
    See below for explanation of n, Tf, cfl, si. 
    Solution is saved in Tecplot format which can also be opened
    in VisIt.
+      visit -o sol*.tec
 */
+use IO;
 use StencilDist;
 
 config const n  = 50,   // number of cells in each direction
@@ -15,8 +17,8 @@ config const n  = 50,   // number of cells in each direction
              si = 100;  // iteration interval to save solution
 const xmin = 0.0, xmax = 1.0,
       ymin = 0.0, ymax = 1.0;
-const ark : 3*real = (0.0, 3.0/4.0, 1.0/3.0);
-const brk : 3*real = (1.0, 1.0/4.0, 2.0/3.0);
+const ark : [1..3] real = (0.0, 3.0/4.0, 1.0/3.0);
+const brk : [1..3] real = (1.0, 1.0/4.0, 2.0/3.0);
 var dx, dy : real;
 
 // fv weno5 reconstruction, gives left state at interface
@@ -79,8 +81,8 @@ proc main()
         Dy = {1..n,1..(n+1)};
   param rank = D.rank;
 
-  var halo : rank*int;
-  for i in 1..rank do halo(i) = 3;
+  // problem space
+  var halo = (3,3);
   const PSpace = D dmapped Stencil(D, fluff=halo, periodic=true);
 
   var u : [PSpace] real;
