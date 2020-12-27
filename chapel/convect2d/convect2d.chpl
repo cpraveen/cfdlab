@@ -2,7 +2,7 @@
    weno5 reconstruction and periodic boundary conditions. 
    You need to use StencilDist which will be available in v1.14
    of Chapel. You can specify some command line options, e.g.,
-      ./convect2d --n=100 --Tf=5.0 --cfl=0.4 --si=100
+      ./convect2d --nx=100 --ny==100 --Tf=5.0 --cfl=0.4 --si=100
    See below for explanation of n, Tf, cfl, si. 
    Solution is saved in Tecplot format which can also be opened
    in VisIt.
@@ -11,7 +11,8 @@
 use IO;
 use StencilDist;
 
-config const n  = 50,   // number of cells in each direction
+config const nx = 50,   // number of cells in x direction
+             ny = 50,   // number of cells in y direction
              Tf = 10.0, // Time of simulation
              cfl= 0.4,  // cfl number
              si = 100;  // iteration interval to save solution
@@ -56,7 +57,7 @@ proc savesol(t : real, u : [?D] real, c : int) : int
   var fw = open(filename, iomode.cw).writer();
   fw.writeln("TITLE = \"u_t + u_x + u_y = 0\"");
   fw.writeln("VARIABLES = x, y, sol");
-  fw.writeln("ZONE STRANDID=1, SOLUTIONTIME=",t,", I=",n,", J=",n,", DATAPACKING=POINT");
+  fw.writeln("ZONE STRANDID=1, SOLUTIONTIME=",t,", I=",nx,", J=",ny,", DATAPACKING=POINT");
   for (j,i) in D
   {
     const x = xmin + (i-1)*dx + 0.5*dx,
@@ -70,19 +71,19 @@ proc savesol(t : real, u : [?D] real, c : int) : int
 // main function
 proc main()
 {
-  dx = (xmax-xmin)/n;
-  dy = (ymax-ymin)/n;
+  dx = (xmax-xmin)/nx;
+  dy = (ymax-ymin)/ny;
 
-  writeln("Grid size is ",n," x ",n);
+  writeln("Grid size is ",nx," x ",ny);
   writeln("dx, dy =", dx, dy);
 
-  const D  = {1..n, 1..n},
-        Dx = {1..(n+1),1..n},
-        Dy = {1..n,1..(n+1)};
+  const D  = {1..nx, 1..ny},
+        Dx = {1..(nx+1),1..ny},
+        Dy = {1..nx,1..(ny+1)};
   param rank = D.rank;
 
   // problem space
-  var halo = (3,3);
+  var halo: rank*int = (3,3);
   const PSpace = D dmapped Stencil(D, fluff=halo, periodic=true);
 
   var u : [PSpace] real;
