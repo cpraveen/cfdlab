@@ -105,9 +105,9 @@ proc main()
   writeln("Grid size is ",nx," x ",ny);
   writeln("dx, dy =", dx, dy);
 
-  const D  = {1..nx, 1..ny},
-        Dx = {1..(nx+1),1..ny},
-        Dy = {1..nx,1..(ny+1)};
+  const D  = {1..nx, 1..ny},     // nx * ny     cells
+        Dx = {1..(nx+1),1..ny},  // (nx+1) * ny vertical faces
+        Dy = {1..nx,1..(ny+1)};  // nx * (ny+1) horizontal faces
   param rank = D.rank;
 
   // problem space
@@ -158,6 +158,7 @@ proc main()
     u0 = u;
 
     // 3-stage RK scheme
+    // du/dt + res(u) = 0
     for rk in 1..3
     {
       res = 0.0;
@@ -169,7 +170,7 @@ proc main()
               yf = ymin + (j-1)*dy + 0.5*dy;
         var vel : [1..2] real;
         advection_velocity(xf, yf, vel);
-        // reconstruct left/right states at face
+        // reconstruct left/right states at face between (i-1,j) and (i,j)
         const ul = weno5(u[i-3,j],u[i-2,j],u[i-1,j],u[i,j],u[i+1,j]);
         const ur = weno5(u[i+2,j],u[i+1,j],u[i,j],u[i-1,j],u[i-2,j]);
         // compute numerical flux
@@ -186,7 +187,7 @@ proc main()
               yf = ymin + (j-1)*dy;
         var vel : [1..2] real;
         advection_velocity(xf, yf, vel);
-        // reconstruct left/right states at face
+        // reconstruct left/right states at face between (i,j-1) and (i,j)
         const ul = weno5(u[i,j-3],u[i,j-2],u[i,j-1],u[i,j],u[i,j+1]);
         const ur = weno5(u[i,j+2],u[i,j+1],u[i,j],u[i,j-1],u[i,j-2]);
         // compute numerical flux
