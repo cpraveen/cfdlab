@@ -23,7 +23,9 @@ const ark : [1..3] real = (0.0, 3.0/4.0, 1.0/3.0);
 const brk : [1..3] real = (1.0, 1.0/4.0, 2.0/3.0);
 var dx, dy : real;
 
-proc advection_velocity(x:real, y:real, vel : [1..2] real)
+// (x,y) : coordinates
+// vel   : velocity at (x,y)
+proc advection_velocity(x:real, y:real, ref vel:[1..2] real)
 {
    vel[1] = -y;
    vel[2] =  x;
@@ -31,7 +33,7 @@ proc advection_velocity(x:real, y:real, vel : [1..2] real)
 
 // fv weno5 reconstruction, gives left state at interface
 // between u0 and up1
-proc weno5(um2:real, um1:real, u0:real, up1:real, up2:real): real
+proc weno5(um2:real, um1:real, u0:real, up1:real, up2:real) : real
 {
    const eps = 1.0e-6;
    const gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
@@ -164,7 +166,7 @@ proc main()
       {
         // velocity at face mid-point
         const xf = xmin + (i-1)*dx,
-              yf = ymin + (j-1)*dy;
+              yf = ymin + (j-1)*dy + 0.5*dy;
         var vel : [1..2] real;
         advection_velocity(xf, yf, vel);
         // reconstruct left/right states at face
@@ -180,7 +182,7 @@ proc main()
       forall (i,j) in Dy
       {
         // velocity at face mid-point
-        const xf = xmin + (i-1)*dx,
+        const xf = xmin + (i-1)*dx + 0.5*dx,
               yf = ymin + (j-1)*dy;
         var vel : [1..2] real;
         advection_velocity(xf, yf, vel);
