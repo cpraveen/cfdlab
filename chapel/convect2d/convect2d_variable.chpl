@@ -1,9 +1,10 @@
-/* Solves u_t + u_x + u_y = 0 using finite volume scheme, 
+/* Solves u_t + div(vel*u) = 0 using finite volume scheme, 
+   where vel = (-y,x)
    weno5 reconstruction and periodic boundary conditions. 
    You need to use StencilDist which will be available in v1.14
    of Chapel. You can specify some command line options, e.g.,
-      ./convect2d --nx=100 --ny=100 --Tf=5.0 --cfl=0.4 --si=100
-   See below for explanation of n, Tf, cfl, si. 
+      ./convect2d_variable --nx=100 --ny=100 --Tf=5.0 --cfl=0.8 --si=100
+   See below for explanation of nx, ny, Tf, cfl, si. 
    Solution is saved in Tecplot format which can also be opened
    in VisIt.
       visit -o sol*.tec
@@ -11,16 +12,22 @@
 use IO;
 use StencilDist;
 
-config const nx = 50,   // number of cells in x direction
-             ny = 50,   // number of cells in y direction
+config const nx = 100,   // number of cells in x direction
+             ny = 100,   // number of cells in y direction
              Tf = 10.0, // Time of simulation
-             cfl= 0.4,  // cfl number
+             cfl= 0.9,  // cfl number
              si = 100;  // iteration interval to save solution
-const xmin = 0.0, xmax = 1.0,
-      ymin = 0.0, ymax = 1.0;
+const xmin = -1.0, xmax = 1.0,
+      ymin = -1.0, ymax = 1.0;
 const ark : [1..3] real = (0.0, 3.0/4.0, 1.0/3.0);
 const brk : [1..3] real = (1.0, 1.0/4.0, 2.0/3.0);
 var dx, dy : real;
+
+proc advection_velocity(x:real, y:real, vel : [1..2] real)
+{
+   vel[1] = -y;
+   vel[2] =  x;
+}
 
 // fv weno5 reconstruction, gives left state at interface
 // between u0 and up1
@@ -45,6 +52,25 @@ proc weno5(um2:real, um1:real, u0:real, up1:real, up2:real): real
    const u3 = (1.0/3.0)*u0 + (5.0/6.0)*up1 - (1.0/6.0)*up2;
 
    return (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
+}
+
+// upwind flux
+// (lx,ly): unit normal vector to face
+// vel    : velocity vector
+// ul,ur  : left, right states
+// flux   : numerical flux
+proc numerical_flux(lx:real, ly:real, vel:[1..2] real, 
+                    ul:real, ur:real, ref flux:real)
+{
+   const vn = vel[1]*lx + vel[2]*ly; // normal velocity
+   if(vn > 0.0)
+   {
+      flux = vn * ul;
+   }
+   else
+   {
+      flux = vn * ur;
+   }
 }
 
 // Save solution to file
@@ -93,18 +119,28 @@ proc main()
   {
     const x = xmin + (i-1)*dx + 0.5*dx,
           y = ymin + (j-1)*dy + 0.5*dy;
-    u[i,j] = sin(2*pi*x) * sin(2*pi*y);
+    u[i,j] = 1.0 + exp(-100.0*((x-0.5)**2 + y**2));
   }
   u.updateFluff();
 
   var c  = 0;     // counter to save solution
   c = savesol(0.0, u, c);
 
+  // Compute dt
+  var dt = 1.0e20;
+  for (i,j) in PSpace
+  {
+    const x = xmin + (i-1)*dx + 0.5*dx,
+          y = ymin + (j-1)*dy + 0.5*dy; // cell center
+    var vel : [1..2] real;
+    advection_velocity(x, y, vel);
+    dt = min(dt, 1.0/(abs(vel[1])/dx + abs(vel[2])/dy));
+  }
+  dt *= cfl;
+
   var u0 : [PSpace] real; // old solution
   var res: [PSpace] real; // residual
 
-  const umax = sqrt(2.0); // max wave speed used in dt computation
-  var dt = cfl * min(dx, dy) / umax;
   var t  = 0.0;   // time counter
   var it = 0;     // iteration counter
   var lam = dt/(dx*dy);
@@ -126,16 +162,36 @@ proc main()
       // x fluxes
       forall (i,j) in Dx
       {
+        // velocity at face mid-point
+        const xf = xmin + (i-1)*dx,
+              yf = ymin + (j-1)*dy;
+        var vel : [1..2] real;
+        advection_velocity(xf, yf, vel);
+        // reconstruct left/right states at face
         const ul = weno5(u[i-3,j],u[i-2,j],u[i-1,j],u[i,j],u[i+1,j]);
-        res[i-1,j] += ul * dy;
-        res[i,j]   -= ul * dy;
+        const ur = weno5(u[i+2,j],u[i+1,j],u[i,j],u[i-1,j],u[i-2,j]);
+        // compute numerical flux
+        var flux : real;
+        numerical_flux(1.0, 0.0, vel, ul, ur, flux);
+        res[i-1,j] += flux * dy;
+        res[i,j]   -= flux * dy;
       }
       // y fluxes
       forall (i,j) in Dy
       {
+        // velocity at face mid-point
+        const xf = xmin + (i-1)*dx,
+              yf = ymin + (j-1)*dy;
+        var vel : [1..2] real;
+        advection_velocity(xf, yf, vel);
+        // reconstruct left/right states at face
         const ul = weno5(u[i,j-3],u[i,j-2],u[i,j-1],u[i,j],u[i,j+1]);
-        res[i,j-1] += ul * dx;
-        res[i,j]   -= ul * dx;
+        const ur = weno5(u[i,j+2],u[i,j+1],u[i,j],u[i,j-1],u[i,j-2]);
+        // compute numerical flux
+        var flux : real;
+        numerical_flux(0.0, 1.0, vel, ul, ur, flux);
+        res[i,j-1] += flux * dx;
+        res[i,j]   -= flux * dx;
       }
       u = ark[rk] * u0 + brk[rk] * (u - lam * res);
       u.updateFluff();
