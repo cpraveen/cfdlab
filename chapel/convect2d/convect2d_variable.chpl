@@ -136,7 +136,7 @@ proc main()
           y = ymin + (j-1)*dy + 0.5*dy; // cell center
     var vel : [1..2] real;
     advection_velocity(x, y, vel);
-    dt = min(dt, 1.0/(abs(vel[1])/dx + abs(vel[2])/dy));
+    dt = min(dt, 1.0/(abs(vel[1])/dx + abs(vel[2])/dy) + 1.0e-20);
   }
   dt *= cfl;
 
