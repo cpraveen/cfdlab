@@ -7,7 +7,7 @@ def f(x, y):
 
 x, y = np.mgrid[-7.:7.05:0.1, -5.:5.05:0.05]
 
-figure(1,fgcolor=(0,0,0),bgcolor=(1,1,1))
+figure(1,fgcolor=(0,0,0),bgcolor=(1,1,1),size=(600,600))
 s = contour_surf(x, y, f, contours=10, warp_scale=0)
 outline()
 axes(y_axis_visibility=False)
@@ -15,7 +15,7 @@ view(azimuth=0,elevation=0)
 title('Contour plot')
 #savefig('contour.png',size=(300,300))
 
-figure(2,fgcolor=(0,0,0),bgcolor=(1,1,1))
+figure(2,fgcolor=(0,0,0),bgcolor=(1,1,1),size=(600,600))
 s = imshow(x, y, f, colormap='jet')
 colorbar(orientation='vertical')
 outline()
@@ -24,7 +24,7 @@ view(azimuth=0,elevation=0)
 title('Colour plot')
 #savefig('colour.png',size=(300,300))
 
-figure(3,fgcolor=(0,0,0),bgcolor=(1,1,1))
+figure(3,fgcolor=(0,0,0),bgcolor=(1,1,1),size=(600,600))
 s = surf(x, y, f)
 axes()
 title('Surface plot')
