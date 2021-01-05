@@ -58,7 +58,6 @@ dolink adol-c
 dolink arpack-ng
 dolink assimp
 dolink boost
-dolink bzip2
 dolink cmake
 dolink ginkgo
 dolink gmsh

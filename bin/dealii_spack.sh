@@ -54,7 +54,6 @@ $(spack location -i cmake)/bin/cmake  \
 -DLAPACK_INCLUDE_DIRS=$(spack location -i openblas)/include  \
 -DLAPACK_LIBRARIES=$(spack location -i openblas)/lib/${LAPACK_LIBRARY}  \
 -DBOOST_DIR=$(spack location -i boost)  \
--DBZIP2_DIR=$(spack location -i bzip2) \
 -DMUPARSER_DIR=$(spack location -i muparser)  \
 -DUMFPACK_DIR=$(spack location -i suite-sparse)  \
 -DTBB_DIR=$(spack location -i intel-tbb)  \
