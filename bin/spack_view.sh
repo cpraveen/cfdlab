@@ -44,6 +44,7 @@ rm -rf $SPACK_VIEW/.nagged
 read -p "Link gcc (y/n) ? " CONT
 if [ "$CONT" = "y" ]; then
    dolink gcc
+   echo "Deleting c++, cpp from spack view"
    rm -f $SPACK_VIEW/bin/c++
    rm -f $SPACK_VIEW/bin/cpp
 
