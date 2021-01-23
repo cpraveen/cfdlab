@@ -103,6 +103,7 @@ ${SPACK_VIEW_DIR}/bin/cmake  \
 -DGINKGO_DIR=${SPACK_VIEW_DIR}  \
 -DDEAL_II_WITH_SYMENGINE=ON  \
 -DSYMENGINE_DIR=${SPACK_VIEW_DIR}  \
+-DDEAL_II_WITH_SIMPLEX_SUPPORT=ON \
 ../
 
 echo "*** Add this to your profile ***"
