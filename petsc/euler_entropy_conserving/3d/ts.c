@@ -18,9 +18,9 @@ const double gas_const = 1.0;
 double dx, dy, dz;
 
 typedef enum { flux_central,flux_kepec,flux_kep,flux_mkep,
-               flux_kg,flux_ducros,flux_mkepec } FluxScheme;
+               flux_kg,flux_ducros,flux_mkepec,flux_shima } FluxScheme;
 const char *const FluxSchemes[] = {"central","kepec","kep","mkep",
-                                   "kg","ducros","mkepec",
+                                   "kg","ducros","mkepec","shima",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex,prob_density,prob_tgv } Problem;
@@ -260,7 +260,8 @@ void mkepecflux(const double *Ul, const double *Ur,
    flux[1] = p * nx + u * flux[0];
    flux[2] = p * ny + v * flux[0];
    flux[3] = p * nz + w * flux[0];
-   flux[4] = 0.5 * (1.0 / ((gas_gamma - 1.0) * logb) - q2) * flux[0] + u * flux[1] + v * flux[2] + w * flux[3];
+   flux[4] = 0.5 * (1.0 / ((gas_gamma - 1.0) * logb) - q2) * flux[0]
+             + u * flux[1] + v * flux[2] + w * flux[3];
 }
 
 // KEP flux of Jameson
@@ -326,6 +327,36 @@ void mkepflux(const double *Ul, const double *Ur,
    flux[2] = p * ny + v * flux[0];
    flux[3] = p * nz + w * flux[0];
    flux[4] = gas_gamma * p * un / (gas_gamma - 1.0) + 0.5 * r * u2 * un;
+}
+//------------------------------------------------------------------------------
+// Shima et al. flux
+void shimaflux(const double *Ul, const double *Ur,
+               const double nx, const double ny, const double nz,
+               double *flux)
+{
+   double ql[nvar], qr[nvar];
+   con2prim(Ul, ql);
+   con2prim(Ur, qr);
+
+   double r = 0.5 * (ql[0] + qr[0]);
+   double u = 0.5 * (ql[1] + qr[1]);
+   double v = 0.5 * (ql[2] + qr[2]);
+   double w = 0.5 * (ql[3] + qr[3]);
+   double p = 0.5 * (ql[4] + qr[4]);
+   double k = 0.5*(ql[1] * qr[1] + ql[2] * qr[2] + ql[3] * qr[3]);
+
+   // Rotated velocity
+   double unl = ql[1] * nx + ql[2] * ny + ql[3] * nz;
+   double unr = qr[1] * nx + qr[2] * ny + qr[3] * nz;
+   double un = 0.5*(unl + unr);
+   double pv = 0.5*(ql[4] * unr + ql[4] * unl);
+
+   // Centered flux
+   flux[0] = r * un;
+   flux[1] = p * nx + u * flux[0];
+   flux[2] = p * ny + v * flux[0];
+   flux[3] = p * nz + w * flux[0];
+   flux[4] = p * un / (gas_gamma - 1.0) + r * k * un + pv;
 }
 //------------------------------------------------------------------------------
 // Kennedy and Gruber flux
@@ -411,6 +442,8 @@ void numflux(const FluxScheme flux_scheme,
          ducrosflux(Ul, Ur, nx, ny, nz, flux);
       else if (flux_scheme == flux_mkepec)
          mkepecflux(Ul, Ur, nx, ny, nz, flux);
+      else if (flux_scheme == flux_shima)
+         shimaflux(Ul, Ur, nx, ny, nz, flux);
       else
       {
          PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
@@ -461,6 +494,12 @@ void numflux(const FluxScheme flux_scheme,
          mkepecflux(Ul, Ur, nx, ny, nz, flux1);
          mkepecflux(Ull, Ur, nx, ny, nz, flux2);
          mkepecflux(Ul, Urr, nx, ny, nz, flux3);
+      }
+      else if (flux_scheme == flux_shima)
+      {
+         shimaflux(Ul, Ur, nx, ny, nz, flux1);
+         shimaflux(Ull, Ur, nx, ny, nz, flux2);
+         shimaflux(Ul, Urr, nx, ny, nz, flux3);
       }
       else
       {
