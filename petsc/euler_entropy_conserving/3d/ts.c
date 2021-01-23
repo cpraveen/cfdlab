@@ -349,7 +349,7 @@ void shimaflux(const double *Ul, const double *Ur,
    double unl = ql[1] * nx + ql[2] * ny + ql[3] * nz;
    double unr = qr[1] * nx + qr[2] * ny + qr[3] * nz;
    double un = 0.5*(unl + unr);
-   double pv = 0.5*(ql[4] * unr + ql[4] * unl);
+   double pv = 0.5*(ql[4] * unr + qr[4] * unl);
 
    // Centered flux
    flux[0] = r * un;
