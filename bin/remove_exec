@@ -4,6 +4,6 @@
 find . -type f -perm -u=x | 
    while read LINE; 
    do 
-      echo Removing for "$LINE" 
+      echo "$LINE" 
       chmod -x "$LINE"
    done
