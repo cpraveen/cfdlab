@@ -59,6 +59,7 @@ dolink arpack-ng
 dolink assimp
 dolink boost
 dolink cmake
+dolink eigen
 dolink ginkgo
 dolink gmsh
 dolink gsl
