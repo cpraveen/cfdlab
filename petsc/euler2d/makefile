@@ -17,6 +17,7 @@ ifeq ($(WENO),z)
 	CFLAGS += -DWENOZ
 endif
 
+# All header files in this directory
 HDR=$(wildcard *.h)
 
 TARGET = ssprk ts fdweno
@@ -30,9 +31,13 @@ fdweno: fdweno.c $(HDR)
 	$(CC) -D${PROBLEM} $(CFLAGS) -o fdweno fdweno.c $(LDFLAGS)
 
 help:
-	@echo "Compile like this"
+	@echo "ssprk version"
+	@echo "   make ssprk"
+	@echo "ts version"
+	@echo "   make ts"
+	@echo "Compile fdweno like this"
 	@echo "   make fdweno PROBLEM=ISENTROPIC WENO=z"
-	@echo "Options are"
+	@echo "   Options are"
 	@echo "   PROBLEM: ISENTROPIC, SHOCKREF, SHOCKVORTEX, RIEMANN2D, KH"
 	@echo "   WENO   : js, z"
 

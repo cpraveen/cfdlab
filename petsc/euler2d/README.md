@@ -1,6 +1,7 @@
 # 2d Euler solution using WENO5 finite volume
 
-This code solves 2d Euler equations on Cartesian mesh using WENO5 finite volume method with periodic boundary conditions.
+## SSPRK version (ssprk.c, finite volume WENO)
+This code solves 2d Euler equations on Cartesian mesh for the isentropic vortex problem using WENO5 finite volume method with periodic boundary conditions.
 
 ```shell
 make ssprk
@@ -13,7 +14,7 @@ You can open the plt files using Tecplot of VisIt.
 
 ## TS version (ts.c, finite volume WENO)
 
-This makes use of time stepping schemes in Petsc. To solve du/dt = R(t,u) you must implement R inside the function RHSFunction. Specify either dt or cfl. If both are given, then cfl will be used to compute time step. First compile the code
+This is similar to `ssprk.c` but makes use of time stepping schemes in Petsc. To solve du/dt = R(t,u) you must implement R inside the function RHSFunction. Specify either dt or cfl. If both are given, then cfl will be used to compute time step. First compile the code
 
 ```shell
 make ts
@@ -109,6 +110,17 @@ visit -o sol*.plt
 rm -f fdweno && make fdweno PROBLEM=DMR WENO=z
 rm -rf sol*.plt
 mpirun -np 4 ./fdweno -da_grid_x 400 -da_grid_y 100 -Tf 0.2 -cfl 0.8 -si 100 \
+       -ts_type ssp -ts_ssp_type rks3 -ts_ssp_nstages 4 -ts_monitor
+sh ./merge.sh
+visit -o sol*.plt
+```
+
+### 2-D Riemann problem
+
+```shell
+rm -f fdweno && make fdweno PROBLEM=2DRIEMANN WENO=z
+rm -rf sol*.plt
+mpirun -np 4 ./fdweno -da_grid_x 100 -da_grid_y 100 -Tf 0.8 -cfl 0.8 -si 100 \
        -ts_type ssp -ts_ssp_type rks3 -ts_ssp_nstages 4 -ts_monitor
 sh ./merge.sh
 visit -o sol*.plt
