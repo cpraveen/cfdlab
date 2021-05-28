@@ -1,3 +1,7 @@
+ifndef PETSC_DIR
+$(error "PETSC_DIR is not set")
+endif
+
 CC = mpicc
 CFLAGS = -march=native -O3 -Wall -I$(PETSC_DIR)/include
 LDFLAGS = -lpetsc -L$(PETSC_DIR)/lib -lm
