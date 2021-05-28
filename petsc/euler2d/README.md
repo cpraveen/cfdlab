@@ -8,6 +8,7 @@ make ssprk
 rm -f sol*.plt
 mpirun -np 4 ./ssprk -da_grid_x 100 -da_grid_y 100 -Tf 20.0 -cfl 0.8 -si 100
 sh ./merge.sh
+visit -o sol*.plt
 ```
 
 You can open the plt files using Tecplot of VisIt.
@@ -27,6 +28,7 @@ rm -f sol*.plt
 mpirun -np 4 ./ts -da_grid_x 100 -da_grid_y 100 -Tf 20.0 -cfl 1.8 -si 100 \
                   -ts_monitor
 sh ./merge.sh
+visit -o sol*.plt
 ```
 
 it will use 2-stage, 2-nd order SSPRK scheme.
@@ -38,6 +40,7 @@ rm -f sol*.plt
 mpirun -np 4 ./ts -da_grid_x 100 -da_grid_y 100 -Tf 20.0 -cfl 1.8 -si 100 \
                   -ts_type ssp -ts_ssp_type rks3 -ts_ssp_nstages 4 -ts_monitor
 sh ./merge.sh
+visit -o sol*.plt
 ```
 
 To use the classical RK4 scheme
@@ -47,6 +50,7 @@ rm -f sol*.plt
 mpirun -np 4 ./ts -da_grid_x 100 -da_grid_y 100 -Tf 20.0 -cfl 0.8 -si 100 \
                   -ts_type rk -ts_rk_type 4 -ts_adapt_type none -ts_monitor
 sh ./merge.sh
+visit -o sol*.plt
 ```
 
 ## TS version (fdweno.c, finite difference WENO)
