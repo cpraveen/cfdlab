@@ -55,22 +55,19 @@ if [ "$CONT" = "y" ]; then
 fi
 
 dolink adol-c
+dolink arborx
 dolink arpack-ng
 dolink assimp
 dolink boost
 dolink cmake
 dolink eigen
 dolink ginkgo
-dolink gmsh
 dolink gsl
 dolink hdf5
 dolink metis
 dolink mpich
 dolink muparser
 dolink mumps
-dolink nanoflann
-dolink netcdf-c
-dolink netcdf-cxx
 dolink netlib-scalapack
 dolink oce
 dolink openblas
