@@ -49,6 +49,7 @@ $(spack location -i cmake)/bin/cmake  \
 -DCMAKE_BUILD_TYPE=DebugRelease  \
 -DDEAL_II_COMPONENT_EXAMPLES=ON  \
 -DDEAL_II_COMPILE_EXAMPLES=OFF \
+-DDEAL_II_WITH_ARBORX=ON \
 -DDEAL_II_WITH_THREADS:BOOL=ON  \
 -DDEAL_II_WITH_LAPACK=ON \
 -DLAPACK_INCLUDE_DIRS=$(spack location -i openblas)/include  \
@@ -62,7 +63,8 @@ $(spack location -i cmake)/bin/cmake  \
 -DCMAKE_C_COMPILER=$(spack location -i openmpi)/bin/mpicc  \
 -DCMAKE_CXX_COMPILER=$(spack location -i openmpi)/bin/mpic++  \
 -DCMAKE_Fortran_COMPILER=$(spack location -i openmpi)/bin/mpif90  \
--DDEAL_II_CXX_FLAGS_RELEASE="-march=native" \
+-DDEAL_II_CXX_FLAGS="-march=native -std=c++17" \
+-DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
 -DGSL_DIR=$(spack location -i gsl)  \
 -DDEAL_II_WITH_GSL:BOOL=ON  \
 -DHDF5_DIR=$(spack location -i hdf5)  \
@@ -87,8 +89,6 @@ $(spack location -i cmake)/bin/cmake  \
 -DDEAL_II_WITH_OPENCASCADE=ON  \
 -DGMSH_DIR=$(spack location -i gmsh)  \
 -DDEAL_II_WITH_GMSH=ON  \
--DNANOFLANN_DIR=$(spack location -i nanoflann)  \
--DDEAL_II_WITH_NANOFLANN=ON  \
 -DASSIMP_DIR=$(spack location -i assimp)  \
 -DDEAL_II_WITH_ASSIMP=ON  \
 -DSUNDIALS_DIR=$(spack location -i sundials)  \
