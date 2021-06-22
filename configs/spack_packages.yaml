@@ -1,0 +1,21 @@
+packages:
+  dealii:
+    variants: +simplex ~nanoflann ~gmsh ~python
+  hdf5:
+    variants: +fortran +cxx +hl
+  petsc:
+    variants: +mumps +suite-sparse +p4est
+  cgns:
+    variants: +fortran
+  trilinos:
+    variants: +rol +mesquite
+  libmesh:
+    variants: +boost +eigen +fparser +hdf5 +laspack +metis +perflog +petsc \
+              +slepc +tetgen +triangle
+  vtk:
+    variants: +python
+  all:
+    providers:
+      mpi: [openmpi]
+      blas: [openblas]
+      lapack: [openblas]
