@@ -50,7 +50,6 @@ $(spack location -i cmake)/bin/cmake  \
 -DDEAL_II_COMPONENT_EXAMPLES=ON  \
 -DDEAL_II_COMPILE_EXAMPLES=OFF \
 -DDEAL_II_WITH_ARBORX=ON \
--DDEAL_II_WITH_THREADS:BOOL=ON  \
 -DDEAL_II_WITH_LAPACK=ON \
 -DLAPACK_INCLUDE_DIRS=$(spack location -i openblas)/include  \
 -DLAPACK_LIBRARIES=$(spack location -i openblas)/lib/${LAPACK_LIBRARY}  \
@@ -84,8 +83,6 @@ $(spack location -i cmake)/bin/cmake  \
 -DARPACK_DIR=$(spack location -i arpack-ng)  \
 -DDEAL_II_WITH_ARPACK=ON  \
 -DDEAL_II_ARPACK_WITH_PARPACK=ON  \
--DDEAL_II_WITH_NETCDF=OFF  \
--DNETCDF_DIR=$(spack location -i netcdf-cxx)  \
 -DOPENCASCADE_DIR=$(spack location -i oce)  \
 -DDEAL_II_WITH_OPENCASCADE=ON  \
 -DGMSH_DIR=$(spack location -i gmsh)  \
