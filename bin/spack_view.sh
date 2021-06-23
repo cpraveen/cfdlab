@@ -41,18 +41,18 @@ rm -rf $SPACK_VIEW/.spack
 rm -rf $SPACK_VIEW/.spack-empty
 rm -rf $SPACK_VIEW/.nagged
 
-read -p "Link gcc (y/n) ? " CONT
-if [ "$CONT" = "y" ]; then
-   dolink gcc
-   echo "Deleting c++, cpp from spack view"
-   rm -f $SPACK_VIEW/bin/c++
-   rm -f $SPACK_VIEW/bin/cpp
-
-   read -p "Continue (y/n) ? " CONT
-   if [ "$CONT" = "n" ]; then
-      exit
-   fi
-fi
+#read -p "Link gcc (y/n) ? " CONT
+#if [ "$CONT" = "y" ]; then
+#   dolink gcc
+#   echo "Deleting c++, cpp from spack view"
+#   rm -f $SPACK_VIEW/bin/c++
+#   rm -f $SPACK_VIEW/bin/cpp
+#
+#   read -p "Continue (y/n) ? " CONT
+#   if [ "$CONT" = "n" ]; then
+#      exit
+#   fi
+#fi
 
 dolink adol-c
 dolink arborx

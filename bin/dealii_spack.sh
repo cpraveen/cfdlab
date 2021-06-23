@@ -41,11 +41,23 @@ else
    exit
 fi
 
+# We dont want to install gmsh with spack since it has too many dependencies.
+# We want to use externally installed gmsh, so check here.
+DEAL_II_WITH_GMSH=ON
+if [ -z "$GMSH_DIR" ]; then
+   echo "GMSH_DIR is not set"
+   read -p "Do you want to continue (y/n) ? " CONT
+   if [ "$CONT" = "n" ]; then
+      exit
+   fi
+   DEAL_II_WITH_GMSH=OFF
+   GMSH_DIR=/tmp
+fi
+
 
 $(spack location -i cmake)/bin/cmake  \
 -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
 -DCMAKE_FIND_FRAMEWORK=LAST  \
--DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON  \
 -DCMAKE_BUILD_TYPE=DebugRelease  \
 -DDEAL_II_COMPONENT_EXAMPLES=ON  \
 -DDEAL_II_COMPILE_EXAMPLES=OFF \
@@ -63,7 +75,7 @@ $(spack location -i cmake)/bin/cmake  \
 -DCMAKE_C_COMPILER=$(spack location -i openmpi)/bin/mpicc  \
 -DCMAKE_CXX_COMPILER=$(spack location -i openmpi)/bin/mpic++  \
 -DCMAKE_Fortran_COMPILER=$(spack location -i openmpi)/bin/mpif90  \
--DDEAL_II_CXX_FLAGS="-march=native -std=c++17" \
+-DDEAL_II_CXX_FLAGS="-march=native" \
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
 -DGSL_DIR=$(spack location -i gsl)  \
 -DDEAL_II_WITH_GSL:BOOL=ON  \
@@ -85,8 +97,8 @@ $(spack location -i cmake)/bin/cmake  \
 -DDEAL_II_ARPACK_WITH_PARPACK=ON  \
 -DOPENCASCADE_DIR=$(spack location -i oce)  \
 -DDEAL_II_WITH_OPENCASCADE=ON  \
--DGMSH_DIR=$(spack location -i gmsh)  \
--DDEAL_II_WITH_GMSH=ON  \
+-DGMSH_DIR=$GMSH_DIR \
+-DDEAL_II_WITH_GMSH=$DEAL_II_WITH_GMSH  \
 -DASSIMP_DIR=$(spack location -i assimp)  \
 -DDEAL_II_WITH_ASSIMP=ON  \
 -DSUNDIALS_DIR=$(spack location -i sundials)  \
