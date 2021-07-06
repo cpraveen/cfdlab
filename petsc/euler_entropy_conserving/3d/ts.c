@@ -428,83 +428,85 @@ void numflux(const FluxScheme flux_scheme,
 {
    if(order == 2)
    {
-      if (flux_scheme == flux_central)
-         avgflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_kep)
-         kepflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_kepec)
-         kepecflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_mkep)
-         mkepflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_kg)
-         kgflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_ducros)
-         ducrosflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_mkepec)
-         mkepecflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_keep)
-         keepflux(Ul, Ur, nx, ny, nz, flux);
-      else
+      switch(flux_scheme)
       {
-         PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
-         exit(0);
+         case flux_central:
+            avgflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         case flux_kep:
+            kepflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         case flux_kepec:
+            kepecflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         case flux_mkep:
+            mkepflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         case flux_kg:
+            kgflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         case flux_ducros:
+            ducrosflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         case flux_mkepec:
+            mkepecflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         case flux_keep:
+            keepflux(Ul, Ur, nx, ny, nz, flux);
+            break;
+         default:
+            PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
+            exit(0);
       }
    }
    else if(order == 4)
    {
       double flux1[nvar], flux2[nvar], flux3[nvar];
-      if (flux_scheme == flux_central)
+      switch(flux_scheme)
       {
-         avgflux(Ul, Ur, nx, ny, nz, flux1);
-         avgflux(Ull, Ur, nx, ny, nz, flux2);
-         avgflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else if (flux_scheme == flux_kep)
-      {
-         kepflux(Ul, Ur, nx, ny, nz, flux1);
-         kepflux(Ull, Ur, nx, ny, nz, flux2);
-         kepflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else if (flux_scheme == flux_kepec)
-      {
-         kepecflux(Ul, Ur, nx, ny, nz, flux1);
-         kepecflux(Ull, Ur, nx, ny, nz, flux2);
-         kepecflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else if (flux_scheme == flux_mkep)
-      {
-         mkepflux(Ul, Ur, nx, ny, nz, flux1);
-         mkepflux(Ull, Ur, nx, ny, nz, flux2);
-         mkepflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else if (flux_scheme == flux_kg)
-      {
-         kgflux(Ul, Ur, nx, ny, nz, flux1);
-         kgflux(Ull, Ur, nx, ny, nz, flux2);
-         kgflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else if (flux_scheme == flux_ducros)
-      {
-         ducrosflux(Ul, Ur, nx, ny, nz, flux1);
-         ducrosflux(Ull, Ur, nx, ny, nz, flux2);
-         ducrosflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else if (flux_scheme == flux_mkepec)
-      {
-         mkepecflux(Ul, Ur, nx, ny, nz, flux1);
-         mkepecflux(Ull, Ur, nx, ny, nz, flux2);
-         mkepecflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else if (flux_scheme == flux_keep)
-      {
-         keepflux(Ul, Ur, nx, ny, nz, flux1);
-         keepflux(Ull, Ur, nx, ny, nz, flux2);
-         keepflux(Ul, Urr, nx, ny, nz, flux3);
-      }
-      else
-      {
-         PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
-         exit(0);
+         case flux_central:
+            avgflux(Ul, Ur, nx, ny, nz, flux1);
+            avgflux(Ull, Ur, nx, ny, nz, flux2);
+            avgflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         case flux_kep:
+            kepflux(Ul, Ur, nx, ny, nz, flux1);
+            kepflux(Ull, Ur, nx, ny, nz, flux2);
+            kepflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         case flux_kepec:
+            kepecflux(Ul, Ur, nx, ny, nz, flux1);
+            kepecflux(Ull, Ur, nx, ny, nz, flux2);
+            kepecflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         case flux_mkep:
+            mkepflux(Ul, Ur, nx, ny, nz, flux1);
+            mkepflux(Ull, Ur, nx, ny, nz, flux2);
+            mkepflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         case flux_kg:
+            kgflux(Ul, Ur, nx, ny, nz, flux1);
+            kgflux(Ull, Ur, nx, ny, nz, flux2);
+            kgflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         case flux_ducros:
+            ducrosflux(Ul, Ur, nx, ny, nz, flux1);
+            ducrosflux(Ull, Ur, nx, ny, nz, flux2);
+            ducrosflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         case flux_mkepec:
+            mkepecflux(Ul, Ur, nx, ny, nz, flux1);
+            mkepecflux(Ull, Ur, nx, ny, nz, flux2);
+            mkepecflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         case flux_keep:
+            keepflux(Ul, Ur, nx, ny, nz, flux1);
+            keepflux(Ull, Ur, nx, ny, nz, flux2);
+            keepflux(Ul, Urr, nx, ny, nz, flux3);
+            break;
+         default:
+            PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
+            exit(0);
       }
       for (int i = 0; i < nvar; ++i)
          flux[i] = (4.0 / 3.0) * flux1[i] - (1.0 / 6.0) * flux2[i] - (1.0 / 6.0) * flux3[i];
