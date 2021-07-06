@@ -17,9 +17,9 @@ const double gas_const = 1.0;
 double dx, dy;
 
 typedef enum { flux_central,flux_kepec,flux_kep,flux_mkep,
-               flux_kg,flux_ducros,flux_mkepec } FluxScheme;
+               flux_kg,flux_ducros,flux_mkepec,flux_keep } FluxScheme;
 const char *const FluxSchemes[] = {"central","kepec","kep","mkep",
-                                   "kg","ducros","mkepec",
+                                   "kg","ducros","mkepec","keep",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
@@ -102,8 +102,8 @@ double dt_local(const double *Con)
 }
 
 // Simple average flux
-void avgflux(const double *Ul, const double *Ur, 
-             const double nx, const double ny, 
+void avgflux(const double *Ul, const double *Ur,
+             const double nx, const double ny,
              double *flux)
 {
    double Pl[nvar], Pr[nvar];
@@ -355,6 +355,34 @@ void ducrosflux(const double *Ul, const double *Ur,
    flux[3] = (E + p) * un;
 }
 //------------------------------------------------------------------------------
+// Shima et al. flux: KEEP-PE
+void keepflux(const double *Ul, const double *Ur,
+              const double nx, const double ny,
+              double *flux)
+{
+   double ql[nvar], qr[nvar];
+   con2prim(Ul, ql);
+   con2prim(Ur, qr);
+
+   double r = 0.5 * (ql[0] + qr[0]);
+   double u = 0.5 * (ql[1] + qr[1]);
+   double v = 0.5 * (ql[2] + qr[2]);
+   double p = 0.5 * (ql[3] + qr[3]);
+   double k = 0.5 * (ql[1] * qr[1] + ql[2] * qr[2]);
+
+   // Rotated velocity
+   double unl = ql[1] * nx + ql[2] * ny;
+   double unr = qr[1] * nx + qr[2] * ny;
+   double un = 0.5 * (unl + unr);
+   double pv = 0.5 * (ql[3] * unr + qr[3] * unl);
+
+   // Centered flux
+   flux[0] = r * un;
+   flux[1] = p * nx + u * flux[0];
+   flux[2] = p * ny + v * flux[0];
+   flux[3] = p * un / (gas_gamma - 1.0) + r * k * un + pv;
+}
+//------------------------------------------------------------------------------
 void numflux(const FluxScheme flux_scheme,
              const int order,
              const double *Ull, const double *Ul,
@@ -378,6 +406,8 @@ void numflux(const FluxScheme flux_scheme,
          ducrosflux(Ul, Ur, nx, ny, flux);
       else if (flux_scheme == flux_mkepec)
          mkepecflux(Ul, Ur, nx, ny, flux);
+      else if (flux_scheme == flux_keep)
+         keepflux(Ul, Ur, nx, ny, flux);
       else
       {
          PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
@@ -428,6 +458,12 @@ void numflux(const FluxScheme flux_scheme,
          mkepecflux(Ul, Ur, nx, ny, flux1);
          mkepecflux(Ull, Ur, nx, ny, flux2);
          mkepecflux(Ul, Urr, nx, ny, flux3);
+      }
+      else if (flux_scheme == flux_keep)
+      {
+         keepflux(Ul, Ur, nx, ny, flux1);
+         keepflux(Ull, Ur, nx, ny, flux2);
+         keepflux(Ul, Urr, nx, ny, flux3);
       }
       else
       {
@@ -534,7 +570,7 @@ int main(int argc, char *argv[])
 {
    // some parameters that can overwritten from command line
    PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
-   
+
    PetscErrorCode ierr;
    AppCtx      ctx;
    TS          ts;
@@ -556,15 +592,17 @@ int main(int argc, char *argv[])
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
-   
+
    // Get some command line options
    ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&ctx.Tf,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&ctx.dt,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetEnum(NULL,NULL,"-flux",FluxSchemes,(PetscEnum *)&ctx.flux_scheme, NULL);
+   ierr = PetscOptionsGetEnum(NULL,NULL,"-flux",FluxSchemes,
+                              (PetscEnum *)&ctx.flux_scheme, NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-order",&ctx.order,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetEnum(NULL,NULL,"-problem",Problems,(PetscEnum *)&problem, NULL);
+   ierr = PetscOptionsGetEnum(NULL,NULL,"-problem",Problems,
+                              (PetscEnum *)&problem, NULL); CHKERRQ(ierr);
 
    if(problem == prob_vortex)
    {

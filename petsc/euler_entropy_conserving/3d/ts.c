@@ -18,9 +18,9 @@ const double gas_const = 1.0;
 double dx, dy, dz;
 
 typedef enum { flux_central,flux_kepec,flux_kep,flux_mkep,
-               flux_kg,flux_ducros,flux_mkepec,flux_shima } FluxScheme;
+               flux_kg,flux_ducros,flux_mkepec,flux_keep } FluxScheme;
 const char *const FluxSchemes[] = {"central","kepec","kep","mkep",
-                                   "kg","ducros","mkepec","shima",
+                                   "kg","ducros","mkepec","keep",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex,prob_density,prob_tgv } Problem;
@@ -120,7 +120,7 @@ double dt_local(const double *Con)
 }
 
 // Simple average flux
-void avgflux(const double *Ul, const double *Ur, 
+void avgflux(const double *Ul, const double *Ur,
              const double nx, const double ny, const double nz,
              double *flux)
 {
@@ -329,8 +329,8 @@ void mkepflux(const double *Ul, const double *Ur,
    flux[4] = gas_gamma * p * un / (gas_gamma - 1.0) + 0.5 * r * u2 * un;
 }
 //------------------------------------------------------------------------------
-// Shima et al. flux
-void shimaflux(const double *Ul, const double *Ur,
+// Shima et al. flux: KEEP-PE
+void keepflux(const double *Ul, const double *Ur,
                const double nx, const double ny, const double nz,
                double *flux)
 {
@@ -442,8 +442,8 @@ void numflux(const FluxScheme flux_scheme,
          ducrosflux(Ul, Ur, nx, ny, nz, flux);
       else if (flux_scheme == flux_mkepec)
          mkepecflux(Ul, Ur, nx, ny, nz, flux);
-      else if (flux_scheme == flux_shima)
-         shimaflux(Ul, Ur, nx, ny, nz, flux);
+      else if (flux_scheme == flux_keep)
+         keepflux(Ul, Ur, nx, ny, nz, flux);
       else
       {
          PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
@@ -495,11 +495,11 @@ void numflux(const FluxScheme flux_scheme,
          mkepecflux(Ull, Ur, nx, ny, nz, flux2);
          mkepecflux(Ul, Urr, nx, ny, nz, flux3);
       }
-      else if (flux_scheme == flux_shima)
+      else if (flux_scheme == flux_keep)
       {
-         shimaflux(Ul, Ur, nx, ny, nz, flux1);
-         shimaflux(Ull, Ur, nx, ny, nz, flux2);
-         shimaflux(Ul, Urr, nx, ny, nz, flux3);
+         keepflux(Ul, Ur, nx, ny, nz, flux1);
+         keepflux(Ull, Ur, nx, ny, nz, flux2);
+         keepflux(Ul, Urr, nx, ny, nz, flux3);
       }
       else
       {
@@ -571,7 +571,7 @@ PetscErrorCode savesol(double t, DM da, Vec ug)
    fp = fopen(filename,"w");
    fprintf(fp, "TITLE = \"3D compressible flow\"\n");
    fprintf(fp, "VARIABLES = x, y, z, rho, u, v, w, p\n");
-   fprintf(fp, "ZONE STRANDID=1,SOLUTIONTIME=%e,I=%d,J=%d,K=%d,DATAPACKING=POINT\n", 
+   fprintf(fp, "ZONE STRANDID=1,SOLUTIONTIME=%e,I=%d,J=%d,K=%d,DATAPACKING=POINT\n",
            t,iend-ibeg,jend-jbeg,kend-kbeg);
    for(k=kbeg; k<kend; ++k)
       for(j=jbeg; j<jend; ++j)
@@ -598,7 +598,7 @@ int main(int argc, char *argv[])
 {
    // some parameters that can overwritten from command line
    PetscInt  nx=50, ny=50, nz=50; // use -da_grid_x, -da_grid_y, -da_grid_z to override these
-   
+
    PetscErrorCode ierr;
    AppCtx      ctx;
    TS          ts;
@@ -620,15 +620,17 @@ int main(int argc, char *argv[])
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
-   
+
    // Get some command line options
    ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&ctx.Tf,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&ctx.dt,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&ctx.cfl,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-si",&ctx.si,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetEnum(NULL,NULL,"-flux",FluxSchemes,(PetscEnum *)&ctx.flux_scheme, NULL);
+   ierr = PetscOptionsGetEnum(NULL,NULL,"-flux",FluxSchemes,
+                              (PetscEnum *)&ctx.flux_scheme, NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetInt(NULL,NULL,"-order",&ctx.order,NULL); CHKERRQ(ierr);
-   ierr = PetscOptionsGetEnum(NULL,NULL,"-problem",Problems,(PetscEnum *)&problem, NULL);
+   ierr = PetscOptionsGetEnum(NULL,NULL,"-problem",Problems,
+                              (PetscEnum *)&problem, NULL); CHKERRQ(ierr);
 
    if(problem == prob_vortex)
    {
@@ -664,7 +666,7 @@ int main(int argc, char *argv[])
    }
 
    ierr = DMDACreate3d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
-                       DM_BOUNDARY_PERIODIC, DMDA_STENCIL_BOX, nx, ny, nz, 
+                       DM_BOUNDARY_PERIODIC, DMDA_STENCIL_BOX, nx, ny, nz,
                        PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, nvar,
                        sw, NULL, NULL, NULL, &da); CHKERRQ(ierr);
    ierr = DMSetFromOptions(da); CHKERRQ(ierr);
@@ -781,7 +783,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          for(i=ibeg; i<ibeg+nlocx+1; ++i)
          {
             // face between i-1, i
-            numflux(ctx->flux_scheme, ctx->order, u[k][j][i-2], u[k][j][i-1], 
+            numflux(ctx->flux_scheme, ctx->order, u[k][j][i-2], u[k][j][i-1],
                     u[k][j][i], u[k][j][i+1], 1.0, 0.0, 0.0, flux);
             if(i==ibeg)
             {
@@ -810,7 +812,7 @@ PetscErrorCode RHSFunction(TS ts,PetscReal time,Vec U,Vec R,void* ptr)
          for(i=ibeg; i<ibeg+nlocx; ++i)
          {
             // face between j-1, j
-            numflux(ctx->flux_scheme, ctx->order, u[k][j-2][i], u[k][j-1][i], 
+            numflux(ctx->flux_scheme, ctx->order, u[k][j-2][i], u[k][j-1][i],
                     u[k][j][i], u[k][j+1][i], 0.0, 1.0, 0.0, flux);
             if(j==jbeg)
             {
