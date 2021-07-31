@@ -21,7 +21,7 @@ usage () {
     exit 1
 }
 
-if [ $# -lt 1 ]
+if [ $# -ne 1 ]
 then
 	usage
 fi
