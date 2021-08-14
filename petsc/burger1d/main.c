@@ -1,3 +1,6 @@
+/* Solve Burger's equation in 1d using periodic bc.
+   The grid is cell-centered.
+*/
 static char help[] = "Solves 1d Burger equation.\n\n";
 
 #include <petscsys.h>
@@ -12,6 +15,9 @@ const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
 const double xmin = 0.0;
 const double xmax = 1.0;
 
+//------------------------------------------------------------------------------
+// Initial condition
+//------------------------------------------------------------------------------
 double initcond(double x)
 {
    return 1.0 + 0.5 * sin(2*M_PI*x);
@@ -184,7 +190,7 @@ int main(int argc, char *argv[])
          if(rk==0)
             for(i=ibeg; i<ibeg+nloc; ++i) uold[i-ibeg] = u[i];
 
-         for(i=0; i<nloc; ++i) 
+         for(i=0; i<nloc; ++i)
             res[i] = 0.0;
 
          // Loop over faces and compute flux

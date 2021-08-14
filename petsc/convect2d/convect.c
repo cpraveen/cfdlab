@@ -1,4 +1,7 @@
-static char help[] = "Solves u_t + u_x = 0.\n\n";
+/* Solves 2d linear advection equation with periodic bc.
+   The grid is cell-centered.
+*/
+static char help[] = "Solves u_t + u_x + u_y = 0.\n\n";
 
 #include <petscsys.h>
 #include <petscdm.h>
@@ -10,13 +13,16 @@ const double xmin = 0.0, xmax = 1.0;
 const double ymin = 0.0, ymax = 1.0;
 double dx, dy;
 
+//------------------------------------------------------------------------------
+// Initial condition
+//------------------------------------------------------------------------------
 double initcond(double x, double y)
 {
    return sin(2*M_PI*x) * sin(2*M_PI*y);
 }
 
 //------------------------------------------------------------------------------
-// Weno reconstruction
+// Weno reconstruction of Jiang and Shu
 // Return left value for face between u0, up1
 //------------------------------------------------------------------------------
 double weno5(double um2, double um1, double u0, double up1, double up2)
@@ -45,6 +51,8 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
    return (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
 }
 
+//------------------------------------------------------------------------------
+// Each rank saves its own solution to a tecplot file
 //------------------------------------------------------------------------------
 PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
 {
@@ -96,7 +104,7 @@ int main(int argc, char *argv[])
    PetscReal cfl = 0.4;
    PetscInt  si  = 100;
    PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
-   
+
    PetscErrorCode ierr;
    DM       da;
    Vec      ug, ul;
@@ -111,7 +119,7 @@ int main(int argc, char *argv[])
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
-   
+
    // Get some command line options
    ierr = PetscOptionsGetReal(NULL,NULL,"-Tf",&Tf,NULL); CHKERRQ(ierr);
    ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&cfl,NULL); CHKERRQ(ierr);

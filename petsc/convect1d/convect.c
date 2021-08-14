@@ -1,3 +1,6 @@
+/* Solve linear advection equation in 1d using periodic bc.
+   The grid is cell-centered.
+*/
 static char help[] = "Solves u_t + u_x = 0.\n\n";
 
 #include <petscsys.h>
@@ -9,6 +12,9 @@ const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
 const double xmin = -1.0;
 const double xmax = +1.0;
 
+//------------------------------------------------------------------------------
+// Initial condition
+//------------------------------------------------------------------------------
 double initcond(double x)
 {
    if(x >= -0.8 && x <= -0.6)
@@ -24,7 +30,7 @@ double initcond(double x)
 }
 
 //------------------------------------------------------------------------------
-// Weno reconstruction
+// Weno reconstruction of Jiang-Shu
 // Return left value for face between u0, up1
 //------------------------------------------------------------------------------
 double weno5(double um2, double um1, double u0, double up1, double up2)
@@ -54,7 +60,7 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
 }
 
 //------------------------------------------------------------------------------
-// Save solution to file
+// Save solution to file on rank = 0 process
 //------------------------------------------------------------------------------
 PetscErrorCode savesol(int nx, double dx, Vec ug)
 {
@@ -115,7 +121,8 @@ int main(int argc, char *argv[])
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
 
-   ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, nx, ndof, sw, NULL, &da); CHKERRQ(ierr);
+   ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, nx, ndof, sw,
+                       NULL, &da); CHKERRQ(ierr);
    ierr = DMSetFromOptions(da); CHKERRQ(ierr);
    ierr = DMSetUp(da); CHKERRQ(ierr);
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
@@ -145,7 +152,6 @@ int main(int argc, char *argv[])
    double res[nloc], uold[nloc];
    double dt = cfl * dx;
    double lam= dt/dx;
-
    double tfinal = 2.0, t = 0.0;
 
    while(t < tfinal)
@@ -170,7 +176,7 @@ int main(int argc, char *argv[])
          if(rk==0)
             for(i=ibeg; i<ibeg+nloc; ++i) uold[i-ibeg] = u[i];
 
-         for(i=0; i<nloc; ++i) 
+         for(i=0; i<nloc; ++i)
             res[i] = 0.0;
 
          // Loop over faces and compute flux
@@ -201,7 +207,8 @@ int main(int argc, char *argv[])
 
          // Update solution
          for(i=ibeg; i<ibeg+nloc; ++i)
-            unew[i] = ark[rk]*uold[i-ibeg] + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
+            unew[i] = ark[rk]*uold[i-ibeg]
+                      + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
 
          ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
          ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
