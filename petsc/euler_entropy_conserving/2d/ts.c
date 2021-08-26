@@ -17,9 +17,11 @@ const double gas_const = 1.0;
 double dx, dy;
 
 typedef enum { flux_central,flux_kepec,flux_kep,flux_mkep,
-               flux_kg,flux_ducros,flux_mkepec,flux_keep } FluxScheme;
+               flux_kg,flux_ducros,flux_mkepec,flux_keep,
+               flux_ranocha } FluxScheme;
 const char *const FluxSchemes[] = {"central","kepec","kep","mkep",
                                    "kg","ducros","mkepec","keep",
+                                   "ranocha",
                                    "FluxScheme", "flux_", NULL};
 
 typedef enum { prob_vortex, prob_density } Problem;
@@ -383,6 +385,35 @@ void keepflux(const double *Ul, const double *Ur,
    flux[3] = p * un / (gas_gamma - 1.0) + r * k * un + pv;
 }
 //------------------------------------------------------------------------------
+// Ranocha flux
+void ranochaflux(const double *Ul, const double *Ur,
+                 const double nx, const double ny,
+                 double *flux)
+{
+   double ql[nvar], qr[nvar];
+   con2prim(Ul, ql);
+   con2prim(Ur, qr);
+
+   double r = logavg(ql[0], qr[0]);
+   double u = 0.5 * (ql[1] + qr[1]);
+   double v = 0.5 * (ql[2] + qr[2]);
+   double p = 0.5 * (ql[3] + qr[3]);
+   double k = 0.5 * (ql[1] * qr[1] + ql[2] * qr[2]);
+   double b = logavg(ql[0]/ql[3], qr[0]/qr[3]);
+
+   // Rotated velocity
+   double unl = ql[1] * nx + ql[2] * ny;
+   double unr = qr[1] * nx + qr[2] * ny;
+   double un = 0.5 * (unl + unr);
+   double pv = 0.5 * (ql[3] * unr + qr[3] * unl);
+
+   // Centered flux
+   flux[0] = r * un;
+   flux[1] = p * nx + u * flux[0];
+   flux[2] = p * ny + v * flux[0];
+   flux[3] = r * un / ((gas_gamma - 1.0) * b) + r * k * un + pv;
+}
+//------------------------------------------------------------------------------
 void numflux(const FluxScheme flux_scheme,
              const int order,
              const double *Ull, const double *Ul,
@@ -417,6 +448,9 @@ void numflux(const FluxScheme flux_scheme,
             break;
          case flux_keep:
             keepflux(Ul, Ur, nx, ny, flux);
+            break;
+         case flux_ranocha:
+            ranochaflux(Ul, Ur, nx, ny, flux);
             break;
          default:
             PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
@@ -467,6 +501,11 @@ void numflux(const FluxScheme flux_scheme,
             keepflux(Ul, Ur, nx, ny, flux1);
             keepflux(Ull, Ur, nx, ny, flux2);
             keepflux(Ul, Urr, nx, ny, flux3);
+            break;
+         case flux_ranocha:
+            ranochaflux(Ul, Ur, nx, ny, flux1);
+            ranochaflux(Ull, Ur, nx, ny, flux2);
+            ranochaflux(Ul, Urr, nx, ny, flux3);
             break;
          default:
             PetscPrintf(PETSC_COMM_WORLD,"numflux: flux is not implemented\n");
