@@ -61,11 +61,11 @@ $(spack location -i cmake)/bin/cmake  \
 -DCMAKE_BUILD_TYPE=DebugRelease  \
 -DDEAL_II_COMPONENT_EXAMPLES=ON  \
 -DDEAL_II_COMPILE_EXAMPLES=OFF \
--DDEAL_II_WITH_ARBORX=ON \
 -DDEAL_II_WITH_LAPACK=ON \
 -DLAPACK_INCLUDE_DIRS=$(spack location -i openblas)/include  \
 -DLAPACK_LIBRARIES=$(spack location -i openblas)/lib/${LAPACK_LIBRARY}  \
 -DBOOST_DIR=$(spack location -i boost)  \
+-DDEAL_II_WITH_ARBORX=ON \
 -DARBORX_DIR=$(spack location -i arborx)  \
 -DMUPARSER_DIR=$(spack location -i muparser)  \
 -DUMFPACK_DIR=$(spack location -i suite-sparse)  \

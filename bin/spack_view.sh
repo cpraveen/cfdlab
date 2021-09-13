@@ -64,6 +64,7 @@ dolink eigen
 dolink ginkgo
 dolink gsl
 dolink hdf5
+dolink kokkos
 dolink metis
 dolink mpich
 dolink muparser
