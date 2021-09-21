@@ -1,0 +1,113 @@
+execute pathogen#infect()
+filetype plugin on
+filetype indent on
+syntax enable
+"Highlight search pattern
+set hlsearch
+"Smart indent
+set si
+"Enable indenting of do/enddo loops in fortran
+let b:fortran_do_enddo=1
+" disable indent for html
+au FileType html,htmldjango setlocal indentexpr=
+" disable indent for tex
+au FileType tex setlocal indentexpr=
+set title
+set nobackup
+if has("gui_running")
+   set number
+endif
+"set showmatch
+set tabstop=2
+set shiftwidth=2
+set softtabstop=2
+set expandtab
+"set wrap wrapmargin=2
+set linebreak
+set ic
+"Show line/column number at bottom
+set ruler
+" Ignore these files for auto-completion
+set wildignore=*.o,*~,*.aux
+"Setting for file name completion using tab key
+set wildmode=longest:list
+
+" Nerdtree options
+let NERDTreeIgnore = ['\.o$','\.vtk$','\.vtu$','\.pyc$','\.plt$','\.pdf$']
+let NERDTreeIgnore += ['\.ps$','\.eps$','\.tgz$','\.tar$','\.zip$','\.mp4$']
+
+"colorscheme koehler
+
+if has("gui_running")
+"   colorscheme default
+"Highlight current line
+set cursorline
+endif
+
+
+
+"Option for gui in gvim
+"set background=dark
+set guioptions=aegimLt
+set guifont=Fixed\ 12
+"colorscheme darkblue
+
+"set scrolloff=999
+"hi Statement    term=NONE  ctermfg=LightBlue  guifg=#ffff00 gui=NONE
+hi Statement    term=NONE  ctermfg=DarkGreen  ctermbg=NONE guifg=NONE gui=NONE
+hi Search     ctermfg=Black      ctermbg=Yellow     cterm=NONE
+"nmap gx yiw/^\(sub\<bar>function\)\s\+<C-R>"<CR>
+"imap <silent> j <C-o>gj
+"imap <silent> k <C-o>gk
+nmap <silent> j gj
+nmap <silent> k gk
+
+" Pressure F7 before pasting to avoid indenting
+" After pasting, press F7 to revert back to indenting mode
+"nmap <F7> :set paste!<CR>
+nnoremap <F7> :set invpaste paste?<CR>
+imap <F7> <C-O><F2>
+set pastetoggle=<F2>
+
+"Format a paragraph
+nmap <F8> gwap
+
+"Move back/forward by one tab
+nmap <F9> gT
+nmap <F10> gt
+
+"Use ctr-v to paste something from clipboard without indenting
+nmap <silent> <C-v> :set paste<CR>"*p:set nopaste<CR>
+
+" NERDTree, Use F3 for toggle NERDTree
+nmap <silent> <F3> :NERDTreeToggle<CR>
+
+"Open NERDTree if no file is specified
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+
+"Remove trailing white space while saving file
+"autocmd BufWritePre * %s/\s\+$//e
+
+"Set some filetypes for syntax highlighting
+au BufRead,BufNewFile *.geo   setfiletype gmsh
+au BufRead,BufNewFile *.sce   setfiletype scilab
+au BufRead,BufNewFile *.edp   setfiletype edp
+au BufRead,BufNewFile *.asy   setfiletype asy
+au BufRead,BufNewFile *.chpl  setfiletype chpl
+au BufRead,BufNewFile *.usr   setfiletype fortran "for nek5000 *.usr files
+au BufRead,BufNewFile *.cmd   set syntax=off "disable for overture cmd files
+au BufRead,BufNewFile *.scala set filetype=scala
+
+"Open file with cursor in previous position
+set viminfo='10,\"100,:20,%,n~/.viminfo
+au BufReadPost *
+\ if line("'\"") > 0 |
+\ if line("'\"") <= line("$") |
+\ exe("norm '\"") |
+\ else |
+\ exe "norm $" |
+\ endif |
+\ endif
+
+runtime macros/matchit.vim
