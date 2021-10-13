@@ -29,4 +29,5 @@ You can specify the grid size as a command line argument, below we specify a 100
 rm -f sol*.plt
 mpirun -np 4 ./convect -da_grid_x 100 -da_grid_y 100
 sh ./merge.sh
+visit -o sol*.plt
 ```

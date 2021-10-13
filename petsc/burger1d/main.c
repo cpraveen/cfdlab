@@ -1,5 +1,5 @@
 /* Solve Burger's equation in 1d using periodic bc.
-   The grid is cell-centered.
+   The grid is cell-centered. We use finite volume WENO scheme.
 */
 static char help[] = "Solves 1d Burger equation.\n\n";
 
@@ -53,12 +53,14 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
    return (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
 }
 //------------------------------------------------------------------------------
+// Flux for the Burger equation
+//------------------------------------------------------------------------------
 double Flux(double u)
 {
    return 0.5*pow(u,2);
 }
 //------------------------------------------------------------------------------
-// Godunov flux
+// Godunov flux if sonic point is u = 0
 //------------------------------------------------------------------------------
 double numflux(double ul, double ur)
 {
@@ -67,7 +69,7 @@ double numflux(double ul, double ur)
 //------------------------------------------------------------------------------
 // Save solution to file
 //------------------------------------------------------------------------------
-PetscErrorCode savesol(int nx, double dx, Vec ug)
+PetscErrorCode savesol(const int nx, const double dx, Vec ug)
 {
    int i, rank;
    static int count = 0;
@@ -119,7 +121,7 @@ int main(int argc, char *argv[])
    const PetscInt sw = 3;   // stencil width
    const PetscInt ndof = 1; // no. of dofs per cell
    PetscMPIInt rank, size;
-   double cfl = 0.4;
+   PetscReal cfl = 0.4;
    PetscReal tfinal = 0.25;
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
@@ -128,10 +130,12 @@ int main(int argc, char *argv[])
    MPI_Comm_size(PETSC_COMM_WORLD, &size);
 
    ierr = PetscOptionsGetReal(NULL,NULL,"-tfinal",&tfinal,NULL); CHKERRQ(ierr);
+   ierr = PetscOptionsGetReal(NULL,NULL,"-cfl",&cfl,NULL); CHKERRQ(ierr);
 
    ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, nx, ndof, sw, NULL, &da); CHKERRQ(ierr);
    ierr = DMSetFromOptions(da); CHKERRQ(ierr);
    ierr = DMSetUp(da); CHKERRQ(ierr);
+
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, 0, 0, &nloc, 0, 0); CHKERRQ(ierr);
@@ -154,7 +158,7 @@ int main(int argc, char *argv[])
    ierr = VecAssemblyEnd(ug);    CHKERRQ(ierr);
 
    // save initial condition
-   savesol(nx, dx, ug);
+   ierr = savesol(nx, dx, ug); CHKERRQ(ierr);
 
    // Get local view
    ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
@@ -162,20 +166,19 @@ int main(int argc, char *argv[])
    PetscInt il, nl;
    ierr = DMDAGetGhostCorners(da,&il,0,0,&nl,0,0); CHKERRQ(ierr);
 
-   double res[nloc], uold[nloc];
-   double dt = cfl * dx / (umax + 1.0e-13);
-   double lam= dt/dx;
-
-   double t = 0.0;
+   PetscReal res[nloc], uold[nloc];
+   PetscReal dt = cfl * dx / (umax + 1.0e-13);
+   PetscReal lam= dt/dx;
+   PetscReal t = 0.0;
 
    while(t < tfinal)
    {
-      if(t+dt > tfinal)
+      if(t+dt > tfinal) // adjust dt to reach Tf
       {
          dt = tfinal - t;
          lam = dt/dx;
       }
-      for(int rk=0; rk<3; ++rk)
+      for(int rk=0; rk<3; ++rk) // loop for rk stages
       {
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
@@ -197,15 +200,10 @@ int main(int argc, char *argv[])
          for(i=0; i<nloc+1; ++i) // local index
          {
             // face between j-1, j
-            int j   = il+sw+i; // global index
-            int jm1 = j-1;
-            int jm2 = j-2;
-            int jm3 = j-3;
-            int jp1 = j+1;
-            int jp2 = j+2;
-            double ul = weno5(u[jm3],u[jm2],u[jm1],u[j],u[jp1]);
-            double ur = weno5(u[jp2],u[jp1],u[j],u[jm1],u[jm2]);
-            double flux = numflux(ul, ur);
+            PetscInt j   = il+sw+i; // global index
+            PetscReal ul = weno5(u[j-3],u[j-2],u[j-1],u[j],u[j+1]);
+            PetscReal ur = weno5(u[j+2],u[j+1],u[j],u[j-1],u[j-2]);
+            PetscReal flux = numflux(ul, ur);
             if(i==0) // first face
             {
                res[i] -= flux;
@@ -233,7 +231,7 @@ int main(int argc, char *argv[])
       PetscPrintf(PETSC_COMM_WORLD,"t = %f\n", t);
    }
 
-   savesol(nx, dx, ug);
+   ierr = savesol(nx, dx, ug); CHKERRQ(ierr);
 
    // Destroy everything before finishing
    ierr = DMDestroy(&da); CHKERRQ(ierr);

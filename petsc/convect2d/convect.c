@@ -83,11 +83,11 @@ PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
            t, iend-ibeg, jend-jbeg);
    for(j=jbeg; j<jend; ++j)
       for(i=ibeg; i<iend; ++i)
-   {
-      PetscReal x = xmin + i*dx + 0.5*dx;
-      PetscReal y = ymin + j*dy + 0.5*dy;
-      fprintf(fp, "%e %e %e\n", x, y, u[j][i]);
-   }
+      {
+         PetscReal x = xmin + i*dx + 0.5*dx;
+         PetscReal y = ymin + j*dy + 0.5*dy;
+         fprintf(fp, "%e %e %e\n", x, y, u[j][i]);
+      }
    fclose(fp);
 
    ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
@@ -160,23 +160,22 @@ int main(int argc, char *argv[])
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
    // Allocate res[nlocy][nlocx] and uold[nlocy][nlocx]
-   double (*res) [nlocx] = calloc(nlocy, sizeof(*res) );
-   double (*uold)[nlocx] = calloc(nlocy, sizeof(*uold));
-   double umax = sqrt(2.0);
-   double dt = cfl * dx / umax;
-   double lam= dt/(dx*dy);
-
-   double t = 0.0;
+   PetscReal (*res) [nlocx] = calloc(nlocy, sizeof(*res) );
+   PetscReal (*uold)[nlocx] = calloc(nlocy, sizeof(*uold));
+   PetscReal umax = sqrt(2.0);
+   PetscReal dt = cfl * dx / umax;
+   PetscReal lam= dt/(dx*dy);
+   PetscReal t = 0.0;
    int it = 0;
 
    while(t < Tf)
    {
-      if(t+dt > Tf)
+      if(t+dt > Tf) // adjust dt to reach Tf
       {
          dt = Tf - t;
          lam = dt/(dx*dy);
       }
-      for(int rk=0; rk<3; ++rk)
+      for(int rk=0; rk<3; ++rk) // loop for rk stages
       {
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
@@ -200,10 +199,10 @@ int main(int argc, char *argv[])
             for(j=0; j<nlocy; ++j)
             {
                // face between k-1, k
-               int k = il+sw+i;
-               int l = jl+sw+j;
-               double uleft = weno5(u[l][k-3],u[l][k-2],u[l][k-1],u[l][k],u[l][k+1]);
-               double flux = uleft * dy;
+               PetscInt k = il+sw+i;
+               PetscInt l = jl+sw+j;
+               PetscReal uleft = weno5(u[l][k-3],u[l][k-2],u[l][k-1],u[l][k],u[l][k+1]);
+               PetscReal flux = uleft * dy;
                if(i==0)
                {
                   res[j][i] -= flux;
@@ -224,10 +223,10 @@ int main(int argc, char *argv[])
             for(i=0; i<nlocx; ++i)
             {
                // face between l-1, l
-               int k = il+sw+i;
-               int l = jl+sw+j;
-               double uleft = weno5(u[l-3][k],u[l-2][k],u[l-1][k],u[l][k],u[l+1][k]);
-               double flux = uleft * dx;
+               PetscInt k = il+sw+i;
+               PetscInt l = jl+sw+j;
+               PetscReal uleft = weno5(u[l-3][k],u[l-2][k],u[l-1][k],u[l][k],u[l+1][k]);
+               PetscReal flux = uleft * dx;
                if(j==0)
                {
                   res[j][i] -= flux;

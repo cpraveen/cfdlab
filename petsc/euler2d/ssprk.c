@@ -8,20 +8,20 @@ static char help[] = "Solves 2d Euler equations.\n\n";
 #define min(a,b)  ( (a < b) ? a : b )
 #define nvar  4
 
-const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
-const double xmin = -5.0, xmax = 5.0;
-const double ymin = -5.0, ymax = 5.0;
-const double gas_gamma = 1.4;
-const double gas_const = 1.0;
-double dx, dy;
+const PetscReal ark[] = {0.0, 3.0/4.0, 1.0/3.0};
+const PetscReal xmin = -5.0, xmax = 5.0;
+const PetscReal ymin = -5.0, ymax = 5.0;
+const PetscReal gas_gamma = 1.4;
+const PetscReal gas_const = 1.0;
+PetscReal dx, dy;
 
 // Isentropic vortex
-void initcond(const double x, const double y, double *Prim)
+void initcond(const PetscReal x, const PetscReal y, PetscReal *Prim)
 {
-   const double M = 0.5;
-   const double alpha = 0.0;
-   const double beta = 5.0;
-   const double r2 = x*x + y*y;
+   const PetscReal M = 0.5;
+   const PetscReal alpha = 0.0;
+   const PetscReal beta = 5.0;
+   const PetscReal r2 = x*x + y*y;
    Prim[0] =  pow(1.0 - (gas_gamma-1.0)*(beta*beta)/(8.0*gas_gamma*M_PI*M_PI)*exp(1-r2), (1.0/(gas_gamma-1.0)));
    Prim[1] =  M*cos(alpha*M_PI/180.0) - beta/(2.0*M_PI)*y*exp(0.5*(1.0-r2));
    Prim[2] =  M*sin(alpha*M_PI/180.0) + beta/(2.0*M_PI)*x*exp(0.5*(1.0-r2));
@@ -32,13 +32,14 @@ void initcond(const double x, const double y, double *Prim)
 // Weno reconstruction
 // Return left value for face between u0, up1
 //------------------------------------------------------------------------------
-double weno5(const double um2, const double um1, const double u0, const double up1, const double up2)
+PetscReal weno5(const PetscReal um2, const PetscReal um1, const PetscReal u0, 
+             const PetscReal up1, const PetscReal up2)
 {
-   double eps = 1.0e-6;
-   double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
-   double beta1, beta2, beta3;
-   double u1, u2, u3;
-   double w1, w2, w3;
+   PetscReal eps = 1.0e-6;
+   PetscReal gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
+   PetscReal beta1, beta2, beta3;
+   PetscReal u1, u2, u3;
+   PetscReal w1, w2, w3;
 
    beta1 = (13.0/12.0)*pow((um2 - 2.0*um1 + u0),2) +
            (1.0/4.0)*pow((um2 - 4.0*um1 + 3.0*u0),2);
@@ -59,7 +60,7 @@ double weno5(const double um2, const double um1, const double u0, const double u
 }
 
 // Conserved to primitive variables
-void con2prim(const double *Con, double *Prim)
+void con2prim(const PetscReal *Con, PetscReal *Prim)
 {
   Prim[0] = Con[0];
   Prim[1] = Con[1]/Con[0];
@@ -68,7 +69,7 @@ void con2prim(const double *Con, double *Prim)
 }
 
 // Primitive to conserved variables
-void prim2con(const double *Prim, double *Con)
+void prim2con(const PetscReal *Prim, PetscReal *Con)
 {
   Con[0] = Prim[0];
   Con[1] = Prim[0]*Prim[1];
@@ -77,34 +78,35 @@ void prim2con(const double *Prim, double *Con)
 }
 
 // Compute maximum eigenvalue in direction (nx,ny)
-double maxeigval(const double *Con, const double nx, const double ny)
+PetscReal maxeigval(const PetscReal *Con, const PetscReal nx, const PetscReal ny)
 {
-   double Prim[nvar];
+   PetscReal Prim[nvar];
    con2prim(Con, Prim);
-   const double u = fabs(Prim[1]*nx + Prim[2]*ny);
-   const double a = sqrt(gas_gamma*Prim[3]/Prim[0]);
+   const PetscReal u = fabs(Prim[1]*nx + Prim[2]*ny);
+   const PetscReal a = sqrt(gas_gamma*Prim[3]/Prim[0]);
    return u + a;
 }
 
 // Compute local timestep
-double dt_local(const double *Con)
+PetscReal dt_local(const PetscReal *Con)
 {
-   double Prim[nvar];
+   PetscReal Prim[nvar];
    con2prim(Con, Prim);
-   const double a = sqrt(gas_gamma*Prim[3]/Prim[0]);
-   const double sx = fabs(Prim[1]) + a;
-   const double sy = fabs(Prim[2]) + a;
+   const PetscReal a = sqrt(gas_gamma*Prim[3]/Prim[0]);
+   const PetscReal sx = fabs(Prim[1]) + a;
+   const PetscReal sy = fabs(Prim[2]) + a;
    return 1.0/(sx/dx + sy/dy);
 }
 
 // Simple average flux
-void avg_flux(const double *Ul, const double *Ur, const double nx, const double ny, double *flux)
+void avg_flux(const PetscReal *Ul, const PetscReal *Ur, 
+              const PetscReal nx, const PetscReal ny, PetscReal *flux)
 {
-   double Pl[nvar], Pr[nvar];
+   PetscReal Pl[nvar], Pr[nvar];
    con2prim(Ul, Pl);
    con2prim(Ur, Pr);
 
-   double fluxl[nvar], fluxr[nvar];
+   PetscReal fluxl[nvar], fluxr[nvar];
 
   fluxl[0] = Ul[1]*nx + Ul[2]*ny;
   fluxl[1] = Pl[3]*nx + Pl[1]*fluxl[0];
@@ -120,17 +122,18 @@ void avg_flux(const double *Ul, const double *Ur, const double nx, const double 
 }
 
 // Rusanov flux
-void numflux(const double *Ul, const double *Ur, const double nx, const double ny, double *flux)
+void numflux(const PetscReal *Ul, const PetscReal *Ur, 
+             const PetscReal nx, const PetscReal ny, PetscReal *flux)
 {
-   double Ua[nvar];
+   PetscReal Ua[nvar];
    for(int i=0; i<nvar; ++i) Ua[i] = 0.5*(Ul[i] + Ur[i]);
-   double lam = maxeigval( Ua, nx, ny );
+   PetscReal lam = maxeigval( Ua, nx, ny );
    avg_flux(Ul,Ur,nx,ny,flux);
    for(int i=0; i<nvar; ++i) flux[i] -= 0.5*lam*(Ur[i] - Ul[i]);
 }
 
 //------------------------------------------------------------------------------
-PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
+PetscErrorCode savesol(int *c, PetscReal t, DM da, Vec ug)
 {
    PetscErrorCode ierr;
    char           filename[32] = "sol";
@@ -147,21 +150,22 @@ PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
    ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
 
-   int iend = PetscMin(ibeg+nlocx+1, nx);
-   int jend = PetscMin(jbeg+nlocy+1, ny);
+   PetscInt iend = PetscMin(ibeg+nlocx+1, nx);
+   PetscInt jend = PetscMin(jbeg+nlocy+1, ny);
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    sprintf(filename, "sol-%03d-%03d.plt", *c, rank);
    fp = fopen(filename,"w");
    fprintf(fp, "TITLE = \"u_t + u_x + u_y = 0\"\n");
    fprintf(fp, "VARIABLES = x, y, rho, u, v, p\n");
-   fprintf(fp, "ZONE STRANDID=1, SOLUTIONTIME=%e, I=%d, J=%d, DATAPACKING=POINT\n", t, iend-ibeg, jend-jbeg);
+   fprintf(fp, "ZONE STRANDID=1, SOLUTIONTIME=%e, I=%d, J=%d, DATAPACKING=POINT\n", 
+           t, iend-ibeg, jend-jbeg);
    for(j=jbeg; j<jend; ++j)
       for(i=ibeg; i<iend; ++i)
    {
       PetscReal x = xmin + i*dx + 0.5*dx;
       PetscReal y = ymin + j*dy + 0.5*dy;
-      double prim[nvar];
+      PetscReal prim[nvar];
       con2prim(u[j][i], prim);
       fprintf(fp, "%e %e %e %e %e %e\n", x, y, prim[0], prim[1], prim[2], prim[3]);
    }
@@ -223,7 +227,7 @@ int main(int argc, char *argv[])
       {
          PetscReal x = xmin + i*dx + 0.5*dx;
          PetscReal y = ymin + j*dy + 0.5*dy;
-         double prim[nvar];
+         PetscReal prim[nvar];
          initcond(x, y, prim);
          prim2con(prim, u[j][i]);
       }
@@ -237,12 +241,10 @@ int main(int argc, char *argv[])
    ierr = DMDAGetGhostCorners(da,&il,&jl,0,&nl,&ml,0); CHKERRQ(ierr);
 
    // Allocate res[nlocy][nlocx][nvar] and uold[nlocy][nlocx][nvar]
-   double (*res) [nlocx][nvar] = calloc(nlocy, sizeof(*res) );
-   double (*uold)[nlocx][nvar] = calloc(nlocy, sizeof(*uold));
-
-   double dt, lam;
-
-   double t = 0.0;
+   PetscReal (*res) [nlocx][nvar] = calloc(nlocy, sizeof(*res) );
+   PetscReal (*uold)[nlocx][nvar] = calloc(nlocy, sizeof(*uold));
+   PetscReal dt, lam;
+   PetscReal t = 0.0;
    int it = 0;
 
    while(t < Tf)
@@ -256,7 +258,7 @@ int main(int argc, char *argv[])
          if(rk==0)
          {
             // compute time step
-            double dtlocal = 1.0e20;
+            PetscReal dtlocal = 1.0e20;
 
             for(j=jbeg; j<jbeg+nlocy; ++j)
                for(i=ibeg; i<ibeg+nlocx; ++i)
@@ -287,9 +289,9 @@ int main(int argc, char *argv[])
             for(j=0; j<nlocy; ++j)
             {
                // face between k-1, k
-               int k = il+sw+i;
-               int l = jl+sw+j;
-               double UL[nvar], UR[nvar], flux[nvar];
+               PetscInt k = il+sw+i;
+               PetscInt l = jl+sw+j;
+               PetscReal UL[nvar], UR[nvar], flux[nvar];
                for(d=0; d<nvar; ++d)
                {
                   UL[d] = weno5(u[l][k-3][d],u[l][k-2][d],u[l][k-1][d],u[l][k][d],u[l][k+1][d]);
@@ -321,9 +323,9 @@ int main(int argc, char *argv[])
             for(i=0; i<nlocx; ++i)
             {
                // face between l-1, l
-               int k = il+sw+i;
-               int l = jl+sw+j;
-               double UL[nvar], UR[nvar], flux[nvar];
+               PetscInt k = il+sw+i;
+               PetscInt l = jl+sw+j;
+               PetscReal UL[nvar], UR[nvar], flux[nvar];
                for(d=0; d<nvar; ++d)
                {
                   UL[d] = weno5(u[l-3][k][d],u[l-2][k][d],u[l-1][k][d],u[l][k][d],u[l+1][k][d]);

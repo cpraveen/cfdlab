@@ -62,7 +62,7 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
 //------------------------------------------------------------------------------
 // Save solution to file on rank = 0 process
 //------------------------------------------------------------------------------
-PetscErrorCode savesol(int nx, double dx, Vec ug)
+PetscErrorCode savesol(const int nx, const double dx, Vec ug)
 {
    int i, rank;
    static int count = 0;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
    const PetscInt sw = 3;   // stencil width
    const PetscInt ndof = 1; // no. of dofs per cell
    PetscMPIInt rank, size;
-   double cfl = 0.4;
+   PetscReal cfl = 0.4;
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
 
@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
                        NULL, &da); CHKERRQ(ierr);
    ierr = DMSetFromOptions(da); CHKERRQ(ierr);
    ierr = DMSetUp(da); CHKERRQ(ierr);
+
    ierr = DMCreateGlobalVector(da, &ug); CHKERRQ(ierr);
 
    ierr = DMDAGetCorners(da, &ibeg, 0, 0, &nloc, 0, 0); CHKERRQ(ierr);
@@ -141,7 +142,7 @@ int main(int argc, char *argv[])
    ierr = VecAssemblyEnd(ug);    CHKERRQ(ierr);
 
    // save initial condition
-   savesol(nx, dx, ug);
+   ierr = savesol(nx, dx, ug); CHKERRQ(ierr);
 
    // Get local view
    ierr = DMGetLocalVector(da, &ul); CHKERRQ(ierr);
@@ -149,10 +150,10 @@ int main(int argc, char *argv[])
    PetscInt il, nl;
    ierr = DMDAGetGhostCorners(da,&il,0,0,&nl,0,0); CHKERRQ(ierr);
 
-   double res[nloc], uold[nloc];
-   double dt = cfl * dx;
-   double lam= dt/dx;
-   double tfinal = 2.0, t = 0.0;
+   PetscReal res[nloc], uold[nloc];
+   PetscReal dt = cfl * dx;
+   PetscReal lam= dt/dx;
+   PetscReal tfinal = 2.0, t = 0.0;
 
    while(t < tfinal)
    {
@@ -183,13 +184,9 @@ int main(int argc, char *argv[])
          for(i=0; i<nloc+1; ++i) // local index
          {
             // face between j-1, j
-            int j   = il+sw+i; // global index
-            int jm1 = j-1;
-            int jm2 = j-2;
-            int jm3 = j-3;
-            int jp1 = j+1;
-            double uleft = weno5(u[jm3],u[jm2],u[jm1],u[j],u[jp1]);
-            double flux = uleft;
+            PetscInt j   = il+sw+i; // global index
+            PetscReal uleft = weno5(u[j-3],u[j-2],u[j-1],u[j],u[j+1]);
+            PetscReal flux = uleft;
             if(i==0) // first face
             {
                res[i] -= flux;
@@ -218,7 +215,7 @@ int main(int argc, char *argv[])
       PetscPrintf(PETSC_COMM_WORLD,"t = %f\n", t);
    }
 
-   savesol(nx, dx, ug);
+   ierr = savesol(nx, dx, ug); CHKERRQ(ierr);
 
    // Destroy everything before finishing
    ierr = DMDestroy(&da); CHKERRQ(ierr);
