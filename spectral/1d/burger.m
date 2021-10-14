@@ -6,39 +6,49 @@
 % The formulation is based on
 %     Trefethen: Spectral Methods in Matlab
 %
-% Semi-implicit scheme: explit for convection, implicit for diffusion
+% Semi-implicit scheme: explicit for convection, implicit for diffusion
 %
-nu=0.1;
-N = 2^5;
+% Arguments: nu, N, cfl, nT
+function burger(nu, N, cfl, nT)
 
-xf = linspace(0,1,N+1);
-x  = xf(2:end);
-k  = [0:N/2-1 0 -N/2+1:-1];
-h  = 1/N;
+  if nargin == 0
+    nu = 0.1;
+    N  = 2^5;
+    nT = 500;
+    cfl= 0.5;
+  end
 
-u  = sin(2*pi*x);
-uh = fft(u);
-plot(uh,'o');
+  fprintf(1,"nu = %e\n", nu);
+  fprintf(1,"N  = %d\n", N);
+  fprintf(1,"cfl= %f\n", cfl);
 
-nT = 500;
-cfl= 0.5;
-dt = cfl*h/max(abs(u));
-t  = 0;
+  xf = linspace(0,1,N+1);
+  x  = xf(2:end);
+  k  = [0:N/2-1 0 -N/2+1:-1];
+  h  = 1/N;
 
-for it=1:nT
-   w = u.^2/2;
-   wh= fft(w);
-   uh = (uh - dt * 1i * k .* wh) ./ (1 + dt * nu * k.^2 );
-   u = real(ifft(uh));
-   t = t + dt; ts = strcat('Time = ', num2str(t));
-   if(mod(it,10)==0)
-      subplot(2,1,1)
-      plot(xf,[u(end) u],'o-');
-      xlabel('x'); ylabel('u')
-      title(ts); grid on
-      subplot(2,1,2)
-      plot(k(1:N/2+1), abs(uh(1:N/2+1)), 'o')
-      xlabel('k'); ylabel('|u_k|')
-      pause(0.5)
-   end
+  u  = sin(2*pi*x);
+  uh = fft(u);
+  plot(uh,'o');
+
+  t  = 0;
+  for it=1:nT
+     dt = cfl*h/max(abs(u));
+     w  = u.^2/2;
+     wh = fft(w);
+     uh = (uh - dt * 1i * k .* wh) ./ (1 + dt * nu * k.^2 );
+     u  = real(ifft(uh));
+     t  = t + dt; ts = strcat('Time = ', num2str(t));
+     if(mod(it,10) == 0)
+        subplot(2,1,1)
+        plot(xf,[u(end) u],'o-');
+        xlabel('x'); ylabel('u')
+        title(ts); grid on
+        subplot(2,1,2)
+        plot(k(1:N/2+1), abs(uh(1:N/2+1)), 'o')
+        xlabel('k'); ylabel('|u_k|')
+        pause(0.5)
+     end
+  end
+
 end
