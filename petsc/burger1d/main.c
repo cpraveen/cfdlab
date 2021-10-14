@@ -11,14 +11,14 @@ static char help[] = "Solves 1d Burger equation.\n\n";
 #define max(a,b) ((a) > (b) ? (a) : (b))
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
-const double ark[] = {0.0, 3.0/4.0, 1.0/3.0};
-const double xmin = 0.0;
-const double xmax = 1.0;
+const PetscReal ark[] = {0.0, 3.0/4.0, 1.0/3.0};
+const PetscReal xmin = 0.0;
+const PetscReal xmax = 1.0;
 
 //------------------------------------------------------------------------------
 // Initial condition
 //------------------------------------------------------------------------------
-double initcond(double x)
+PetscReal initcond(PetscReal x)
 {
    return 1.0 + 0.5 * sin(2*M_PI*x);
 }
@@ -27,13 +27,13 @@ double initcond(double x)
 // Weno reconstruction of Jiang-Shu
 // Return left value for face between u0, up1
 //------------------------------------------------------------------------------
-double weno5(double um2, double um1, double u0, double up1, double up2)
+PetscReal weno5(PetscReal um2, PetscReal um1, PetscReal u0, PetscReal up1, PetscReal up2)
 {
-   double eps = 1.0e-6;
-   double gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
-   double beta1, beta2, beta3;
-   double u1, u2, u3;
-   double w1, w2, w3;
+   PetscReal eps = 1.0e-6;
+   PetscReal gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
+   PetscReal beta1, beta2, beta3;
+   PetscReal u1, u2, u3;
+   PetscReal w1, w2, w3;
 
    beta1 = (13.0/12.0)*pow((um2 - 2.0*um1 + u0),2) +
            (1.0/4.0)*pow((um2 - 4.0*um1 + 3.0*u0),2);
@@ -55,21 +55,21 @@ double weno5(double um2, double um1, double u0, double up1, double up2)
 //------------------------------------------------------------------------------
 // Flux for the Burger equation
 //------------------------------------------------------------------------------
-double Flux(double u)
+PetscReal Flux(PetscReal u)
 {
    return 0.5*pow(u,2);
 }
 //------------------------------------------------------------------------------
 // Godunov flux if sonic point is u = 0
 //------------------------------------------------------------------------------
-double numflux(double ul, double ur)
+PetscReal numflux(PetscReal ul, PetscReal ur)
 {
    return max(Flux(max(0,ul)),Flux(min(0,ur)));
 }
 //------------------------------------------------------------------------------
 // Save solution to file
 //------------------------------------------------------------------------------
-PetscErrorCode savesol(const int nx, const double dx, Vec ug)
+PetscErrorCode savesol(const int nx, const PetscReal dx, Vec ug)
 {
    int i, rank;
    static int count = 0;
@@ -184,10 +184,7 @@ int main(int argc, char *argv[])
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
 
          PetscScalar *u;
-         ierr = DMDAVecGetArrayRead(da, ul, &u); CHKERRQ(ierr);
-
-         PetscScalar *unew;
-         ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
+         ierr = DMDAVecGetArray(da, ul, &u); CHKERRQ(ierr);
 
          // First stage, store solution at time level n into uold
          if(rk==0)
@@ -221,10 +218,9 @@ int main(int argc, char *argv[])
 
          // Update solution
          for(i=ibeg; i<ibeg+nloc; ++i)
-            unew[i] = ark[rk]*uold[i-ibeg] + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
+            u[i] = ark[rk]*uold[i-ibeg] + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
 
-         ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
-         ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
       }
 
       t += dt;

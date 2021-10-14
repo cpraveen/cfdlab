@@ -157,21 +157,18 @@ int main(int argc, char *argv[])
 
    while(t < tfinal)
    {
-      if(t+dt > tfinal)
+      if(t+dt > tfinal) // adjust dt to reach Tf
       {
          dt = tfinal - t;
          lam = dt/dx;
       }
-      for(int rk=0; rk<3; ++rk)
+      for(int rk=0; rk<3; ++rk) // loop for rk stages
       {
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
 
          PetscScalar *u;
-         ierr = DMDAVecGetArrayRead(da, ul, &u); CHKERRQ(ierr);
-
-         PetscScalar *unew;
-         ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
+         ierr = DMDAVecGetArray(da, ul, &u); CHKERRQ(ierr);
 
          // First stage, store solution at time level n into uold
          if(rk==0)
@@ -204,11 +201,10 @@ int main(int argc, char *argv[])
 
          // Update solution
          for(i=ibeg; i<ibeg+nloc; ++i)
-            unew[i] = ark[rk]*uold[i-ibeg]
-                      + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
+            u[i] = ark[rk]*uold[i-ibeg]
+                   + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
 
-         ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
-         ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
       }
 
       t += dt;

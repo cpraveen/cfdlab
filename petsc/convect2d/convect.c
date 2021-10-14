@@ -71,8 +71,8 @@ PetscErrorCode savesol(int *c, double t, DM da, Vec ug)
    ierr = DMDAGetInfo(da,0,&nx,&ny,0,0,0,0,0,0,0,0,0,0); CHKERRQ(ierr);
    ierr = DMDAGetCorners(da, &ibeg, &jbeg, 0, &nlocx, &nlocy, 0); CHKERRQ(ierr);
 
-   int iend = PetscMin(ibeg+nlocx+1, nx);
-   int jend = PetscMin(jbeg+nlocy+1, ny);
+   PetscInt iend = PetscMin(ibeg+nlocx+1, nx);
+   PetscInt jend = PetscMin(jbeg+nlocy+1, ny);
 
    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
    sprintf(filename, "sol-%03d-%03d.plt", *c, rank);
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
    PetscReal Tf  = 10.0;
    PetscReal cfl = 0.4;
    PetscInt  si  = 100;
-   PetscInt  nx  = 50, ny=50; // use -da_grid_x, -da_grid_y to override these
+   PetscInt  nx  = 50, ny = 50; // use -da_grid_x, -da_grid_y to override these
 
    PetscErrorCode ierr;
    DM       da;
@@ -112,7 +112,6 @@ int main(int argc, char *argv[])
    const PetscInt sw = 3, ndof = 1; // stencil width
    PetscMPIInt rank, size;
    PetscScalar **u;
-   PetscScalar **unew;
    int c = 0; // counter for saving solution files
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
@@ -180,8 +179,7 @@ int main(int argc, char *argv[])
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
 
-         ierr = DMDAVecGetArrayRead(da, ul, &u); CHKERRQ(ierr);
-         ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
+         ierr = DMDAVecGetArray(da, ul, &u); CHKERRQ(ierr);
 
          if(rk==0)
          {
@@ -245,11 +243,10 @@ int main(int argc, char *argv[])
          // Update solution
          for(j=jbeg; j<jbeg+nlocy; ++j)
             for(i=ibeg; i<ibeg+nlocx; ++i)
-               unew[j][i] = ark[rk]*uold[j-jbeg][i-ibeg]
+               u[j][i] = ark[rk]*uold[j-jbeg][i-ibeg]
                           + (1.0-ark[rk])*(u[j][i] - lam * res[j-jbeg][i-ibeg]);
 
-         ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
-         ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
       }
 
       t += dt; ++it;
