@@ -54,63 +54,80 @@ if [ -z "$GMSH_DIR" ]; then
    GMSH_DIR=/tmp
 fi
 
+# Select mpich or openmpi
+read -p "mpich or openmpi ? " MPI
+if [ $MPI = "mpich" ]; then
+  MPI_DIR=`spack location -i mpich`
+elif [ $MPI = "openmpi" ]; then
+  MPI_DIR=`spack location -i openmpi`
+else
+   echo "Unknown MPI specified"
+   exit
+fi
 
-$(spack location -i cmake)/bin/cmake  \
+if [ -z "$MPI_DIR" ]; then
+   echo "MPI_DIR not found"
+   exit
+else
+   echo "MPI = " $MPI_DIR
+fi
+
+`spack location -i cmake`/bin/cmake  \
 -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
 -DCMAKE_FIND_FRAMEWORK=LAST  \
 -DCMAKE_BUILD_TYPE=DebugRelease  \
 -DDEAL_II_COMPONENT_EXAMPLES=ON  \
 -DDEAL_II_COMPILE_EXAMPLES=OFF \
 -DDEAL_II_WITH_LAPACK=ON \
--DLAPACK_INCLUDE_DIRS=$(spack location -i openblas)/include  \
--DLAPACK_LIBRARIES=$(spack location -i openblas)/lib/${LAPACK_LIBRARY}  \
--DBOOST_DIR=$(spack location -i boost)  \
+-DLAPACK_INCLUDE_DIRS=`spack location -i openblas`/include  \
+-DLAPACK_LIBRARIES=`spack location -i openblas`/lib/${LAPACK_LIBRARY}  \
+-DBOOST_DIR=`spack location -i boost`  \
 -DDEAL_II_WITH_ARBORX=ON \
--DARBORX_DIR=$(spack location -i arborx)  \
--DMUPARSER_DIR=$(spack location -i muparser)  \
--DUMFPACK_DIR=$(spack location -i suite-sparse)  \
--DTBB_DIR=$(spack location -i intel-tbb)  \
--DZLIB_DIR=$(spack location -i zlib)  \
+-DARBORX_DIR=`spack location -i arborx`  \
+-DMUPARSER_DIR=`spack location -i muparser`  \
+-DUMFPACK_DIR=`spack location -i suite-sparse`  \
+-DTBB_DIR=`spack location -i intel-tbb`  \
+-DZLIB_DIR=`spack location -i zlib`  \
 -DDEAL_II_WITH_MPI:BOOL=ON  \
--DCMAKE_C_COMPILER=$(spack location -i openmpi)/bin/mpicc  \
--DCMAKE_CXX_COMPILER=$(spack location -i openmpi)/bin/mpic++  \
--DCMAKE_Fortran_COMPILER=$(spack location -i openmpi)/bin/mpif90  \
+-DCMAKE_C_COMPILER=$MPI_DIR/bin/mpicc  \
+-DCMAKE_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
+-DCMAKE_Fortran_COMPILER=$MPI_DIR/bin/mpif90  \
 -DDEAL_II_CXX_FLAGS="-march=native" \
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
--DGSL_DIR=$(spack location -i gsl)  \
+-DGSL_DIR=`spack location -i gsl`  \
 -DDEAL_II_WITH_GSL:BOOL=ON  \
--DHDF5_DIR=$(spack location -i hdf5)  \
+-DHDF5_DIR=`spack location -i hdf5`  \
 -DDEAL_II_WITH_HDF5:BOOL=ON  \
--DP4EST_DIR=$(spack location -i p4est)  \
+-DP4EST_DIR=`spack location -i p4est`  \
 -DDEAL_II_WITH_P4EST:BOOL=ON  \
--DPETSC_DIR=$(spack location -i petsc)  \
+-DPETSC_DIR=`spack location -i petsc`  \
 -DDEAL_II_WITH_PETSC:BOOL=ON  \
--DSLEPC_DIR=$(spack location -i slepc)  \
+-DSLEPC_DIR=`spack location -i slepc`  \
 -DDEAL_II_WITH_SLEPC:BOOL=ON  \
--DTRILINOS_DIR=$(spack location -i trilinos)  \
+-DTRILINOS_DIR=`spack location -i trilinos`  \
 -DDEAL_II_WITH_TRILINOS:BOOL=ON  \
--DMETIS_DIR=$(spack location -i metis)  \
+-DMETIS_DIR=`spack location -i metis`  \
 -DDEAL_II_WITH_METIS:BOOL=ON  \
 -DDEAL_II_COMPONENT_DOCUMENTATION=OFF  \
--DARPACK_DIR=$(spack location -i arpack-ng)  \
+-DARPACK_DIR=`spack location -i arpack-ng`  \
 -DDEAL_II_WITH_ARPACK=ON  \
 -DDEAL_II_ARPACK_WITH_PARPACK=ON  \
--DOPENCASCADE_DIR=$(spack location -i oce)  \
+-DOPENCASCADE_DIR=`spack location -i oce`  \
 -DDEAL_II_WITH_OPENCASCADE=ON  \
 -DGMSH_DIR=$GMSH_DIR \
 -DDEAL_II_WITH_GMSH=$DEAL_II_WITH_GMSH  \
--DASSIMP_DIR=$(spack location -i assimp)  \
+-DASSIMP_DIR=`spack location -i assimp`  \
 -DDEAL_II_WITH_ASSIMP=ON  \
--DSUNDIALS_DIR=$(spack location -i sundials)  \
+-DSUNDIALS_DIR=`spack location -i sundials`  \
 -DDEAL_II_WITH_SUNDIALS=ON  \
--DADOLC_DIR=$(spack location -i adol-c)  \
+-DADOLC_DIR=`spack location -i adol-c`  \
 -DDEAL_II_WITH_ADOLC=ON  \
--DSCALAPACK_DIR=$(spack location -i netlib-scalapack)  \
+-DSCALAPACK_DIR=`spack location -i netlib-scalapack`  \
 -DDEAL_II_WITH_SCALAPACK=ON  \
 -DDEAL_II_WITH_GINKGO=ON  \
--DGINKGO_DIR=$(spack location -i ginkgo)  \
+-DGINKGO_DIR=`spack location -i ginkgo`  \
 -DDEAL_II_WITH_SYMENGINE=ON  \
--DSYMENGINE_DIR=$(spack location -i symengine)  \
+-DSYMENGINE_DIR=`spack location -i symengine`  \
 ../
 
 echo "*** Add this to your profile ***"
