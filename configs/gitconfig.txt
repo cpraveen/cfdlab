@@ -1,0 +1,16 @@
+[user]
+	name = Praveen C
+	email = ID@gmail.com
+[pager]
+   log  = diffr | less
+   show = diffr | less
+   diff = diffr --colors refine-added:none:background:white \
+                --colors refine-removed:none:background:white | less
+[alias]
+   co = checkout
+   ci = commit
+   br = branch
+[init]
+	defaultBranch = master
+[pull]
+	rebase = false
