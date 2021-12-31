@@ -1,6 +1,6 @@
 [user]
-	 name = Praveen C
-	 email = ID@gmail.com
+   name = Praveen C
+   email = ID@gmail.com
 [pager]
    log  = diffr | less
    show = diffr | less
@@ -15,6 +15,6 @@
    ci = commit
    br = branch
 [init]
-	 defaultBranch = master
+   defaultBranch = master
 [pull]
-	 rebase = false
+   rebase = false
