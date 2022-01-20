@@ -18,9 +18,9 @@ if has("gui_running")
    set number
 endif
 "set showmatch
-set tabstop=2
-set shiftwidth=2
-set softtabstop=2
+set tabstop=3
+set shiftwidth=3
+set softtabstop=3
 set expandtab
 "set wrap wrapmargin=2
 set linebreak
