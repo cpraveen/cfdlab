@@ -1,0 +1,131 @@
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/opt/homebrew/Caskroom/miniforge/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh" ]; then
+        . "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh"
+    else
+        export PATH="/opt/homebrew/Caskroom/miniforge/base/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+#------------------------------------------------------------------------------
+# List paths in a readable form
+path(){
+    echo $PATH | tr ':' '\n'
+}
+
+#List dirs only
+dir(){
+ls -l |awk '{ if ( substr($1,1,1)== "d") {print}}'
+}
+#------------------------------------------------------------------------------
+# Git branch in prompt.
+parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
+# Change the window title of X terminals
+case $TERM in
+	xterm*|rxvt|Eterm|eterm)
+      PROMPT_COMMAND='echo -ne "\033]0;@:${PWD/$HOME/~}$(parse_git_branch)\007"'
+		;;
+	screen)
+		PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\033\\"'
+		;;
+esac
+
+precmd() { eval "$PROMPT_COMMAND" }
+#------------------------------------------------------------------------------
+# Enable completion, ignore case
+autoload -Uz compinit && compinit
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+setopt no_list_ambiguous
+#------------------------------------------------------------------------------
+export PS1="%B%F{red}$%F{black}%b "
+#------------------------------------------------------------------------------
+alias grep="grep --color"
+alias ls="ls -FGL"
+alias ll="\ls -lG"
+alias diff="colordiff -b -B --expand-tabs"
+alias pylab="ipython --pylab --matplotlib --nosep --pprint"
+alias pystyle="autopep8 --in-place --select=E303,W291 --ignore=E305"
+alias term="open -a Terminal ."
+alias texshop="open -a /Applications/TeX/TeXShop.app"
+alias visit="arch -x86_64 visit -nosplash"
+alias vispy="visit -cli -nowin -s"
+alias grace="DISPLAY=:0.0 xmgrace"
+
+# git related
+alias gitdiff="git difftool -y"
+alias gitstatus="git status -s -uno ."
+alias gitzip="git archive --format zip --output master.zip master"
+
+# ssh aliases
+alias math="ssh math.tifrbng.res.in"
+alias math2="ssh mail2.tifrbng.res.in"
+#alias cfdlab="ssh 59.160.205.19 -p 9622"
+alias cfdlab="ssh -Y -p 2259 praveen@158.144.181.10"
+#alias chandra="ssh 59.160.205.19 -p 2233"
+alias chandra="ssh -Y -p 2262 praveen@158.144.181.10"
+alias cluster="ssh -Y 59.160.205.19 -p 2222"
+alias turing="ssh -Y 59.160.205.19 -p 2225"
+alias newton="ssh -Y praveen@158.144.181.10 -p 2261"
+alias combustor="ssh praveen@158.144.181.10 -p 2266"
+#alias euler="ssh 59.160.205.19 -p 2267"
+alias euler="ssh -Y -p 2267 praveen@158.144.181.10"
+#alias rta="ssh -p 2223 praveen@59.160.205.23"
+alias rta="ssh -Y -p 2270 praveen@158.144.181.10"
+alias maxwell="ssh -Y praveen@158.144.181.10 -p 2272"
+alias fourier="ssh -Y praveen@158.144.181.10 -p 2265"
+alias feynman="ssh -Y praveen@158.144.181.10 -p 2273"
+alias sdf="ssh pc@otaku.freeshell.org"
+alias freeshell="ssh pc@otaku.freeshell.org"
+alias cchpc19="ssh  -p 4748 -tt c.praveen_052@gwssh.tifr.res.in ssh -p 22 -tt c.praveen_052@cchpc19.tifr.res.in"
+
+alias docker_fenics="docker run -ti -v \$(pwd):/home/fenics/shared -w /home/fenics/shared  quay.io/fenicsproject/stable"
+alias docker_dolfinx="docker run -ti -v \$(pwd):/home/fenics/shared -w /home/fenics/shared  dolfinx/dolfinx"
+alias docker_fenics_notebook="docker run --name notebook -w /home/fenics -v \$(pwd):/home/fenics/shared -d -p 127.0.0.1:8888:8888 quay.io/fenicsproject/stable 'jupyter-notebook --ip=0.0.0.0'"
+alias docker_dealii="docker run -ti -v \$(pwd):/home/dealii/shared -w /home/dealii/shared  dealii/dealii:latest"
+alias docker_rm="docker stop \$(docker ps -q -a) && docker rm \$(docker ps -q -a)"
+alias docker_drake="docker run -it -v `pwd`:/home/firedrake/shared firedrakeproject/firedrake:latest"
+#------------------------------------------------------------------------------
+export BIBINPUTS=.:$HOME/GoogleDrive/Documents/TeX/bibtex
+#------------------------------------------------------------------------------
+export PETSC_DIR=/opt/spack
+export METIS_DIR=/opt/spack
+export BLAS_DIR=/opt/spack
+export LAPACK_DIR=/opt/spack
+export HDF5_DIR=/opt/spack
+export EIGEN_DIR=/opt/spack
+export P4EST_DIR=/opt/spack
+export GMSH_DIR=/Applications/Gmsh.app/Contents/MacOS
+export DEAL_II_DIR=$HOME/Applications/deal.II/9.3.3/install
+export CGSEM_DIR=$HOME/Work/cgsem
+export CLAW=$HOME/Applications/clawpack
+export PYTHONPATH=$PYTHONPATH:$CLAW
+#------------------------------------------------------------------------------
+PATH=$PATH:/Applications/MacVim.app/Contents/bin
+PATH=$PATH:/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin
+PATH=$PATH:/Applications/VisIt.app/Contents/Resources/bin
+PATH=$PATH:`ls -d /Applications/ParaView*`/Contents/MacOS
+PATH=$PATH:/Applications/Gmsh.app/Contents/MacOS
+PATH=$PATH:/Applications/Octave-6.2.0.app/Contents/Resources/usr/Cellar/octave-octave-app@6.2.0/6.2.0/bin
+PATH=$PATH:$HOME/Applications/cfdlab/bin
+PATH=$PATH:/Users/spack/spack/bin
+PATH=/opt/spack/bin:$PATH
+export PATH
+#------------------------------------------------------------------------------
+export HISTCONTROL=ignoredups
+export PYTHONSTARTUP=$HOME/Applications/cfdlab/bin/python.py
+export COPYFILE_DISABLE=1 # Prevent tar from adding dot files
+export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+#------------------------------------------------------------------------------
+# unset since this causes some manpath error when we ssh to linux
+unset LC_CTYPE
+#------------------------------------------------------------------------------
+rm -f "$HOME/Google Drive"
