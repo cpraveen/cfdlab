@@ -97,6 +97,7 @@ alias docker_drake="docker run -it -v `pwd`:/home/firedrake/shared firedrakeproj
 export BIBINPUTS=.:$HOME/GoogleDrive/Documents/TeX/bibtex
 #------------------------------------------------------------------------------
 export PETSC_DIR=/opt/spack
+export SLEPC_DIR=/opt/spack
 export METIS_DIR=/opt/spack
 export BLAS_DIR=/opt/spack
 export LAPACK_DIR=/opt/spack
@@ -116,7 +117,9 @@ PATH=$PATH:`ls -d /Applications/ParaView*`/Contents/MacOS
 PATH=$PATH:/Applications/Gmsh.app/Contents/MacOS
 PATH=$PATH:/Applications/Octave-6.2.0.app/Contents/Resources/usr/Cellar/octave-octave-app@6.2.0/6.2.0/bin
 PATH=$PATH:$HOME/Applications/cfdlab/bin
-PATH=$PATH:/Users/spack/spack/bin
+PATH=$PATH:$HOME/Applications/spack/bin
+PATH=$PATH:/opt/homebrew/bin
+PATH=$GMSH_DIR:$PATH
 PATH=/opt/spack/bin:$PATH
 export PATH
 #------------------------------------------------------------------------------
