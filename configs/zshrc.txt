@@ -121,6 +121,7 @@ PATH=$PATH:$HOME/Applications/spack/bin
 PATH=$PATH:/opt/homebrew/bin
 PATH=$GMSH_DIR:$PATH
 PATH=/opt/spack/bin:$PATH
+PATH=$PATH:.
 export PATH
 #------------------------------------------------------------------------------
 export HISTCONTROL=ignoredups
