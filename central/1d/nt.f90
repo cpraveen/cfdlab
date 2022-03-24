@@ -1,11 +1,12 @@
 !------------------------------------------------------------------------------
-! Central scheme of Kurganov-Tadmor
+! Central scheme of Nessyahu-Tadmor
 ! Solve sod problem for 1d Euler equation
 !------------------------------------------------------------------------------
 module Common
    integer,parameter :: nvar = 3
    integer,parameter :: ng = 1
    real :: gam
+   real :: theta ! used in minmod, theta in [1,2]
    real :: dx
    real :: dt
 end module Common
@@ -14,6 +15,7 @@ end module Common
 program main
    use Common
    implicit none
+   theta = 1.0
    gam = 1.4
    call solve(100, 0.2, 0.5)
 end program main
@@ -152,17 +154,19 @@ subroutine jacobian(rho, v, p, A)
 end subroutine jacobian
 
 !------------------------------------------------------------------------------
-real function minmod(ujm1, uj, ujp1)
+real function minmod(ujm1, uj, ujp1, theta)
    implicit none
-   real :: ujm1, uj, ujp1
+   real,intent(in) :: ujm1, uj, ujp1, theta
    ! Local variables
-   real :: db, df, sb, sf
+   real :: db, dc, df, sb, sc, sf
    db = uj - ujm1
+   dc = 0.5*(ujp1 - ujm1)
    df = ujp1 - uj
    sb = sign(1.0, db)
+   sc = sign(1.0, dc)
    sf = sign(1.0, df)
-   if(sb == sf)then
-      minmod = sb * min(abs(db), abs(df))
+   if(sb == sc .and. sc == sf)then
+      minmod = sb * min(theta*abs(db), abs(dc), theta*abs(df))
    else
       minmod = 0.0
    endif
@@ -190,7 +194,7 @@ subroutine update(n1, u1, n2, u2)
 
    do i=1,n1
       do j=1,nvar
-         ux(j,i) = minmod(u1(j,i-1), u1(j,i), u1(j,i+1)) / dx
+         ux(j,i) = minmod(u1(j,i-1), u1(j,i), u1(j,i+1), theta) / dx
       enddo
       call con2prim(u1(:,i), rho, v, p)
       call jacobian(rho, v, p, A)
