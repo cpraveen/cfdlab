@@ -4,7 +4,7 @@
 !------------------------------------------------------------------------------
 module Common
    integer,parameter :: nvar = 3
-   integer,parameter :: ng = 3
+   integer,parameter :: ng = 1
    real :: gam
    real :: dx
    real :: dt
