@@ -1,3 +1,4 @@
 # Copy this as $HOME/.julia/config/startup.jl
+push!(LOAD_PATH,".")
 ENV["MPLBACKEND"]="tkagg" # PyQt5 does not work on apple cpu
 using Revise
