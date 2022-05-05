@@ -15,7 +15,10 @@ au FileType tex setlocal indentexpr=
 set title
 set nobackup
 if has("gui_running")
+   set cursorline
    set number
+   set gfn=Menlo:h14
+   set linespace=2
 endif
 "set showmatch
 set tabstop=3
@@ -38,18 +41,10 @@ let NERDTreeIgnore += ['\.ps$','\.eps$','\.tgz$','\.tar$','\.zip$','\.mp4$']
 
 "colorscheme koehler
 
-if has("gui_running")
-"   colorscheme default
-"Highlight current line
-set cursorline
-endif
-
-
-
 "Option for gui in gvim
 "set background=dark
 set guioptions=aegimLt
-set guifont=Fixed\ 12
+"set guifont=Fixed\ 12
 "colorscheme darkblue
 
 "set scrolloff=999
