@@ -20,7 +20,7 @@ files=
 for f in $fnames
 do
    # Check file actually exists
-   if [ -f $f.ps ] || [ -f $f.eps ] || [ -f $f.pdf ]; then
+   if [ -f $f.ps ] || [ -f $f.eps ] || [ -f $f.pdf ] || [ -f $f.png ]; then
       echo ">>> Copying $f"
       files+=" "$f.*
    else
