@@ -1,19 +1,19 @@
 packages:
   dealii:
-    variants: ~examples +simplex ~nanoflann ~gmsh ~python
+    require: ~examples +simplex ~nanoflann ~gmsh ~python
   hdf5:
-    variants: +fortran +cxx +hl
+    require: +fortran +cxx +hl
   petsc:
-    variants: +mumps +suite-sparse +p4est
+    require: +mumps +suite-sparse +p4est
   cgns:
-    variants: +fortran
+    require: +fortran
   trilinos:
-    variants: +rol +mesquite +mumps +suite-sparse +superlu-dist
+    require: +rol +mesquite +mumps +suite-sparse +superlu-dist
   libmesh:
-    variants: +boost +eigen +fparser +hdf5 +laspack +metis +perflog +petsc \
+    require: +boost +eigen +fparser +hdf5 +laspack +metis +perflog +petsc \
               +slepc +tetgen +triangle
   vtk:
-    variants: +python
+    require: +python
   all:
     providers:
       mpi: [openmpi]
