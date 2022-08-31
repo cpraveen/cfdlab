@@ -1,6 +1,6 @@
 packages:
   dealii:
-    variants: +simplex ~nanoflann ~gmsh ~python
+    variants: ~examples +simplex ~nanoflann ~gmsh ~python
   hdf5:
     variants: +fortran +cxx +hl
   petsc:
