@@ -8,7 +8,7 @@ packages:
   cgns:
     variants: +fortran
   trilinos:
-    variants: +rol +mesquite
+    variants: +rol +mesquite +mumps +suite-sparse +superlu-dist
   libmesh:
     variants: +boost +eigen +fparser +hdf5 +laspack +metis +perflog +petsc \
               +slepc +tetgen +triangle
