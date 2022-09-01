@@ -45,6 +45,7 @@ setopt no_list_ambiguous
 #------------------------------------------------------------------------------
 export PS1="%B%F{red}$%F{black}%b "
 #------------------------------------------------------------------------------
+alias diff="colordiff"
 alias grep="grep --color"
 alias ls="ls -FGL"
 alias ll="\ls -lG"
