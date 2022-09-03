@@ -1,0 +1,51 @@
+###
+### Copy this as $HOME/.gnuplot
+###
+
+###
+### Language initialization
+###
+# set locale
+# set encoding locale
+
+###
+### Default line colors and repeat cycle
+###
+set linetype 1 lc rgb "dark-violet" lw 2
+set linetype 2 lc rgb "#009e73"     lw 2
+set linetype 3 lc rgb "#56b4e9"     lw 2
+set linetype 4 lc rgb "#e69f00"     lw 2
+set linetype 5 lc rgb "#f0e442"     lw 2
+set linetype 6 lc rgb "#0072b2"     lw 2
+set linetype 7 lc rgb "#e51e10"     lw 2
+set linetype 8 lc rgb "black"       lw 2
+set linetype cycle 8
+
+set key    font ",16"
+set xtics  font ",16"
+set ytics  font ",16"
+set title  font ",16"
+set xlabel font ",16"
+set ylabel font ",16"
+
+# Draw grid lines
+set grid
+
+###
+### Initialize the default loadpath for shared gnuplot scripts and data.
+### Please confirm that this path is correct before uncommented the line below.
+###
+# set loadpath "/usr/local/share/gnuplot/4.7/demo"
+
+###
+### Some commonly used functions that are not built in
+###
+# sinc(x) = sin(x)/x
+# rgb(r,g,b) = sprintf("#%06x",256.*256.*255.*r+256.*255.*g+255.*b)
+# hsv(h,s,v) = sprintf("#%06x",hsv2rgb(h,s,v))
+
+###
+### Other preferences
+###
+# set clip two
+
