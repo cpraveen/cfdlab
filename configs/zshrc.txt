@@ -31,7 +31,7 @@ parse_git_branch() {
 
 # Change the window title of X terminals
 if (( ${+SSH_TTY} )); then
-  PROMPT_COMMAND='echo -ne "\033]0;@${HOST%%.*}:${PWD/$HOME/                    ~}$(parse_git_branch)\007"'
+  PROMPT_COMMAND='echo -ne "\033]0;@${HOST%%.*}:${PWD/$HOME/~}$(parse_git_branch)\007"'
 else
   PROMPT_COMMAND='echo -ne "\033]0;@:${PWD/$HOME/~}$(parse_git_branch)\007"'
 fi
