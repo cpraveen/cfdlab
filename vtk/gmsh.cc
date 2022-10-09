@@ -224,8 +224,8 @@ int main()
 
 
    // Save vtk file
-   ofstream vtk;
-   vtk.open ("foo.vtk");
+   string filename = "foo.vtk";
+   ofstream vtk (filename);
 
    vtk << "# vtk DataFile Version 3.0" << endl;
    vtk << "Test file" << endl;
@@ -273,5 +273,5 @@ int main()
       vtk << cvalue[i] << endl;
 
    vtk.close();
-   cout << "Wrote foo.vtk" << endl;
+   cout << "Wrote " << filename << endl;
 }
