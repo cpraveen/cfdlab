@@ -26,16 +26,12 @@ ls -l |awk '{ if ( substr($1,1,1)== "d") {print}}'
 #------------------------------------------------------------------------------
 # Git branch in prompt.
 parse_git_branch() {
-   if [ -d .git ]; then
-      behind=`git status uno 2> /dev/null | grep behind`
-      if [ -z "$behind" ]; then
-         git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
-      else
-         git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1 ↑)/'
-      fi
+   behind=`git status uno 2> /dev/null | grep behind`
+   if [ -z "$behind" ]; then
+      git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
    else
-      echo ""
-   fi 
+      git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1 ↑)/'
+   fi
 }
 
 # Change the window title of X terminals
