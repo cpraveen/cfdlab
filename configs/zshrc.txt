@@ -53,7 +53,6 @@ setopt promptsubst
 PS1=$'%F{green}${(r:$COLUMNS::-:)}'$PS1
 export PS1
 #------------------------------------------------------------------------------
-alias diff="colordiff"
 alias grep="grep --color"
 alias ls="ls -FGL"
 alias ll="\ls -lG"
