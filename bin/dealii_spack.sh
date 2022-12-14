@@ -92,10 +92,12 @@ fi
 -DCMAKE_C_COMPILER=$MPI_DIR/bin/mpicc  \
 -DCMAKE_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
 -DCMAKE_Fortran_COMPILER=$MPI_DIR/bin/mpif90  \
--DDEAL_II_CXX_FLAGS="-march=native" \
+-DDEAL_II_CXX_FLAGS="-march=native -std=c++17" \
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
 -DGSL_DIR=`spack location -i gsl`  \
 -DDEAL_II_WITH_GSL:BOOL=ON  \
+-DCGAL_DIR=`spack location -i cgal`  \
+-DDEAL_II_WITH_CGAL:BOOL=OFF  \
 -DHDF5_DIR=`spack location -i hdf5`  \
 -DDEAL_II_WITH_HDF5:BOOL=ON  \
 -DP4EST_DIR=`spack location -i p4est`  \
