@@ -50,7 +50,7 @@ setopt no_list_ambiguous
 #------------------------------------------------------------------------------
 PS1="%B%F{red}$%F{black}%b "
 setopt promptsubst
-PS1=$'%F{green}${(r:$COLUMNS::-:)}'$PS1
+PS1=$'%F{253}${(r:$COLUMNS::-:)}'$PS1
 export PS1
 #------------------------------------------------------------------------------
 alias grep="grep --color"
