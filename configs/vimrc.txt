@@ -89,6 +89,7 @@ au BufRead,BufNewFile *.geo   setfiletype gmsh
 au BufRead,BufNewFile *.sce   setfiletype scilab
 au BufRead,BufNewFile *.edp   setfiletype edp
 au BufRead,BufNewFile *.asy   setfiletype asy
+au BufRead,BufNewFile *.gnu   setfiletype gnuplot
 au BufRead,BufNewFile *.chpl  setfiletype chpl
 au BufRead,BufNewFile *.usr   setfiletype fortran "for nek5000 *.usr files
 au BufRead,BufNewFile *.cmd   set syntax=off "disable for overture cmd files
