@@ -2,6 +2,22 @@
 
 Solves linear advection eqn using upwind finite volume scheme, weno5 reconstruction and periodic bc.
 
+Run `make` to compile all programs
+
+```shell
+make
+```
+
+## ghost.c
+
+shows how to construct array with negative indexing for ghost values
+
+## serial.c
+
+Serial version of the code
+
+## convect.c
+
 We use PETSc vectors to manage parallelization but there is no matrix that is being solved.
 
 To run:
