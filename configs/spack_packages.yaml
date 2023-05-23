@@ -1,6 +1,6 @@
 packages:
   dealii:
-    require: ~examples +simplex ~nanoflann ~gmsh ~python
+    require: ~examples +simplex ~nanoflann ~gmsh ~python ~oce
   hdf5:
     require: +fortran +cxx +hl
   petsc:
@@ -10,8 +10,8 @@ packages:
   trilinos:
     require: +rol +mesquite +mumps +suite-sparse +superlu-dist
   libmesh:
-    require: +boost +eigen +fparser +hdf5 +laspack +metis +perflog +petsc \
-              +slepc +tetgen +triangle
+    require: +boost +eigen +fparser +hdf5 +laspack +metis +perflog +petsc 
+             +slepc +tetgen +triangle
   vtk:
     require: +python
   all:
