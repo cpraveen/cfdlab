@@ -1,7 +1,8 @@
 # Default = 3, 
 # 25 is slow to wake
-sudo pmset -c hibernatemode 3
-sudo pmset -b hibernatemode 25
+sudo pmset -a hibernatemode 3
+#sudo pmset -c hibernatemode 3
+#sudo pmset -b hibernatemode 25
 
 # Default = 1
 sudo pmset -a standby       1
