@@ -17,7 +17,7 @@
     <Field name="tunnelSSH" type="bool">true</Field>
     <Field name="maximumNodesValid" type="bool">false</Field>
     <Field name="maximumNodes" type="int">1</Field>
-    <Field name="maximumProcessorsValid" type="bool">true</Field>
-    <Field name="maximumProcessors" type="int">4</Field>
+    <Field name="maximumProcessorsValid" type="bool">false</Field>
+    <Field name="maximumProcessors" type="int">1</Field>
     <Field name="activeProfile" type="int">-1</Field>
 </Object>
