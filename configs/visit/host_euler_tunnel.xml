@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Object name="MachineProfile">
     <Field name="hostNickname" type="string">euler_tunnel</Field>
-    <Field name="host" type="string">158.144.181.10</Field>
+    <Field name="host" type="string">euler.tifrbng.res.in</Field>
     <Field name="userName" type="string">notset</Field>
     <Field name="hostAliases" type="string"></Field>
     <Field name="directory" type="string">/opt/visit/current</Field>
