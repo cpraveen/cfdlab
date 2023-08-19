@@ -11,7 +11,7 @@ sh ./merge.sh
 visit -o sol*.plt
 ```
 
-You can open the plt files using Tecplot of VisIt.
+You can open the plt files using Tecplot or VisIt.
 
 ## TS version (ts.c, finite volume WENO)
 
@@ -21,7 +21,7 @@ This is similar to `ssprk.c` but makes use of time stepping schemes in Petsc. To
 make ts
 ```
 
-If you dont specify any scheme
+If you dont specify any RK scheme and run like this
 
 ```shell
 rm -f sol*.plt
@@ -85,6 +85,8 @@ mpirun -np 4 ./fdweno -da_grid_x 100 -da_grid_y 100 -Tf 5.0 -cfl 0.8 -si 100 \
 sh ./merge.sh
 visit -o sol*.plt
 ```
+
+Since exact solution is available, you can run a convergence test, see the script `conv_test.sh`.
 
 ### Shock reflection
 

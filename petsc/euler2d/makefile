@@ -20,7 +20,7 @@ endif
 # All header files in this directory
 HDR=$(wildcard *.h)
 
-TARGET = ssprk ts fdweno
+TARGET = ssprk ts
 
 all: $(TARGET)
 
@@ -42,4 +42,4 @@ help:
 	@echo "   WENO   : js, z"
 
 clean:
-	rm -f *.o $(TARGET)
+	rm -f *.o $(TARGET) fdweno
