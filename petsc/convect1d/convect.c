@@ -1,4 +1,5 @@
-/* Solve linear advection equation in 1d using periodic bc.
+/* Solve linear advection equation in 1d using periodic bc,
+   upwind flux, and weno scheme.
    The grid is cell-centered.
 */
 static char help[] = "Solves u_t + u_x = 0.\n\n";
@@ -89,12 +90,13 @@ PetscErrorCode savesol(const int nx, const double dx, Vec ug)
       for(i=0; i<nx; ++i)
          fprintf(f, "%e %e\n", xmin+i*dx+0.5*dx, uarray[i]);
       fclose(f);
-      printf("Wrote solution into sol.dat\n");
+      PetscPrintf(PETSC_COMM_WORLD,"Wrote solution into sol.dat\n");
       ierr = VecRestoreArray(uall, &uarray); CHKERRQ(ierr);
       if(count==0)
       {
          // Initial solution is copied to sol0.dat
          system("cp sol.dat sol0.dat");
+         PetscPrintf(PETSC_COMM_WORLD,"Copied initial into sol0.dat\n");
          count = 1;
       }
    }
@@ -168,7 +170,10 @@ int main(int argc, char *argv[])
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
 
          PetscScalar *u;
-         ierr = DMDAVecGetArray(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecGetArrayRead(da, ul, &u); CHKERRQ(ierr);
+
+         PetscScalar *unew;
+         ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
 
          // First stage, store solution at time level n into uold
          if(rk==0)
@@ -201,10 +206,11 @@ int main(int argc, char *argv[])
 
          // Update solution
          for(i=ibeg; i<ibeg+nloc; ++i)
-            u[i] = ark[rk]*uold[i-ibeg]
-                   + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
+            unew[i] = ark[rk]*uold[i-ibeg]
+                      + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
 
-         ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
       }
 
       t += dt;

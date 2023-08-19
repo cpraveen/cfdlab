@@ -184,7 +184,10 @@ int main(int argc, char *argv[])
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
 
          PetscScalar *u;
-         ierr = DMDAVecGetArray(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecGetArrayRead(da, ul, &u); CHKERRQ(ierr);
+
+         PetscScalar *unew;
+         ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
 
          // First stage, store solution at time level n into uold
          if(rk==0)
@@ -218,9 +221,11 @@ int main(int argc, char *argv[])
 
          // Update solution
          for(i=ibeg; i<ibeg+nloc; ++i)
-            u[i] = ark[rk]*uold[i-ibeg] + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
+            unew[i] = ark[rk]*uold[i-ibeg] 
+                      + (1.0-ark[rk])*(u[i] - lam * res[i-ibeg]);
 
-         ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
       }
 
       t += dt;

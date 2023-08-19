@@ -1,4 +1,5 @@
-/* Solve linear advection equation in 1d using periodic bc.
+/* Solve linear advection equation in 1d using periodic bc,
+   upwind flux, and weno scheme.
    The grid is cell-centered.
 */
 #include<stdlib.h>
@@ -128,7 +129,9 @@ int main(int argc, char *argv[])
             res[i] = 0.0;
 
          // Loop over faces and compute flux
-         for(i=0; i<nx+1; ++i) // local index
+         // dx * du_i/dt + (f_{i+1/2} - f_{i-1/2}) = 0
+         // dx * du_i/dt + res_i = 0
+         for(i=0; i<nx+1; ++i)
          {
             // face between i-1, i
             double uleft = weno5(u[i-3],u[i-2],u[i-1],u[i],u[i+1]);

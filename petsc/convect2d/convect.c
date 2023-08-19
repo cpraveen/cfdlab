@@ -108,10 +108,10 @@ int main(int argc, char *argv[])
    PetscErrorCode ierr;
    DM       da;
    Vec      ug, ul;
+   PetscScalar **u;
    PetscInt i, j, ibeg, jbeg, nlocx, nlocy;
    const PetscInt sw = 3, ndof = 1; // stencil width
    PetscMPIInt rank, size;
-   PetscScalar **u;
    int c = 0; // counter for saving solution files
 
    ierr = PetscInitialize(&argc, &argv, (char*)0, help); CHKERRQ(ierr);
@@ -179,7 +179,10 @@ int main(int argc, char *argv[])
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
          ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
 
-         ierr = DMDAVecGetArray(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecGetArrayRead(da, ul, &u); CHKERRQ(ierr);
+
+         PetscScalar **unew;
+         ierr = DMDAVecGetArray(da, ug, &unew); CHKERRQ(ierr);
 
          if(rk==0)
          {
@@ -243,10 +246,11 @@ int main(int argc, char *argv[])
          // Update solution
          for(j=jbeg; j<jbeg+nlocy; ++j)
             for(i=ibeg; i<ibeg+nlocx; ++i)
-               u[j][i] = ark[rk]*uold[j-jbeg][i-ibeg]
-                          + (1.0-ark[rk])*(u[j][i] - lam * res[j-jbeg][i-ibeg]);
+               unew[j][i] = ark[rk]*uold[j-jbeg][i-ibeg]
+                            + (1.0-ark[rk])*(u[j][i] - lam * res[j-jbeg][i-ibeg]);
 
-         ierr = DMDAVecRestoreArray(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArrayRead(da, ul, &u); CHKERRQ(ierr);
+         ierr = DMDAVecRestoreArray(da, ug, &unew); CHKERRQ(ierr);
       }
 
       t += dt; ++it;
