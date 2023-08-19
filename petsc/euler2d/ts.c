@@ -407,7 +407,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal time,Vec U,void *ptr)
    PetscErrorCode ierr;
 
    if (step < 0) return(0); /* step of -1 indicates an interpolated solution */
-   PetscPrintf(PETSC_COMM_WORLD,"iter, t = %e\n", step, time);
+   PetscPrintf(PETSC_COMM_WORLD,"iter, t = %d %e\n", step, time);
 
    ierr = TSGetDM(ts, &da); CHKERRQ(ierr);
 

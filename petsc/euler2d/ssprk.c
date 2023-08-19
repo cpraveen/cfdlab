@@ -16,6 +16,7 @@ const PetscReal gas_const = 1.0;
 PetscReal dx, dy;
 
 // Isentropic vortex
+// Prim = (density, vel_x, vel_y, pressure)
 void initcond(const PetscReal x, const PetscReal y, PetscReal *Prim)
 {
    const PetscReal M = 0.5;
@@ -60,6 +61,8 @@ PetscReal weno5(const PetscReal um2, const PetscReal um1, const PetscReal u0,
 }
 
 // Conserved to primitive variables
+// Con  = (rho, rho*u, rho*v, E)
+// Prim = (rho, u, v, p)
 void con2prim(const PetscReal *Con, PetscReal *Prim)
 {
   Prim[0] = Con[0];
