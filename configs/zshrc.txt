@@ -34,11 +34,17 @@ parse_git_branch() {
    fi
 }
 
+parse_conda() {
+   if [ $CONDA_DEFAULT_ENV != "base" ]; then
+      echo "("$CONDA_DEFAULT_ENV")"
+   fi
+}
+
 # Change the window title of X terminals
 if (( ${+SSH_TTY} )); then
-  PROMPT_COMMAND='echo -ne "\033]0;@${HOST%%.*}:${PWD/$HOME/~}$(parse_git_branch)\007"'
+   PROMPT_COMMAND='echo -ne "\033]0;@${HOST%%.*}:${PWD/$HOME/~}$(parse_git_branch)$(parse_conda)\007"'
 else
-  PROMPT_COMMAND='echo -ne "\033]0;@:${PWD/$HOME/~}$(parse_git_branch)\007"'
+   PROMPT_COMMAND='echo -ne "\033]0;@:${PWD/$HOME/~}$(parse_git_branch)$(parse_conda)\007"'
 fi
 
 precmd() { eval "$PROMPT_COMMAND" }
