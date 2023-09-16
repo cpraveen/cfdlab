@@ -69,7 +69,7 @@ alias term="open -a Terminal ."
 alias texshop="open -a /Applications/TeX/TeXShop.app"
 alias visit="arch -x86_64 visit -nosplash"
 alias vispy="visit -cli -nowin -s"
-alias grace="DISPLAY=:0.0 xmgrace"
+alias grace="xmgrace -free -geometry 768x768"
 
 # git related
 alias gitdiff="git difftool -y"
