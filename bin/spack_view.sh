@@ -83,3 +83,4 @@ dolink symengine
 dolink tbb
 dolink trilinos
 dolink zlib
+dolink zlib-ng
