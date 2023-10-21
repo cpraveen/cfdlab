@@ -55,21 +55,30 @@ if [ -z "$GMSH_DIR" ]; then
 fi
 
 # Select mpich or openmpi
-read -p "mpich or openmpi ? " MPI
-if [ $MPI = "mpich" ]; then
-  MPI_DIR=`spack location -i mpich`
-elif [ $MPI = "openmpi" ]; then
-  MPI_DIR=`spack location -i openmpi`
+OPENMPI=`spack location -i openmpi 2> /dev/null`
+MPICH=`spack location -i mpich 2> /dev/null`
+
+if [ $OPENMPI ]; then
+   MPI_DIR=$OPENMPI
 else
-   echo "Unknown MPI specified"
-   exit
+   MPI_DIR=$MPICH
 fi
 
-if [ -z "$MPI_DIR" ]; then
+#read -p "mpich or openmpi ? " MPI
+#if [ $MPI = "mpich" ]; then
+#  MPI_DIR=`spack location -i mpich`
+#elif [ $MPI = "openmpi" ]; then
+#  MPI_DIR=`spack location -i openmpi`
+#else
+#   echo "Unknown MPI specified"
+#   exit
+#fi
+
+if [ -d "$MPI_DIR" ]; then
+   echo "MPI_DIR = " $MPI_DIR
+else
    echo "MPI_DIR not found"
    exit
-else
-   echo "MPI = " $MPI_DIR
 fi
 
 `spack location -i cmake`/bin/cmake  \
