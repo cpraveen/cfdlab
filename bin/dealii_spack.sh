@@ -87,7 +87,7 @@ fi
 -DMUPARSER_DIR=`spack location -i muparser`  \
 -DUMFPACK_DIR=`spack location -i suite-sparse`  \
 -DTBB_DIR=`spack location -i intel-tbb`  \
--DZLIB_DIR=`spack location -i zlib`  \
+-DZLIB_DIR=`spack location -i zlib-ng`  \
 -DDEAL_II_WITH_MPI:BOOL=ON  \
 -DCMAKE_C_COMPILER=$MPI_DIR/bin/mpicc  \
 -DCMAKE_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
@@ -97,7 +97,7 @@ fi
 -DGSL_DIR=`spack location -i gsl`  \
 -DDEAL_II_WITH_GSL:BOOL=ON  \
 -DCGAL_DIR=`spack location -i cgal`  \
--DDEAL_II_WITH_CGAL:BOOL=OFF  \
+-DDEAL_II_WITH_CGAL:BOOL=ON  \
 -DHDF5_DIR=`spack location -i hdf5`  \
 -DDEAL_II_WITH_HDF5:BOOL=ON  \
 -DP4EST_DIR=`spack location -i p4est`  \
