@@ -4,7 +4,7 @@ packages:
   hdf5:
     require: +fortran +cxx +hl
   petsc:
-    require: +mumps +suite-sparse +p4est
+    require: +mumps +scalapack +suite-sparse +superlu-dist +p4est +ptscotch
   cgns:
     require: +fortran
   trilinos:
