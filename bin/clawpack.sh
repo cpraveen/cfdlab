@@ -1,5 +1,10 @@
 # Install clawpack from source, uses conda
 
+if [ -z `which conda` ]; then
+   echo "conda is not found, add it to your path and try again"
+   exit
+fi
+
 if [ -z $CLAW ]; then
    echo "Set CLAW to full path of clawpack directory"
    echo "E.g., export CLAW=$HOME/Applications/clawpack"
