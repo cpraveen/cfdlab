@@ -62,7 +62,7 @@ fi
 conda config --add channels conda-forge
 conda config --set channel_priority strict
 conda install -y ipython matplotlib meson-python ninja nose notebook numpy \
-                 scipy seaborn six petsc4py
+                 petsc4py pip scipy seaborn six
 
 # Build clawpack
 echo "----------------------------------------------------------------------"
