@@ -13,6 +13,8 @@ fi
 if [ -z $CLAW ]; then
    echo "Set CLAW to full path of clawpack directory"
    echo "E.g., export CLAW=$HOME/Applications/clawpack"
+   echo "Git sources of clawpack will be cloned into this."
+   echo "If this directory exists, it will be deleted."
    exit
 fi
 
@@ -29,7 +31,8 @@ VERSION=$1
 # Name of conda environment
 ENV=claw
 
-echo "Will install using conda env: " $ENV
+echo "Will install using conda env: $ENV"
+echo "$CLAW will be deleted if it exists."
 read -p "Press enter to continue"
 
 echo "----------------------------------------------------------------------"
