@@ -1,0 +1,58 @@
+# Install clawpack from source, uses conda
+
+if [ -z $CLAW ]; then
+   echo "Set CLAW to full path of clawpack directory"
+   echo "E.g., export CLAW=$HOME/Applications/clawpack"
+   exit
+fi
+
+if [ $# -eq 0 ]
+  then
+    echo "Clawpack version is not supplied"
+    echo "Example: run this script like this"
+    echo "   sh ./clawpack.sh v5.9.2"
+    exit
+fi
+
+VERSION=$1
+
+# Name of conda environment
+ENV="claw"
+
+echo "----------------------------------------------------------------------"
+echo "Checking out clawpack source"
+echo "----------------------------------------------------------------------"
+rm -rf $CLAW
+git clone git@github.com:clawpack/clawpack.git $CLAW
+cd $CLAW
+git clone --recursive https://github.com/clawpack/apps
+git checkout $VERSION
+git submodule init
+git submodule update
+
+find_in_conda_env(){
+    conda env list | grep "${@}" >/dev/null 2>/dev/null
+}
+
+if find_in_conda_env $ENV ; then
+   echo "----------------------------------------------------------------------"
+   echo $ENV "exists, activating"
+   echo "----------------------------------------------------------------------"
+   conda activate $ENV
+else
+   echo "----------------------------------------------------------------------"
+   echo "Creating $ENV and installint packages"
+   echo "----------------------------------------------------------------------"
+   conda create -y -n $ENV
+   conda activate $ENV
+   conda config --add channels conda-forge
+   conda config --set channel_priority strict
+   conda install ipython matplotlib meson-python ninja nose notebook numpy \
+         scipy seaborn six petsc4py
+fi
+
+# Build clawpack
+echo "----------------------------------------------------------------------"
+echo "Building clawpack"
+echo "----------------------------------------------------------------------"
+pip install --user --no-build-isolation -e .
