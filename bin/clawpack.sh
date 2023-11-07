@@ -1,7 +1,12 @@
 # Install clawpack from source, uses conda
 
+if [ -z `which git` ]; then
+   echo "git is not found, install/add it to your path and try again"
+   exit
+fi
+
 if [ -z `which conda` ]; then
-   echo "conda is not found, add it to your path and try again"
+   echo "conda is not found, install/add it to your path and try again"
    exit
 fi
 
