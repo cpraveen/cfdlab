@@ -41,14 +41,14 @@ if find_in_conda_env $ENV ; then
    conda activate $ENV
 else
    echo "----------------------------------------------------------------------"
-   echo "Creating $ENV and installint packages"
+   echo "Creating $ENV and installing packages"
    echo "----------------------------------------------------------------------"
    conda create -y -n $ENV
    conda activate $ENV
    conda config --add channels conda-forge
    conda config --set channel_priority strict
-   conda install ipython matplotlib meson-python ninja nose notebook numpy \
-         scipy seaborn six petsc4py
+   conda install -y ipython matplotlib meson-python ninja nose notebook numpy \
+                    scipy seaborn six petsc4py
 fi
 
 # Build clawpack
