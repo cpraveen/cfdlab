@@ -29,6 +29,9 @@ VERSION=$1
 # Name of conda environment
 ENV=claw
 
+echo "Will install using conda env: " $ENV
+read -p "Press enter to continue"
+
 echo "----------------------------------------------------------------------"
 echo "Checking out clawpack source"
 echo "----------------------------------------------------------------------"
@@ -59,10 +62,9 @@ else
    conda activate $ENV
 fi
 
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-conda install -y ipython matplotlib meson-python ninja nose notebook numpy \
-                 petsc4py pip scipy seaborn six
+conda install -y -c conda-forge \
+              ipython matplotlib meson-python ninja nose notebook numpy \
+              petsc4py pip scipy seaborn six
 
 # Build clawpack
 echo "----------------------------------------------------------------------"
