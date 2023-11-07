@@ -22,7 +22,7 @@ fi
 VERSION=$1
 
 # Name of conda environment
-ENV="claw"
+ENV=claw
 
 echo "----------------------------------------------------------------------"
 echo "Checking out clawpack source"
@@ -34,6 +34,8 @@ git clone --recursive https://github.com/clawpack/apps
 git checkout $VERSION
 git submodule init
 git submodule update
+
+eval "$(conda shell.bash hook)"
 
 find_in_conda_env(){
     conda env list | grep "${@}" >/dev/null 2>/dev/null
@@ -50,11 +52,12 @@ else
    echo "----------------------------------------------------------------------"
    conda create -y -n $ENV
    conda activate $ENV
-   conda config --add channels conda-forge
-   conda config --set channel_priority strict
-   conda install -y ipython matplotlib meson-python ninja nose notebook numpy \
-                    scipy seaborn six petsc4py
 fi
+
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+conda install -y ipython matplotlib meson-python ninja nose notebook numpy \
+                 scipy seaborn six petsc4py
 
 # Build clawpack
 echo "----------------------------------------------------------------------"
