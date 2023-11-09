@@ -75,3 +75,11 @@ echo "----------------------------------------------------------------------"
 echo "Building clawpack"
 echo "----------------------------------------------------------------------"
 pip install --user --no-build-isolation -e .
+
+echo "----------------------------------------------------------------------"
+echo "Installation successful, try to run a test"
+echo "   conda activate claw"
+echo "   cd /tmp"
+echo "   python $CLAW/pyclaw/examples/advection_1d/advection_1d.py iplot=1"
+echo "It is better not to run inside $CLAW or to modify the code there."
+echo "----------------------------------------------------------------------"
