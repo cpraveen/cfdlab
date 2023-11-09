@@ -1,4 +1,5 @@
 # Install clawpack from source, uses conda
+set -e
 
 if [ -z `which git` ]; then
    echo "git is not found, install/add it to your path and try again"
