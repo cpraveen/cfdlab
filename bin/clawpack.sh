@@ -34,7 +34,7 @@ ENV=claw
 
 echo "Will install using conda env: $ENV"
 echo "$CLAW will be deleted if it exists."
-read -p "Press enter to continue"
+read -p "Press enter to continue or control-c to quit "
 
 echo "----------------------------------------------------------------------"
 echo "Checking out clawpack source"
