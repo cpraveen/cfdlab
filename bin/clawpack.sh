@@ -33,7 +33,7 @@ VERSION=$1
 ENV=claw
 
 echo "Will install using conda env: $ENV"
-echo "$CLAW will be deleted if it exists."
+echo "Directory $CLAW will be deleted if it exists."
 read -p "Press enter to continue or control-c to quit "
 
 echo "----------------------------------------------------------------------"
@@ -55,12 +55,12 @@ find_in_conda_env(){
 
 if find_in_conda_env $ENV ; then
    echo "----------------------------------------------------------------------"
-   echo $ENV "exists, activating"
+   echo "Conda env $ENV exists, activating"
    echo "----------------------------------------------------------------------"
    conda activate $ENV
 else
    echo "----------------------------------------------------------------------"
-   echo "Creating $ENV and installing packages"
+   echo "Creating conda env $ENV and installing packages"
    echo "----------------------------------------------------------------------"
    conda create -y -n $ENV
    conda activate $ENV
