@@ -1,12 +1,12 @@
 # Install clawpack from source, uses conda
 set -e
 
-if [ -z `which git` ]; then
+if [ -z `which git >/dev/null 2>/dev/null` ]; then
    echo "git is not found, install/add it to your path and try again"
    exit
 fi
 
-if [ -z `which conda` ]; then
+if [ -z `which conda >/dev/null 2>/dev/null` ]; then
    echo "conda is not found, install/add it to your path and try again"
    exit
 fi
@@ -47,6 +47,7 @@ git checkout $VERSION
 git submodule init
 git submodule update
 
+# Install needed packages inside conda env
 eval "$(conda shell.bash hook)"
 
 find_in_conda_env(){
@@ -66,9 +67,16 @@ else
    conda activate $ENV
 fi
 
-conda install -y -c conda-forge \
-              ipython matplotlib meson-python ninja nose notebook numpy \
-              petsc4py pip scipy seaborn six
+PACKAGES="ipython matplotlib meson-python ninja nose notebook numpy \
+          petsc4py pip scipy seaborn six"
+
+# If gfortran is not found, then install it
+if [ -z `which gfortran >/dev/null 2>/dev/null` ]; then
+   echo "gfortran not found, will be installed in the conda env"
+   PACKAGES="$PACKAGES gfortran"
+fi
+
+conda install -y -c conda-forge $PACKAGES
 
 # Build clawpack
 echo "----------------------------------------------------------------------"
