@@ -40,7 +40,7 @@ echo "----------------------------------------------------------------------"
 echo "Checking out clawpack source"
 echo "----------------------------------------------------------------------"
 rm -rf $CLAW
-git clone git@github.com:clawpack/clawpack.git $CLAW
+git clone https://github.com/clawpack/clawpack.git $CLAW
 cd $CLAW
 git clone --recursive https://github.com/clawpack/apps
 git checkout $VERSION
