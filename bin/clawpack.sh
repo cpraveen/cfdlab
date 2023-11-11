@@ -1,16 +1,22 @@
 # Install clawpack from source, uses conda
+# Tested to work with bash and zsh
+
+# Exit on error
 set -e
 
+# Check for git
 if [ -z `which git >/dev/null 2>/dev/null` ]; then
    echo "git is not found, install/add it to your path and try again"
    exit
 fi
 
+# Check for conda
 if [ -z `which conda >/dev/null 2>/dev/null` ]; then
    echo "conda is not found, install/add it to your path and try again"
    exit
 fi
 
+# Check that CLAW is set
 if [ -z $CLAW ]; then
    echo "Set CLAW to full path of clawpack directory"
    echo "E.g., export CLAW=$HOME/Applications/clawpack"
@@ -19,6 +25,7 @@ if [ -z $CLAW ]; then
    exit
 fi
 
+# Need to specify clawpack version to install
 if [ $# -eq 0 ]
   then
     echo "Clawpack version is not supplied"
@@ -27,9 +34,10 @@ if [ $# -eq 0 ]
     exit
 fi
 
+# clawpack version
 VERSION=$1
 
-# Name of conda environment
+# Name of conda environment, you can change this if you want
 ENV=claw
 
 echo "Will install using conda env: $ENV"
@@ -37,7 +45,7 @@ echo "Directory $CLAW will be deleted if it exists."
 read -p "Press enter to continue or control-c to quit "
 
 echo "----------------------------------------------------------------------"
-echo "Checking out clawpack source"
+echo "Checking out clawpack source from git"
 echo "----------------------------------------------------------------------"
 rm -rf $CLAW
 git clone https://github.com/clawpack/clawpack.git $CLAW
