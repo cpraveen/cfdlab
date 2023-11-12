@@ -1,0 +1,599 @@
+                            TIDY
+
+         A Computer Code for Renumbering and Beautifying
+                   FORTRAN Source Programs
+                  Version 7.2 - 1999-10-15
+
+by:
+
+Harry M. Murphy, Jr.
+Air Force Weapons Laboratory
+Kirtland AFB, New Mexico
+
+Current version by:
+Ajit J. Thakkar
+Dept. of Chemistry
+University of New Brunswick
+Fredericton, NB E3B 6E2
+Canada
+E-mail: ajit@unb.ca
+http://www.unb.ca/chem/ajit/
+
+Copyright (C) 1989, The Regents of the University of
+California All Rights Reserved
+THE REGENTS OF THE UNIVERSITY OF CALIFORNIA MAKE NO
+REPRESENTATION OR WARRANTIES WITH RESPECT TO THE CONTENTS
+HEREOF AND SPECIFICALLY DISCLAIM ANY IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE.
+Further, the Regents of the University of California reserve
+the right to revise this software and/or documentation and
+to make changes from time to time in the content hereof
+without obligation of the Regents of the University of
+California to notify any person of such revision or change.
+
+PERMISSION TO COPY AND DISTRIBUTE THIS PROGRAM, AND TO MAKE
+DERIVATIVE WORKS FROM IT, IS GRANTED PROVIDED THAT THIS
+COPYRIGHT NOTICE IS RETAINED IN ALL SOURCE CODE AND USER
+MANUALS.
+
+
+I.  Introduction
+
+The TIDY program renumbers and otherwise cleans up old and
+tired FORTRAN source programs.  TIDY accepts ANSI FORTRAN
+with a default of 19 continuation cards as well as some IBM
+and CDC dialect FORTRAN statements. It is designed to work
+with ANSI FORTRAN-77, and will also accept FORTRAN II and
+FORTRAN IV statements. Certain FORTRAN II statements (such
+as READ INPUT TAPE) are automatically translated to their
+FORTRAN IV equivalents.  All lower case alphabetic
+characters in FORTRAN keywords are normally translated to 
+upper case.
+
+Although this manual is oriented to Wintel computers, 
+TIDY has been successfully installed under the
+UNIX (4.3 BSD) and IBM VM/CMS operating systems.
+
+I.2  Limitations:
+
+The F90 extensions to ANSI Fortran-77 supported are 
+DO/ENDDO loops, DO WHILE loops, comment cards starting with 
+an ! (exclamation mark) in column 1, CYCLE, EXIT, lower
+case characters, IMPLICIT NONE, INCLUDE  statements,  
+long variable names, the relational operators <,>,<=,>=,
+==,/= and the use of underscores in variable names. 
+
+I.3.  Input Statement Format
+
+TIDY accepts standard FORTRAN statements with statement
+numbers in columns 1-5, continuation code in column 6, and
+instructions in columns 7-72.  However, see the discussion
+of the *OLDS control card below.
+
+TIDY also accepts statements in which a horizontal tab
+character in any of columns 1-6 means that the next
+character is in column 7.  Statements with an ampersand (&)
+in column 1 are interpreted as continuation lines.
+
+
+II.  TIDY Control Cards:
+
+TIDY has certain commands which control the program's
+operation and output file formats. These commands may occur
+in the user control file, or anywhere in the FORTRAN source
+file, and may be used to negate a previous command. Default
+settings are listed where meaningful.
+
+TIDY commands must begin with an asterisk in column 1.  The
+remainder of the command consists of a four-letter keyword
+and possibly an equal sign followed by a numeric or
+alphabetic argument.  Commands are negated by prefacing the
+keyword with the letters NO.
+
+The commands which control statement numbering, indentation,
+and serial numbering are grouped separately, followed by
+miscellaneous commands.
+
+II.0.  Source deck input format control:
+
+TIDY now treats information in columns 73-80 of the original
+Fortran source file as legal Fortran code, and re-formats it
+into standard 72-column Fortran statements (except that
+trailing blanks in these columns are not incorporated into
+strings which may continue onto the next original card).  If
+the original deck had sequence numbers in these columns, the
+user can direct that columns 73-80 be ignored with the *OLDS
+control card.  In the default mode (*NOSERIAL), comment
+cards can use columns 73-80.
+
+Command        Description
+*******        ***********
+
+*OLDSEQ /      *OLDS causes columns 73-80 of the original
+*NOOLDSEQ      deck to be treated as sequence numbers (in
+               effect ignored).  *NOOLDS causes non-blank
+               characters in these columns to be considered
+               part of the Fortran statement to be re-
+               formatted with continuation cards as needed
+               (a warning message is issued each time this
+               is done).  Default is *OLDS.
+
+II.1.  Statement number control:
+
+TIDY numbers all statements in increasing order.  The user
+can specify the starting number for each routine, and the
+increment between statement numbers.  FORMAT statements can
+be numbered with a different starting number if desired.
+Statement numbers can be left- or right-justified as
+desired.  The commands controlling statement numbering are:
+
+Command        Description
+*******        ***********
+
+*LEFT=n. /     Left adjust statement numbers to column n.
+*RIGHT=n.      *RIGHT right adjusts statement numbers to end
+               in column n. Default is *RIGHT=5
+
+*BASE=n. /     Initializes counter for statement label
+*NOBASE        numbers to n for each program unit.  *NOBASE
+               is equivalent to *BASE=0.  Default is
+               *NOBASE.
+
+*FMTB=n /      Initializes counter for FORMAT statement
+*NOFMTB        numbers to n for each program unit.  *NOFMTB
+               means that FORMAT statement numbers are
+               numbered according to the *BASE value above.
+               Value is disregarded if new statement numbers
+               for non-FORMAT statements would conflict.
+               Default is *NOFMTB.
+
+*STAT=n.       Set the increment for statement numbers to n.
+               Default is *STAT=10.
+
+*REFE /        Make a cross-reference table between new
+*NOREFE        labels and old labels. *NOREFE suppresses the
+               cross-reference table. Default is *NOREFE.
+
+II.2.  Indentation:
+
+TIDY controls the starting column for FORTRAN statements
+with the *COLUMN option.  The default starting column is 7.
+If desired, the *INDENT option may be used to automatically
+indent the contents of DO-loops and IF-blocks.  TIDY will
+try to fit statements into the desired indenting scheme, but
+if the resulting statement would have more than the maximum
+number of continuation lines (see the *MAXC command), then
+the statement will not be indented.  The commands which
+control statement positioning are:
+
+Command        Description
+*******        ***********
+
+*COLU=n./      Start FORTRAN statements in column n. *NOCOLU
+*NOCOLU        leaves the first letter of the FORTRAN
+               statement in place. Default is *COLU=7.
+
+*INDEN=n.      Indents statements within DO-loops and IF-
+*NOINDEN       blocks. Maximum value for n is 10.  *NOINDEN
+               turns this option off.  Default is *INDEN=2
+
+*FSPL /        This option controls the treatment of strings
+*NOFSPL        in FORMAT statements when indentation is used
+               and the FORMAT statements are not collected
+               at the end of each routine.  If *FSPL is
+               selected, a string which spans two cards will
+               be broken into two strings, and the
+               continuation card will be indented under the
+               FORMAT statement.  If *NOFSPL is selected,
+               the string will not be split into two parts,
+               and the continuation card's text will begin
+               in column 7. Since splitting strings in a
+               FORMAT statement may adversely affect
+               readability, the default is *NOFSPL.
+
+II.3.  Serialization control:
+
+Serialization consists of a 1-3 letter code in columns 73-
+75, a 4-digit serial number in columns 76-79, and a minus
+sign in column 80 of the END card.  The *SERIAL card is the
+master card which must be used to enable any of the
+serialization options.
+
+The label field can either be copied from columns 73-75 of
+each FUNCTION, SUBROUTINE, or PROGRAM card (*LABEL option),
+or it can be generated automatically (*NOLABEL option).  The
+automatic label sequence is A, B, ... , Z, AA, AB, ... .
+The user can choose where to start in this sequence with the
+*ROUT= card.
+
+To prepare a deck with serial numbers in columns 76-79, but
+with no label, use the *LABE option and leave columns 73-75
+of each FUNCTION, SUBROUTINE, or PROGRAM card blank.
+
+
+Command        Description
+*******        ***********
+
+*SERI /        Begin or restore the punching of
+*NOSERI        serialization in columns 73-79. *NOSERI
+               cancels all labelling in columns 73-80.
+               Default is *NOSERI.
+
+*ROUT=xy       Reset the alphabetic label in columns 73 - 80
+               to the characters xy.
+
+*LABE /        Use the labelling from columns 73-75 of the
+*NOLABE        current FUNCTION, SUBROUTINE or PROGRAM card
+               for the sequencing in columns 73-80. *NOLABE
+               turns this option off.  Default is *NOLABE.
+
+
+*IDST=n. /     Set the serial number increment. *IDST and
+*IDIN=n.       *IDIN are identical. This option works only
+               when *SERI is in effect. Default is *IDST=1.
+
+II.4.  String translation:
+
+Since the Hollerith constant (nHf) is being phased out as a
+way to define strings, this version of TIDY can translate
+Hollerith constants to strings delimited by apostrophes.
+Any apostrophes embedded in such strings will be doubled
+(e.g. 1H' becomes '''').
+
+The following options control this process:
+
+Command        Description
+*******        ***********
+
+*HTRAN=n./     Selects types of Hollerith constants to be
+*NOHTRAN       changed to apostrophe-delimited strings.  1 =
+               Hollerith constants only, 2 = nLf and nRf
+               (CDC variants) only, 3 = all types.  *NOHTRAN
+               turns this option off. Default is *HTRAN=1.
+
+*HLOG /        As an aid to identifying variables which
+*NOHLOG        should be typed as CHARACTER in Fortran-77,
+               executable statements in which Hollerith
+               constants have been converted to delimited
+               strings can be identified in the listing
+               file. Default is *HLOG.
+
+*DEL1=x        Defines the primary character used to delimit
+               strings.  Default is apostrophe.
+
+*DEL2=x /      Defines an alternate character used to
+*NODEL2        delimit strings. These strings may be
+               translated by the *DTRAN option.  *NODEL2
+               means no alternate string delimiter is
+               defined.  Default is *NODEL2.
+
+*DTRAN /       Causes strings delimited by a second type of
+*NODTRAN       delimiter (for example an asterisk) to be
+               changed to strings delimited by the primary
+               delimiter (normally an apostrophe).  Any
+               occurrences of the primary delimiter within
+               such strings will be properly duplicated (for
+               example *'* becomes ''''). *NODTRAN turns
+               this option off.  Default is *NODTRAN.
+
+II.5.  Miscellaneous commands:
+
+Command        Description
+*******        ***********
+
+*ANSI /        Issue warning messages for statements which
+*NOANSI        are not part of ANSI Standard FORTRAN-77.
+               *NOANSI suppresses such messages.  Default is
+               *NOANSI.
+
+*ARET=x        The character used to denote alternate return
+               addresses in CALL statements (e.g. CALL F
+               (*1,*2) ) is set to x.  Default is * (ANSI
+               standard).
+
+*ARTRAN=x /    On output, the character used to denote
+*NOARTRAN      alternate return addresses in CALL statements
+               (see *ARET above) will be changed to x.
+               *NOARTRAN prevents this translation.  Default
+               is *NOARTRAN.
+
+*CARD /        Produce a punch file (file containing TIDY'd
+*NOCARD        code). *NOCARD suppresses the creation of the
+               punch file.  Default is *CARD.
+
+*UCASE=n       Controls translation of characters which are
+*LCASE=n       not in strings or comment statements to upper
+               case (*UCASE) or to lower case (*LCASE):  if
+               n=0 then all such characters are translated;
+               if n=1, then only characters in Fortran
+               keywords are translated;  if n=2 then only
+               characters which are NOT in Fortran keywords
+               are translated.  Note that *LCASE and *UCASE
+               cards could be used separately (for example
+               to force Fortran keywords to upper case and
+               all other non-string text to be lower-case,
+               use *UCASE=1 and *LCASE=2.  Default is
+               *UCASE=0.
+
+*NOCASE        *NOCASE suppresses case translation of
+               characters which are not part of Fortran
+               keywords, strings, or comment statements,
+               thus allowing mixed-case statements (such as
+               Total=0).  Default is *UCASE=0.
+
+*CCHR=x /      Use the character specified as x as the
+*NOCCHR        continuation character for all continuation
+               lines of a statement. Default *CCHR=&.
+               *NOCCHR numbers continuation lines as
+               (1, 2, ... 9,X).
+
+*COLL /        Collect format statements at the end of the
+*NOCOLL        routine.  *NOCOLL leaves the format
+               statements in place. Default is *NOCOLL.
+
+*COMM=n /      Transmit comments to the output.  *COMM with
+*NOCOMM        no numeric argument causes comments to be
+               transmitted without processing.  If a numeric
+               argument is used, the value of n controls the
+               left-most column number in which the text of
+               comments may start.  Values of n between 3
+               and 7 mean that comment text will be right-
+               shifted if necessary so the text will begin
+               in column n.  Comments whose text begins past
+               column n will not be altered.  Shifting of
+               comments may cause text loss by truncation at
+               column 72 (*SER) or 80 (*NOSER).
+               *NOCOMM deletes comments from output files.
+               Default is *COMM.
+
+*BLAN /        Retain blank lines in output files.  *NOBLAN
+*NOBLAN        deletes blank lines.  Default is *BLAN.
+
+*CONT /        Leave GOTO's and labeled CONTINUE's which are
+*NOCONT        not DO-loop terminators in the code. *NOCONT
+               deletes such CONTINUE's and re-routes GOTO's,
+               unless they are within an IF-block. Default
+               is *NOCONT.
+
+*ENDO /        Leave DO-END DO loops in the code and change comment
+*NOENDO        signifiers to !
+               *NOENDO causes these loops to be converted to
+               conventional numbered DO-loops which
+               terminate with CONTINUE statements, and comment
+               signifiers are left as they were.
+               Default is *ENDO.
+
+*EXEM=n /      *EXEM suppresses indentation and blank
+*NOEXEM        removal from non-comment statements.  The
+               only processing done will be statement
+               renumbering and Hollerith string conversion
+               (if requested).  The value of n selects the
+               types of statements exempted:
+               *EXEM or *EXEM=1 suppresses such processing
+               for non-executable (FORMAT and DATA)
+               statements only.
+               *EXEM=2 suppresses such processing for all
+               statements.
+               *NOEXEM causes full processing of all
+               statements.
+               Default is *NOEXEM.
+
+*FEND /        *FEND forces an END statement to be written
+*NOFEND        at the end of each routine.  *NOFEND prevents
+               forcing an END statement if one is not needed
+               (such as in an INCLUDE file).  Default is
+               *FEND.
+
+*LIST /        Write original source to the TIDY listing
+*NOLIST        file. *NOLIST suppresses inclusion of the
+               original source. Default is *NOLIST.
+
+*LIST = 2. /   Write out TIDY'd code to listing file.
+*NOLIST = 2.   *NOLIST=2 suppresses the TIDY'd listing.
+               Default is NOLIST=2.
+
+*MAXC = n /    Sets the maximum number of continuation cards
+*NOMAXC        for a Fortran statement to n.  *NOMAXC
+               removes the restriction and allows use of all
+               working space (currently 40 continuation
+               cards).  Default is *MAXC=19.
+
+*NEWRO         Reset everything to starting values.
+
+*SKIP          Skip processing to the end of the current
+               routine.
+
+III.  Files
+
+TIDY uses the following files:
+
+Unit  Name        Description
+
+3     USRCON      User control file tidy.ini (optional).  
+                  This file is processed before the
+                  source file, and can only contain TIDY
+                  commands. It can be used to avoid having
+                  to edit the same TIDY commands into every
+                  file to be processed.
+
+4     INFILE      The FORTRAN source file (filename.ext).
+                  May also contain TIDY commands as needed.
+
+7     OUTFIL      List output file (filename.lis). 
+                  Listing of the source file, TIDY
+                  diagnostics, and a listing of the TIDY-
+                  generated FORTRAN program.
+
+8     PUNFIL      The TIDY-generated FORTRAN program.
+                  (filename.tid)
+
+Scratch and system files
+
+1     SCFIL1      Scratch file.
+
+2     SCFIL2      Scratch file.
+
+6     STDERR      Console output.
+
+5     STDIN       Console input (not used).
+
+V.  Usage 
+
+TIDY 7.2 is run by issuing the command
+                        tidy fname.ext 
+from a console session.
+If an extension has been specified, then the
+source is assumed to be in 'fname.ext' where 'ext' may be
+blank. If there there is no '.ext' part, then it looks for
+the source first in 'fname.for' and then in 'fname.f'. If
+none of these is found, then the program terminates. If the
+source file is located, then the 'listing' file is named
+'fname.lis' and the 'punch' file is named 'fname.tid'. TIDY
+looks for a control file named 'tidy.ini' in the
+current directory. If one is not found, then it is assumed
+that there is no control file. Scratch files are normally
+deleted at program termination.
+
+TIDY terminates normally (error level 0) if no Fortran
+errors were found.  If Fortran errors were found, the
+program terminates with error levels 1 or 2 depending on the
+severity of the error.  Extremely severe errors or
+conditions beyond TIDY's capability cause immediate
+termination with error level 3.
+
+
+VI.   Bugs
+
+Problems will arise if strings are delimited by asterisks
+and if the alternate return character in CALL statements is
+also an asterisk.
+
+TIDY cannot process statements which have continuation cards
+and have comment statements within the continued statement.
+This is a fatal error.
+
+TIDY will misinterpret FORTRAN comments that begin with a *
+followed by letters that happen to match a TIDY command.
+
+TIDY issues a spurious warning if the source file contains
+an include statement that refers to a file containing one or
+more complete subroutines. Such an include statement at the
+end of the source file leads to an error in the last line of
+the tidied file.
+
+
+VII.  Programming notes
+
+All abnormal terminations are executed in subroutine QUIT
+as CALL EXIT(n) statements. These calls to a non-standard 
+intrinsic must be rewritten if the error-exit logic must
+be changed to be compatible with another operating system.
+
+For testing, a *DEBUG option is available.
+
+The size of working arrays is controlled by the parameter
+NQCNTS in file TIDY.INC.  It is currently set to allow up to
+40 continuation cards without recompiling.  Note that the
+*MAXC control card controls how much of this space is
+actually used, and that default is currently set at 19
+continuation cards, which seems to be a common maximum for
+many compilers.
+
+VII.1  Modification History
+
+Version 7.2: 
+Added support for the F90 statements: implicit none, cycle and exit.
+
+Source code modified to reduce non-standard F77 usage to calls to 
+Exit and GetArg. The code can now be compiled with Lahey F77L, LF90, LF95 
+and GNU g77.
+
+Archaic features such as carriage control, specific intrinsic function
+calls, and arithmetic IF statements have been eliminated from the
+source code.
+ 
+Minor bug fix.
+
+Version 7.01: Treat lines with ! in column 1 as comments.
+Convert source code to Lahey F77L. Change invocation
+and method of searching for and opening files. Change defaults
+to reflect a transition to F90 style. The default *ENDO option
+now converts comments to start with a !.
+
+Version 7.0: Major revision - separated case control of
+Fortran keywords from other text in executable statements
+(see *LCASE and *UCASE commands).  Added *MAXC=n to control
+number of continuation statements allowed, parameterized
+sizes of main work arrays.  Added *FMTB to specify base of
+FORMAT numbering.  Added *COMM=n to shift starting column of
+comments.  Added *OLDSER control card.  Comment cards can go
+past column 72 when *NOSER is used.  Spaces automatically
+inserted following commas separating arguments in CALL,
+FUNCTION, and SUBROUTINE statements.  Minor bug fixes.
+
+Version 6.42:  Add *EXEM=2 for total suppression of internal
+reformatting.  In this mode TIDY simply re-numbers
+statements.
+
+Version 6.41:  All STOP statements now exit with consistent
+DOS error levels.
+
+Version 6.4: changed case translation to control-card option
+so special recompilation for lower-case translation not
+necessary.  Added ability to retain DO-ENDDO loops.  Fixed
+bug in *LEFT/*RIGHT controls.  Added fatal error for
+comments within continued statements.
+
+Version 6.32: added *CASE option;  Handle DO 10,I=1,N;
+Limited DO WHILE support.
+
+Version 6.3: DO - ENDDO loops automatically translated to
+standard Fortran-77.
+
+Version 6.22: *FSPL, *BLAN, *HLOG options added. Non-ANSI
+warning for REAL*8 etc.
+
+Version 6.0:
+The character used to denote alternate return addresses in
+CALL statements can now be changed.  The ANSI standard is *,
+but other possibilities exist (IBM Fortran IV used &).
+Also, this character can be translated if desired.  NOTE
+THAT THE DEFAULT IS NOW *. EARLIER TIDY VERSIONS USED & (IBM
+Fortran IV form).
+
+Version 5.0 - none
+
+Version 4.0:
+The statement continuation character can be set to a single
+character instead of sequential numbers 1, 2, ... if
+desired.
+
+Automatic generation of an END card at the end of the output
+file can be suppressed if desired.  This allows an INCLUDE
+file to be processed without automatically adding an END
+card to it.
+
+Hollerith constants (nHf) are normally converted to strings
+delimited by apostrophes.  Optionally, the CDC variants nLf
+and nRf can also be translated.  These features can be
+disabled if desired.
+
+Strings delimited by a character other than an apostrophe
+can be recognized and, optionally, translated to apostrophe-
+delimited strings.
+
+Strings delimited by asterisks (an old CDC feature) are no
+longer automatically recognized.  They can still be
+processed by the new "alternate delimiter" feature noted
+above.
+
+
+VIII.  Acknowledgments
+
+Many programmers have worked on TIDY and its documentation
+since it was first published by Harry Murphy in 1966.  Among
+them are Gerry Tool (Lawrence Berkeley Laboratory), Alice
+Barlow (NASA Ames Research Center), Roger Chaffee
+(Stanford Linear Accelerator Center), and Alan G. Stangenberger, 
+Dept. of Forestry & Resource Management, University of 
+California, Berkeley, CA  94720, (forags@nature.berkeley.edu).
