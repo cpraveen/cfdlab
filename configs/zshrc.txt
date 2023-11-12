@@ -1,18 +1,3 @@
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/opt/homebrew/Caskroom/miniforge/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh" ]; then
-        . "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh"
-    else
-        export PATH="/opt/homebrew/Caskroom/miniforge/base/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-
 #------------------------------------------------------------------------------
 # List paths in a readable form
 path(){
@@ -22,6 +7,18 @@ path(){
 #List dirs only
 dir(){
 ls -l |awk '{ if ( substr($1,1,1)== "d") {print}}'
+}
+
+# Common git command
+gitpush()
+{
+   git add -u
+   if [ $# -eq 0 ]; then
+      git commit -m "Update"
+   else
+      git commit -m "$@"
+   fi
+   git push
 }
 #------------------------------------------------------------------------------
 # Git branch in prompt.
@@ -144,3 +141,17 @@ export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
 unset LC_CTYPE
 #------------------------------------------------------------------------------
 rm -f "$HOME/Google Drive"
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/opt/homebrew/Caskroom/miniforge/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh" ]; then
+        . "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh"
+    else
+        export PATH="/opt/homebrew/Caskroom/miniforge/base/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
