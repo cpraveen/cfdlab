@@ -76,7 +76,7 @@ else
 fi
 
 PACKAGES="ipython matplotlib meson-python ninja nose notebook numpy \
-          petsc4py pip scipy seaborn six"
+          petsc4py pip pytest scipy seaborn six spin"
 
 # If gfortran is not found, then install it
 if [ -z `which gfortran >/dev/null 2>/dev/null` ]; then
