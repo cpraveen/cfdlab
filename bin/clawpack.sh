@@ -5,13 +5,15 @@
 set -e
 
 # Check for git
-if [ -z `which git >/dev/null 2>/dev/null` ]; then
+if ! type  git &> /dev/null
+then
    echo "git is not found, install/add it to your path and try again"
    exit
 fi
 
 # Check for conda
-if [ -z `which conda >/dev/null 2>/dev/null` ]; then
+if ! type  conda &> /dev/null
+then
    echo "conda is not found, install/add it to your path and try again"
    exit
 fi
@@ -40,8 +42,19 @@ VERSION=$1
 # Name of conda environment, you can change this if you want
 ENV=claw
 
-echo "Will install using conda env: $ENV"
-echo "Directory $CLAW will be deleted if it exists."
+echo "Installing in conda env: $ENV"
+echo "CLAW = $CLAW"
+if [ -d $CLAW ]; then
+   echo "WARNING: Directory"
+   echo "            $CLAW"
+   echo "         exists. It will be deleted."
+else
+   echo "WARNING: Directory"
+   echo "            $CLAW"
+   echo "         will be created, you need write permission."
+fi
+echo "Clawpack sources will be downloaded to"
+echo "            $CLAW"
 read -p "Press enter to continue or control-c to quit "
 
 echo "----------------------------------------------------------------------"
@@ -79,7 +92,8 @@ PACKAGES="ipython matplotlib meson-python ninja nose notebook numpy \
           petsc4py pip pytest scipy seaborn six spin"
 
 # If gfortran is not found, then install it
-if [ -z `which gfortran >/dev/null 2>/dev/null` ]; then
+if ! type  gfortran &> /dev/null
+then
    echo "gfortran not found, will be installed in the conda env"
    PACKAGES="$PACKAGES gfortran"
 fi
