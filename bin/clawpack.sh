@@ -88,7 +88,7 @@ else
    conda activate $ENV
 fi
 
-PACKAGES="ipython matplotlib meson-python ninja nose notebook numpy \
+PACKAGES="ipython jupyterlab matplotlib meson-python ninja nose numpy \
           petsc4py pip pytest scipy seaborn six spin"
 
 # If gfortran is not found, then install it
