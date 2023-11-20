@@ -10,7 +10,7 @@ ls -l |awk '{ if ( substr($1,1,1)== "d") {print}}'
 }
 
 # Common git command
-gitpush()
+gitup()
 {
    git add -u
    if [ $# -eq 0 ]; then
