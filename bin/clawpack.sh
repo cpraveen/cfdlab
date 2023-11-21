@@ -27,6 +27,14 @@ if [ -z $CLAW ]; then
    exit
 fi
 
+# Check $CLAW is writable
+if [ ! -w "$(dirname "$CLAW")" ]; then
+   echo "CLAW = $CLAW" 
+   echo "No permission to create/write into CLAW."
+   echo "Set CLAW to some location with write permission."
+   exit
+fi
+
 # Need to specify clawpack version to install
 if [ $# -eq 0 ]
   then
