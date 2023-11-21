@@ -5,15 +5,13 @@
 set -e
 
 # Check for git
-if ! type  git &> /dev/null
-then
+if [ ! type  git &> /dev/null ]; then
    echo "git is not found, install/add it to your path and try again"
    exit
 fi
 
 # Check for conda
-if ! type  conda &> /dev/null
-then
+if [ ! type  conda &> /dev/null ]; then
    echo "conda is not found, install/add it to your path and try again"
    exit
 fi
@@ -36,8 +34,7 @@ if [ ! -w "$(dirname "$CLAW")" ]; then
 fi
 
 # Need to specify clawpack version to install
-if [ $# -eq 0 ]
-  then
+if [ $# -eq 0 ]; then
     echo "Clawpack version is not supplied"
     echo "Example: run this script like this"
     echo "   sh ./clawpack.sh v5.9.2"
@@ -99,8 +96,7 @@ PACKAGES="ipython jupyterlab matplotlib meson-python ninja nose numpy \
           petsc4py pip pytest scipy seaborn six spin"
 
 # If gfortran is not found, then install it
-if ! type  gfortran &> /dev/null
-then
+if [ ! type  gfortran &> /dev/null ]; then
    echo "gfortran not found, will be installed in the conda env"
    PACKAGES="$PACKAGES gfortran"
 fi
