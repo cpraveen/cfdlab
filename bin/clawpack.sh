@@ -52,6 +52,7 @@ ENV=claw
 
 echo "Installing in conda env: $ENV"
 echo "CLAW = $CLAW"
+echo "Clawpack sources will be downloaded to above directory."
 if [ -d $CLAW ]; then
    echo "WARNING: Directory"
    echo "            $CLAW"
@@ -61,8 +62,6 @@ else
    echo "            $CLAW"
    echo "         will be created, you need write permission."
 fi
-echo "Clawpack sources will be downloaded to"
-echo "            $CLAW"
 read -p "Press enter to continue or control-c to quit "
 
 echo "----------------------------------------------------------------------"
