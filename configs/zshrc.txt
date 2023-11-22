@@ -39,9 +39,9 @@ parse_conda() {
 
 # Change the window title of X terminals
 if (( ${+SSH_TTY} )); then
-   PROMPT_COMMAND='echo -ne "\033]0;@${HOST%%.*}:${PWD/$HOME/~}$(parse_git_branch)$(parse_conda)\007"'
+   PROMPT_COMMAND='echo -ne "\033]0;@${HOST%%.*}:${PWD/$HOME/~} $(parse_git_branch)$(parse_conda)\007"'
 else
-   PROMPT_COMMAND='echo -ne "\033]0;@:${PWD/$HOME/~}$(parse_git_branch)$(parse_conda)\007"'
+   PROMPT_COMMAND='echo -ne "\033]0;@:${PWD/$HOME/~} $(parse_git_branch)$(parse_conda)\007"'
 fi
 
 precmd() { eval "$PROMPT_COMMAND" }
