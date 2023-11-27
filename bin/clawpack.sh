@@ -37,7 +37,7 @@ fi
 if [ $# -eq 0 ]; then
     echo "Clawpack version is not supplied"
     echo "Example: run this script like this"
-    echo "   sh ./clawpack.sh v5.9.2"
+    echo "   bash ./clawpack.sh v5.9.2"
     exit
 fi
 
