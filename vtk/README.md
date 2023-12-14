@@ -25,3 +25,7 @@ c++ gmsh.cc
 ./a.out
 ```
 This outputs a vtk file in unstructured format. Open it in Visit.
+
+## Reading vtk files
+
+The two notebooks show how to read vtk files using vtk Python API and meshio. These were taken from https://github.com/pnavaro/plot_vtk_with_matplotlib
