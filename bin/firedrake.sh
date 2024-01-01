@@ -10,6 +10,8 @@ echo $PATH
 
 #PETSC_CONFIGURE_OPTIONS="--with-hdf5-dir=$HDF5_DIR"
 
+python ./firedrake-install --show-dependencies
+
 python ./firedrake-install --venv-name firedrake \
                            --slepc \
                            --with-parmetis \
