@@ -1,4 +1,5 @@
 unset PETSC_DIR
+unset SLEPC_DIR
 unset HDF5_DIR
 
 PATH=$PATH:`spack location -i autoconf`/bin
