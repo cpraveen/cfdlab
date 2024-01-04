@@ -100,7 +100,7 @@ alias docker_dolfinx="docker run -ti -v \$(pwd):/home/fenics/shared -w /home/fen
 alias docker_fenics_notebook="docker run --name notebook -w /home/fenics -v \$(pwd):/home/fenics/shared -d -p 127.0.0.1:8888:8888 quay.io/fenicsproject/stable 'jupyter-notebook --ip=0.0.0.0'"
 alias docker_dealii="docker run -ti -v \$(pwd):/home/dealii/shared -w /home/dealii/shared  dealii/dealii:latest"
 alias docker_rm="docker stop \$(docker ps -q -a) && docker rm \$(docker ps -q -a)"
-alias docker_drake="docker run -it -v `pwd`:/home/firedrake/shared firedrakeproject/firedrake:latest"
+alias docker_drake="docker run -ti -v \$(pwd):/home/firedrake/shared -w /home/firedrake/shared firedrakeproject/firedrake:latest"
 #------------------------------------------------------------------------------
 export BIBINPUTS=.:$HOME/GoogleDrive/Documents/TeX/bibtex
 #------------------------------------------------------------------------------
