@@ -9,6 +9,8 @@ PATH=$PATH:`spack location -i libtool`/bin
 echo $PATH
 
 #PETSC_CONFIGURE_OPTIONS="--with-hdf5-dir=$HDF5_DIR"
+#
+export PETSC_CONFIGURE_OPTIONS="--download-zlib"
 
 python ./firedrake-install --show-dependencies
 
