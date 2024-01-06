@@ -105,6 +105,10 @@ fi
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
 -DGSL_DIR=`spack location -i gsl`  \
 -DDEAL_II_WITH_GSL:BOOL=ON  \
+-DGMP_INCLUDE_DIR=`spack location -i gmp` \
+-DGMP_LIBRARIES=`spack location -i gmp` \
+-DMPFR_INCLUDE_DIR=`spack location -i mpfr` \
+-DMPFR_LIBRARIES=`spack location -i mpfr` \
 -DCGAL_DIR=`spack location -i cgal`  \
 -DDEAL_II_WITH_CGAL:BOOL=ON  \
 -DHDF5_DIR=`spack location -i hdf5`  \
