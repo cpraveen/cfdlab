@@ -6,8 +6,6 @@
 # NOTE THAT IF YOU HAVE A PS OR EPS FILE OF SAME NAME, IT WILL BE DELETED.
 
 # Find all pdf in this and all subdirectories
-
-
 PDF=`find . -name "*.pdf"`
 
 for f in $PDF
