@@ -138,7 +138,9 @@ export COPYFILE_DISABLE=1 # Prevent tar from adding dot files
 export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
 #------------------------------------------------------------------------------
 # unset since this causes some manpath error when we ssh to linux
-unset LC_CTYPE
+#unset LC_CTYPE
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
 #------------------------------------------------------------------------------
 rm -f "$HOME/Google Drive"
 # >>> conda initialize >>>
