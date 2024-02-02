@@ -3,15 +3,16 @@
 
 int main()
 {
-   int nx = 10;
-   int ng = 3;
-   int n  = ng + nx + ng;
+   int nx = 10; // no of real cells
+   int ng = 3;  // no of ghost cells on each side
+   int n  = ng + nx + ng; // total no of cells
    double *u = (double*)malloc(n * sizeof(double*)) + ng;
 
    // Real cells
    for(int i=0; i<nx; ++i)
       u[i] = i;
 
+   // Fill with periodicity
    // fill ghost values at left boundary
    for(int i=-ng; i<0; ++i)
       u[i] = u[i+nx];
