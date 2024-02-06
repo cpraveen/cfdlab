@@ -333,7 +333,7 @@ font.size:    12.0
                         # loaded, depending on your font settings.
 
 ## The following settings allow you to select the fonts in math mode.
-#mathtext.fontset: dejavusans  # Should be 'dejavusans' (default),
+mathtext.fontset: cm           # Should be 'dejavusans' (default),
                                # 'dejavuserif', 'cm' (Computer Modern), 'stix',
                                # 'stixsans' or 'custom'
 ## "mathtext.fontset: custom" is defined by the mathtext.bf, .cal, .it, ...
