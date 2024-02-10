@@ -53,13 +53,15 @@ echo "Clawpack sources will be downloaded to above directory."
 if [ -d $CLAW ]; then
    echo "WARNING: Directory"
    echo "            $CLAW"
-   echo "         exists. It will be deleted."
+   echo "         exists."
+   read -p "Do you want to delete and checkout again ? (y/n) " update_claw
 else
    echo "WARNING: Directory"
    echo "            $CLAW"
    echo "         will be created, you need write permission."
 fi
-read -p "Press enter to continue or control-c to quit "
+
+if [[ "$update_claw" == "y" ]]; then
 
 echo "----------------------------------------------------------------------"
 echo "Checking out clawpack source from git"
@@ -71,6 +73,20 @@ git clone --recursive https://github.com/clawpack/apps
 git checkout $VERSION
 git submodule init
 git submodule update
+
+else
+
+echo "----------------------------------------------------------------------"
+echo "Checking out clawpack version " $VERSION
+echo "----------------------------------------------------------------------"
+cd $CLAW
+git checkout master
+git pull
+git checkout $VERSION
+git submodule init
+git submodule update
+
+fi
 
 # Install needed packages inside conda env
 eval "$(conda shell.bash hook)"
@@ -107,6 +123,7 @@ conda install -y -c conda-forge $PACKAGES
 echo "----------------------------------------------------------------------"
 echo "Building clawpack"
 echo "----------------------------------------------------------------------"
+cd $CLAW
 pip install --user --no-build-isolation -e .
 
 echo "----------------------------------------------------------------------"
