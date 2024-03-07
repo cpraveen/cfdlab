@@ -62,9 +62,8 @@ if [ -d $CLAW ]; then
    fi
    read -p "Do you want to delete and checkout again ? (y/n/ctr-c) " update_claw
 else
-   echo "WARNING: Directory"
-   echo "            $CLAW"
-   echo "         will be created, you need write permission."
+   echo "Directory $CLAW will be created"
+   update_claw="y"
 fi
 
 if [[ "$update_claw" == "y" ]]; then
