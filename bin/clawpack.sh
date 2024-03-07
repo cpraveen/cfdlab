@@ -51,10 +51,16 @@ echo "Installing in conda env: $ENV"
 echo "CLAW = $CLAW"
 echo "Clawpack sources will be downloaded to above directory."
 if [ -d $CLAW ]; then
+   GIT=`cd $CLAW && git describe --all 2> /dev/null`
    echo "WARNING: Directory"
    echo "            $CLAW"
-   echo "         exists."
-   read -p "Do you want to delete and checkout again ? (y/n) " update_claw
+   echo "         exists\c"
+   if [ $GIT ]; then
+      echo " with Clawpack git version: $GIT"
+   else
+      echo " but there is no Clawpack git version."
+   fi
+   read -p "Do you want to delete and checkout again ? (y/n/ctr-c) " update_claw
 else
    echo "WARNING: Directory"
    echo "            $CLAW"
