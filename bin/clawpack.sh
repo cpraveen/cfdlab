@@ -117,7 +117,8 @@ PACKAGES="ipython ipywidgets jupyterlab matplotlib meson-python ninja nose \
           numpy petsc4py pip pytest scipy seaborn six spin sympy"
 
 # If gfortran is not found, then install it
-if [ ! type  gfortran &> /dev/null ]; then
+if ! command -v  gfortran &> /dev/null
+then
    echo "gfortran not found, will be installed in the conda env"
    PACKAGES="$PACKAGES gfortran"
 fi
