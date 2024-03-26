@@ -97,7 +97,7 @@ fi
 eval "$(conda shell.bash hook)"
 
 find_in_conda_env(){
-    conda env list | grep "${@}" >/dev/null 2>/dev/null
+    conda env list | grep "${@} " >/dev/null 2>/dev/null
 }
 
 if find_in_conda_env $ENV ; then
