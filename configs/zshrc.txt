@@ -21,6 +21,18 @@ gitup()
    git push
 }
 #------------------------------------------------------------------------------
+# Common git command
+gitup()
+{
+   git add -u
+   if [ $# -eq 0 ]; then
+      git commit -m "Update"
+   else
+      git commit -m "$@"
+   fi 
+   git push
+}
+
 # Git branch in prompt.
 parse_git_branch() {
    behind=`git status uno 2> /dev/null | grep behind`
@@ -135,7 +147,7 @@ export PATH
 export HISTCONTROL=ignoredups
 export PYTHONSTARTUP=$HOME/Applications/cfdlab/bin/python.py
 export COPYFILE_DISABLE=1 # Prevent tar from adding dot files
-export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+#export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
 #------------------------------------------------------------------------------
 # unset since this causes some manpath error when we ssh to linux
 #unset LC_CTYPE
