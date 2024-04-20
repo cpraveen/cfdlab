@@ -144,6 +144,7 @@ PATH=/opt/spack/bin:$PATH
 PATH=$PATH:.
 export PATH
 #------------------------------------------------------------------------------
+setopt hist_ignore_all_dups
 export HISTCONTROL=ignoredups
 export PYTHONSTARTUP=$HOME/Applications/cfdlab/bin/python.py
 export COPYFILE_DISABLE=1 # Prevent tar from adding dot files
