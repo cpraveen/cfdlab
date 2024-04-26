@@ -124,7 +124,7 @@ visit -o sol*.plt
 ### 2-D Riemann problem
 
 ```shell
-rm -f fdweno && make fdweno PROBLEM=2DRIEMANN WENO=z
+rm -f fdweno && make fdweno PROBLEM=RIEMANN2D WENO=z
 rm -rf sol*.plt
 mpirun -np 4 ./fdweno -da_grid_x 100 -da_grid_y 100 -Tf 0.8 -cfl 0.8 -si 100 \
        -ts_type ssp -ts_ssp_type rks3 -ts_ssp_nstages 4 -ts_monitor
