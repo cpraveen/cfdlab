@@ -61,7 +61,7 @@ This is the most sophisticated of the three codes.  Compile the code
 make fdweno PROBLEM=ISENTROPIC WENO=z
 ```
 
-Run this similar to ts.c code. Other options for PROBLEM are
+Run this similar to ts.c code. Other options for `PROBLEM` are
 
 * ISENTROPIC: Isentropic vortex with periodic bc
 * SHOCKREF  : Shock reflection (has steady solution for large time)
@@ -69,7 +69,7 @@ Run this similar to ts.c code. Other options for PROBLEM are
 * RIEMANN2D: 2-D Riemann problem
 * KH: Kelvin-Helmholtz instability
 
-Options for WENO are js and z. You can see some make options
+Options for `WENO` are `js` and `z`. You can see some make options
 
 ```shell
 make help
