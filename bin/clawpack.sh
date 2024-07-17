@@ -114,7 +114,7 @@ else
 fi
 
 PACKAGES="ipython ipywidgets jupyterlab matplotlib meson-python ninja nose \
-          numpy petsc4py pip pytest scipy seaborn six spin sympy"
+          numpy'<2.0' petsc4py pip pytest scipy seaborn six spin sympy"
 
 # If gfortran is not found, then install it
 if ! command -v  gfortran &> /dev/null
