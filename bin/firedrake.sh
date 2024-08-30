@@ -6,6 +6,7 @@ PATH=$PATH:`spack location -i autoconf`/bin
 PATH=$PATH:`spack location -i automake`/bin
 PATH=$PATH:`spack location -i gmake`/bin
 PATH=$PATH:`spack location -i libtool`/bin
+PATH=$PATH:`spack location -i ninja`/bin
 echo $PATH
 
 #PETSC_CONFIGURE_OPTIONS="--with-hdf5-dir=$HDF5_DIR"
