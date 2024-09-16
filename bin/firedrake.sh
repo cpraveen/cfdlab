@@ -18,9 +18,9 @@ python ./firedrake-install --show-dependencies
 python ./firedrake-install --venv-name firedrake \
                            --slepc \
                            --with-parmetis \
-                           --mpicc mpicc \
-                           --mpicxx mpicxx \
-                           --mpif90 mpif90 \
-                           --mpiexec mpiexec \
+                           --mpicc /opt/spack/bin/mpicc \
+                           --mpicxx /opt/spack/bin/mpicxx \
+                           --mpif90 /opt/spack/bin/mpif90 \
+                           --mpiexec /opt/spack/bin/mpiexec \
                            --with-blas /opt/spack \
                            --no-package-manager
