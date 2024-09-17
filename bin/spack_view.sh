@@ -80,6 +80,7 @@ dolink slepc
 dolink suite-sparse
 dolink sundials
 dolink symengine
+dolink taskflow
 dolink tbb
 dolink trilinos
 dolink zlib

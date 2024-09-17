@@ -97,32 +97,32 @@ fi
 -DUMFPACK_DIR=`spack location -i suite-sparse`  \
 -DTBB_DIR=`spack location -i intel-tbb`  \
 -DZLIB_DIR=`spack location -i zlib-ng`  \
--DDEAL_II_WITH_MPI:BOOL=ON  \
+-DDEAL_II_WITH_MPI=ON  \
 -DCMAKE_C_COMPILER=$MPI_DIR/bin/mpicc  \
 -DCMAKE_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
 -DCMAKE_Fortran_COMPILER=$MPI_DIR/bin/mpif90  \
 -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
 -DGSL_DIR=`spack location -i gsl`  \
--DDEAL_II_WITH_GSL:BOOL=ON  \
+-DDEAL_II_WITH_GSL=ON  \
 -DGMP_INCLUDE_DIR=`spack location -i gmp` \
 -DGMP_LIBRARIES=`spack location -i gmp` \
 -DMPFR_INCLUDE_DIR=`spack location -i mpfr` \
 -DMPFR_LIBRARIES=`spack location -i mpfr` \
 -DCGAL_DIR=`spack location -i cgal`  \
--DDEAL_II_WITH_CGAL:BOOL=ON  \
+-DDEAL_II_WITH_CGAL=ON  \
 -DHDF5_DIR=`spack location -i hdf5`  \
--DDEAL_II_WITH_HDF5:BOOL=ON  \
+-DDEAL_II_WITH_HDF5=ON  \
 -DP4EST_DIR=`spack location -i p4est`  \
--DDEAL_II_WITH_P4EST:BOOL=ON  \
+-DDEAL_II_WITH_P4EST=ON  \
 -DPETSC_DIR=`spack location -i petsc`  \
--DDEAL_II_WITH_PETSC:BOOL=ON  \
+-DDEAL_II_WITH_PETSC=ON  \
 -DSLEPC_DIR=`spack location -i slepc`  \
--DDEAL_II_WITH_SLEPC:BOOL=ON  \
+-DDEAL_II_WITH_SLEPC=ON  \
 -DTRILINOS_DIR=`spack location -i trilinos`  \
--DDEAL_II_WITH_TRILINOS:BOOL=ON  \
+-DDEAL_II_WITH_TRILINOS=ON  \
 -DMETIS_DIR=`spack location -i metis`  \
--DDEAL_II_WITH_METIS:BOOL=ON  \
+-DDEAL_II_WITH_METIS=ON  \
 -DDEAL_II_COMPONENT_DOCUMENTATION=OFF  \
 -DARPACK_DIR=`spack location -i arpack-ng`  \
 -DDEAL_II_WITH_ARPACK=ON  \
@@ -143,6 +143,8 @@ fi
 -DGINKGO_DIR=`spack location -i ginkgo`  \
 -DDEAL_II_WITH_SYMENGINE=ON  \
 -DSYMENGINE_DIR=`spack location -i symengine`  \
+-DDEAL_II_WITH_TASKFLOW=ON  \
+-DTASKFLOW_DIR=`spack location -i taskflow`  \
 ../
 
 echo "*** Add this to your profile ***"
