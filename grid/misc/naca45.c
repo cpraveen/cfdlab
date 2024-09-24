@@ -15,67 +15,6 @@ int npts, opts;
 double m, p, t, c;
 double xr, yr, area;
 
-int main(int argc, char *argv[])
-{
-   int np, series, code;
-   double xp[npmax], yc[npmax], dyc[npmax], yt[npmax], x[npmax], y[npmax],
-      xo[npmax], yo[npmax];
-   void xcoord();
-   void naca4series();
-   void naca5series();
-   void thickness(int, double[], double[]);
-   void total();
-   void writepoints(double[], double[]);
-   void outerpoints(double[], double[]);
-   void writepoly(double[], double[], double[], double[]);
-   void writepts(double[], double[], double[], double[]);
-
-   if(argc < 4) {
-      printf("Usage  : %s <NACA airfoil> <Int1> <Int2>\n", argv[0]);
-      printf("         Int1 = Number of points on airfoil\n");
-      printf("         Int2 = Number of points on outer boundary\n");
-      printf("Example: %s 2415 100 30\n", argv[0]);
-      exit(0);
-   }
-
-   series = strlen(argv[1]);
-   code = atoi(argv[1]);
-   np = atoi(argv[2]);
-   opts = atoi(argv[3]);
-
-   xcoord(np, xp);
-
-   switch (series) {
-      case 4:
-         m = atoi(&argv[1][0]) / 1000;
-         p = atoi(&argv[1][1]) / 100;
-         t = atoi(&argv[1][2]);
-         naca4series(np, xp, yc, dyc);
-         break;
-      case 5:
-         c = atoi(&argv[1][0]) / 10000;
-         p = atoi(&argv[1][1]) / 100;
-         t = atoi(&argv[1][3]);
-         naca5series(np, xp, yc, dyc);
-         break;
-      default:
-         printf("Only NACA 4 and 5 series airfoils supported.\n");
-         exit(0);
-   }
-
-
-   thickness(np, xp, yt);
-   total(np, xp, yc, dyc, yt, x, y);
-   writepoints(x, y);
-
-   outerpoints(xo, yo);
-   xr = 0.5;
-   yr = yc[np / 2];
-   writepts(x, y, xo, yo);
-   writepoly(x, y, xo, yo);
-
-}
-
 void xcoord(int np, double xp[])
 {
    int i;
@@ -155,7 +94,7 @@ void naca5series(int np, double x[], double yc[], double dyc[])
    }
    else {
       printf("Error: Naca 5 series\n");
-      printf("Dont know how to find m and k1 for p = %f\n", &p);
+      printf("Dont know how to find m and k1 for p = %f\n", p);
       printf("Known airfoils are 210xx, 220xx, 230xx, 240xx and 250xx\n");
       exit(0);
    }
@@ -298,7 +237,7 @@ void writepoly(double x[], double y[], double xo[], double yo[])
    fprintf(fpoly, "%5d %5d\n", nseg, 1);
    for(i = 0; i < npts - 2; i++)
       fprintf(fpoly, "%5d %5d %5d %5d\n", i + 1, i + 1, i + 2, 3);
-   fprintf(fpoly, "%5d %5d %5d\n", npts - 1, npts - 1, 1, 3);
+   fprintf(fpoly, "%5d %5d %5d %5d\n", npts - 1, npts - 1, 1, 3);
    for(i = 0; i < opts - 1; i++)
       fprintf(fpoly, "%5d %5d %5d %5d\n", i + npts, i + npts, i + npts + 1,
               5);
@@ -351,3 +290,56 @@ void writepts(double x[], double y[], double xo[], double yo[])
    fclose(fpts);
 
 }
+
+int main(int argc, char *argv[])
+{
+   int np, series, code;
+   double xp[npmax], yc[npmax], dyc[npmax], yt[npmax], x[npmax], y[npmax],
+      xo[npmax], yo[npmax];
+
+   if(argc < 4) {
+      printf("Usage  : %s <NACA airfoil> <Int1> <Int2>\n", argv[0]);
+      printf("         Int1 = Number of points on airfoil\n");
+      printf("         Int2 = Number of points on outer boundary\n");
+      printf("Example: %s 2415 100 30\n", argv[0]);
+      exit(0);
+   }
+
+   series = strlen(argv[1]);
+   code = atoi(argv[1]);
+   np = atoi(argv[2]);
+   opts = atoi(argv[3]);
+
+   xcoord(np, xp);
+
+   switch (series) {
+      case 4:
+         m = atoi(&argv[1][0]) / 1000;
+         p = atoi(&argv[1][1]) / 100;
+         t = atoi(&argv[1][2]);
+         naca4series(np, xp, yc, dyc);
+         break;
+      case 5:
+         c = atoi(&argv[1][0]) / 10000;
+         p = atoi(&argv[1][1]) / 100;
+         t = atoi(&argv[1][3]);
+         naca5series(np, xp, yc, dyc);
+         break;
+      default:
+         printf("Only NACA 4 and 5 series airfoils supported.\n");
+         exit(0);
+   }
+
+
+   thickness(np, xp, yt);
+   total(np, xp, yc, dyc, yt, x, y);
+   writepoints(x, y);
+
+   outerpoints(xo, yo);
+   xr = 0.5;
+   yr = yc[np / 2];
+   writepts(x, y, xo, yo);
+   writepoly(x, y, xo, yo);
+
+}
+
