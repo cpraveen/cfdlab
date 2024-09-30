@@ -9,17 +9,6 @@ dir(){
 ls -l |awk '{ if ( substr($1,1,1)== "d") {print}}'
 }
 
-# Common git command
-gitup()
-{
-   git add -u
-   if [ $# -eq 0 ]; then
-      git commit -m "Update"
-   else
-      git commit -m "$@"
-   fi
-   git push
-}
 #------------------------------------------------------------------------------
 # Common git command
 gitup()
