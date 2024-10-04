@@ -145,6 +145,7 @@ fi
 -DSYMENGINE_DIR=`spack location -i symengine`  \
 -DDEAL_II_WITH_TASKFLOW=ON  \
 -DTASKFLOW_DIR=`spack location -i taskflow`  \
+-DDEAL_II_WITH_VTK=OFF  \
 ../
 
 echo "*** Add this to your profile ***"
