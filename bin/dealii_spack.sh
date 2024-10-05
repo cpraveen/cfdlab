@@ -143,7 +143,7 @@ fi
 -DGINKGO_DIR=`spack location -i ginkgo`  \
 -DDEAL_II_WITH_SYMENGINE=ON  \
 -DSYMENGINE_DIR=`spack location -i symengine`  \
--DDEAL_II_WITH_TASKFLOW=ON  \
+-DDEAL_II_WITH_TASKFLOW=OFF  \
 -DTASKFLOW_DIR=`spack location -i taskflow`  \
 -DDEAL_II_WITH_VTK=OFF  \
 ../
