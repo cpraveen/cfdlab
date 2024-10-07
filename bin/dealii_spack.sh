@@ -101,7 +101,7 @@ fi
 -DCMAKE_C_COMPILER=$MPI_DIR/bin/mpicc  \
 -DCMAKE_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
 -DCMAKE_Fortran_COMPILER=$MPI_DIR/bin/mpif90  \
--DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
+-DDEAL_II_CXX_FLAGS="-march=native -mtune=native" \
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
 -DGSL_DIR=`spack location -i gsl`  \
 -DDEAL_II_WITH_GSL=ON  \
