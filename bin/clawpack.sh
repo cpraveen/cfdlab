@@ -113,15 +113,9 @@ else
    conda activate $ENV
 fi
 
-PACKAGES="ipython ipywidgets jupyterlab matplotlib meson-python ninja nose \
-          'numpy<2.0' petsc4py pip pytest scipy seaborn six spin sympy"
-
-# If gfortran is not found, then install it
-if ! command -v  gfortran &> /dev/null
-then
-   echo "gfortran not found, will be installed in the conda env"
-   PACKAGES="$PACKAGES gfortran"
-fi
+PACKAGES="gfortran ipython ipywidgets jupyterlab matplotlib meson-python \
+          ninja nose 'numpy<2.0' petsc4py pip pytest scipy seaborn six spin \
+          sympy"
 
 conda install -y -c conda-forge $PACKAGES
 
