@@ -113,12 +113,12 @@ proc main()
 
   // problem space
   var halo: rank*int = (3,3);
-  const PSpace = D dmapped stencilDist(D, fluff=halo, periodic=true);
+  const PSpace = D dmapped new stencilDist(D, fluff=halo, periodic=true);
 
   var u : [PSpace] real;
 
   // Set initial condition
-  forall (i,j) in PSpace
+  forall (i,j) in D
   {
     const x = xmin + (i-1)*dx + 0.5*dx,
           y = ymin + (j-1)*dy + 0.5*dy;
@@ -131,7 +131,7 @@ proc main()
 
   // Compute dt
   var dt = 1.0e20;
-  for (i,j) in PSpace
+  for (i,j) in D
   {
     const x = xmin + (i-1)*dx + 0.5*dx,
           y = ymin + (j-1)*dy + 0.5*dy; // cell center

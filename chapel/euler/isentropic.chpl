@@ -11,6 +11,7 @@
 */
 use IO;
 use StencilDist;
+use Math;
 
 config const nx    = 50,   // number of cells in x direction
              ny    = 50,   // number of cells in y direction
@@ -60,7 +61,7 @@ proc savesol(t : real, U : [?D] cType, c : int) : int
   if c > 999 then halt("Filename counter too large !!!");
   const filename = "sol%03i.tec".format(c);
 
-  var fw = open(filename, iomode.cw).writer();
+  var fw = open(filename, ioMode.cw).writer();
   fw.writeln("TITLE = \"u_t + u_x + u_y = 0\"");
   fw.writeln("VARIABLES = x, y, rho, u, v, p");
   fw.writeln("ZONE STRANDID=1, SOLUTIONTIME=",t,", I=",nx,", J=",ny,", DATAPACKING=POINT");
@@ -160,13 +161,13 @@ proc main()
   param rank = D.rank;
 
   var halo: rank*int = (3,3);
-  const PSpace = D dmapped Stencil(D, fluff=halo, periodic=true);
+  const PSpace = D dmapped new stencilDist(D, fluff=halo, periodic=true);
 
   var U, U0, res : [PSpace] cType;
 
   // Set initial condition
   const beta = 5.0;
-  forall (i,j) in PSpace
+  forall (i,j) in D
   {
     const x = xmin + (i-1)*dx + 0.5*dx,
           y = ymin + (j-1)*dy + 0.5*dy;
