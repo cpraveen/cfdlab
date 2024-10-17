@@ -256,7 +256,9 @@ int main(int argc, char *argv[])
       {
          // start global to local but continue with other tasks
          ierr = DMGlobalToLocalBegin(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
+         ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
          ierr = DMDAVecGetArrayDOF(da, ug, &unew); CHKERRQ(ierr);
+         ierr = DMDAVecGetArrayDOFRead(da, ul, &u); CHKERRQ(ierr);
 
          if(rk==0)
          {
@@ -271,7 +273,8 @@ int main(int argc, char *argv[])
                   dtlocal = min(dtlocal, dt_local(unew[j][i]));
                }
 
-            MPI_Allreduce(&dtlocal, &dt, 1, MPI_DOUBLE, MPI_MIN, PETSC_COMM_WORLD);
+            MPI_Allreduce(&dtlocal, &dt, 1, MPI_DOUBLE, MPI_MIN, 
+                          PETSC_COMM_WORLD);
             dt *= cfl;
 
             if(t+dt > Tf) dt = Tf - t;
@@ -282,10 +285,6 @@ int main(int argc, char *argv[])
             for(i=0; i<nlocx; ++i)
                for(d=0; d<nvar; ++d)
                   res[j][i][d] = 0.0;
-
-         // finish global to local
-         ierr = DMGlobalToLocalEnd(da, ug, INSERT_VALUES, ul); CHKERRQ(ierr);
-         ierr = DMDAVecGetArrayDOFRead(da, ul, &u); CHKERRQ(ierr);
 
          // x fluxes
          for(i=0; i<nlocx+1; ++i)
