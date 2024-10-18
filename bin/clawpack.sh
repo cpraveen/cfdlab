@@ -117,6 +117,20 @@ PACKAGES="gfortran ipython ipywidgets jupyterlab matplotlib meson-python \
           ninja nose 'numpy<2.0' petsc4py pip pytest scipy seaborn six spin \
           sympy"
 
+# If gfortran is not found, then install it
+if command -v  gfortran &> /dev/null
+then
+   echo "gfortran already exists: " `command -v gfortran`
+   gfortran --version | head -n1
+   read -p "Use this or install with conda ? (y/n/ctr-c) " fortran
+   if [[ "$fortran" == "y" ]]; then
+      PACKAGES="$PACKAGES gfortran"
+   fi
+else
+   echo "gfortran not found, will be installed in the conda env"
+   PACKAGES="$PACKAGES gfortran"
+fi
+
 conda install -y -c conda-forge $PACKAGES
 
 # Build clawpack
