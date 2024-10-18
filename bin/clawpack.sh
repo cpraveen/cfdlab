@@ -102,9 +102,16 @@ find_in_conda_env(){
 
 if find_in_conda_env $ENV ; then
    echo "----------------------------------------------------------------------"
-   echo "Conda env $ENV exists, activating"
+   echo "Conda env $ENV exists"
    echo "----------------------------------------------------------------------"
-   conda activate $ENV
+   read -p "Use existing conda env ? (y/n/ctr-c) " use_env
+   if [[ "$use_env" == "y" ]]; then
+      conda activate $ENV
+   else
+      conda remove -y -n claw --all
+      conda create -y -n $ENV
+      conda activate $ENV
+   fi
 else
    echo "----------------------------------------------------------------------"
    echo "Creating conda env $ENV and installing packages"
@@ -113,7 +120,7 @@ else
    conda activate $ENV
 fi
 
-PACKAGES="gfortran ipython ipywidgets jupyterlab matplotlib meson-python \
+PACKAGES="ipython ipywidgets jupyterlab matplotlib meson-python \
           ninja nose 'numpy<2.0' petsc4py pip pytest scipy seaborn six spin \
           sympy"
 
@@ -122,7 +129,7 @@ if command -v  gfortran &> /dev/null
 then
    echo "gfortran already exists: " `command -v gfortran`
    gfortran --version | head -n1
-   read -p "Use this or install with conda ? (y/n/ctr-c) " fortran
+   read -p "Install gfortran with conda ? (y/n/ctr-c) " fortran
    if [[ "$fortran" == "y" ]]; then
       PACKAGES="$PACKAGES gfortran"
    fi
