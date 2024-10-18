@@ -1,0 +1,17 @@
+*~
+.DS_Store
+*.cmake
+*.h5
+*.msh
+*.o
+*.pvd
+*.pvtu
+*.tar
+*.tgz
+*.vtu
+*.vtk
+*.xdmf
+*.zip
+compile_commands.json
+CMakeCache.txt
+CMakeFiles
