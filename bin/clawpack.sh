@@ -120,31 +120,39 @@ else
    conda activate $ENV
 fi
 
-PACKAGES="ipython ipywidgets jupyterlab matplotlib meson-python \
+PACKAGES="gfortran ipython ipywidgets jupyterlab matplotlib meson-python \
           ninja nose 'numpy<2.0' petsc4py pip pkg-config pytest \
           scipy seaborn six spin sympy"
 
 # If gfortran is not found, then install it
-if command -v  gfortran &> /dev/null
-then
-   echo "gfortran already exists: " `command -v gfortran`
-   gfortran --version | head -n1
-   read -p "Install gfortran with conda ? (y/n/ctr-c) " fortran
-   if [[ "$fortran" == "y" ]]; then
-      PACKAGES="$PACKAGES gfortran"
-   fi
-else
-   echo "gfortran not found, will be installed in the conda env"
-   PACKAGES="$PACKAGES gfortran"
-fi
+#if command -v  gfortran &> /dev/null
+#then
+#   echo "gfortran already exists: " `command -v gfortran`
+#   gfortran --version | head -n1
+#   read -p "Install gfortran with conda ? (y/n/ctr-c) " fortran
+#   if [[ "$fortran" == "y" ]]; then
+#      PACKAGES="$PACKAGES gfortran"
+#   fi
+#else
+#   echo "gfortran not found, will be installed in the conda env"
+#   PACKAGES="$PACKAGES gfortran"
+#fi
 
 conda install -y -c conda-forge $PACKAGES
+
+export FC=$CONDA_PREFIX/bin/gfortran
+if [[ $OSTYPE == 'darwin'* ]]; then
+   export CC=$CONDA_PREFIX/bin/clang
+else
+   export CC=$CONDA_PREFIX/bin/cc
+fi
 
 # Build clawpack
 echo "----------------------------------------------------------------------"
 echo "Building clawpack"
 echo "----------------------------------------------------------------------"
 cd $CLAW
+rm -rf build
 pip install --user --no-build-isolation -e .
 
 echo "----------------------------------------------------------------------"
