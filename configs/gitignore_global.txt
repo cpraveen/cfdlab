@@ -1,9 +1,11 @@
 *~
 .DS_Store
 *.cmake
+*.gpl
 *.h5
 *.msh
 *.o
+*.plt
 *.pvd
 *.pvtu
 *.tar
@@ -12,6 +14,7 @@
 *.vtk
 *.xdmf
 *.zip
+fort.*
 compile_commands.json
 CMakeCache.txt
 CMakeFiles
