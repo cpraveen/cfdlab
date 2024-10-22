@@ -4,6 +4,8 @@
 # Exit on error
 set -e
 
+export GIT_ADVICE=0
+
 # Check for git
 if [ ! type  git &> /dev/null ]; then
    echo "git is not found, install/add it to your path and try again"
@@ -104,8 +106,8 @@ if find_in_conda_env $ENV ; then
    echo "----------------------------------------------------------------------"
    echo "Conda env $ENV exists"
    echo "----------------------------------------------------------------------"
-   read -p "Use existing conda env ? (y/n/ctr-c) " use_env
-   if [[ "$use_env" == "y" ]]; then
+   read -p "Delete existing conda env ? (y/n/ctr-c) " use_env
+   if [[ "$use_env" == "n" ]]; then
       conda activate $ENV
    else
       conda remove -y -n claw --all
