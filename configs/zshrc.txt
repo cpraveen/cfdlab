@@ -114,10 +114,10 @@ export HDF5_DIR=/opt/spack
 export EIGEN_DIR=/opt/spack
 export P4EST_DIR=/opt/spack
 export GMSH_DIR=/Applications/Gmsh.app/Contents/MacOS
-export DEAL_II_DIR=$HOME/Applications/deal.II/9.3.3/install
+export DEAL_II_DIR=$HOME/Applications/deal.II/current/install
 export CGSEM_DIR=$HOME/Work/cgsem
 export CLAW=$HOME/Applications/clawpack
-export PYTHONPATH=$PYTHONPATH:$CLAW
+export BASILISK=$HOME/Applications/basilisk/src
 #------------------------------------------------------------------------------
 PATH=$PATH:/Applications/MacVim.app/Contents/bin
 PATH=$PATH:/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin
@@ -130,6 +130,7 @@ PATH=$PATH:$HOME/Applications/spack/bin
 PATH=/opt/homebrew/bin:$PATH
 PATH=$GMSH_DIR:$PATH
 PATH=/opt/spack/bin:$PATH
+PATH=$PATH:$BASILISK
 PATH=$PATH:.
 export PATH
 #------------------------------------------------------------------------------
