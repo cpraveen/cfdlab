@@ -34,6 +34,7 @@ OS=`uname -s`
 echo "OS is $OS"
 if [ $OS = "Darwin" ]; then
    LAPACK_LIBRARY=libopenblas.dylib
+   export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 elif [ $OS = "Linux" ]; then
    LAPACK_LIBRARY=libopenblas.so
 else
