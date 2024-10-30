@@ -124,7 +124,6 @@ PATH=$PATH:/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin
 PATH=$PATH:/Applications/VisIt.app/Contents/Resources/bin
 PATH=$PATH:`ls -d /Applications/ParaView*`/Contents/MacOS
 PATH=$PATH:/Applications/Gmsh.app/Contents/MacOS
-PATH=$PATH:/Applications/Octave-6.2.0.app/Contents/Resources/usr/Cellar/octave-octave-app@6.2.0/6.2.0/bin
 PATH=$PATH:$HOME/Applications/cfdlab/bin
 PATH=$PATH:$HOME/Applications/spack/bin
 PATH=/opt/homebrew/bin:$PATH
@@ -138,7 +137,7 @@ setopt hist_ignore_all_dups
 export HISTCONTROL=ignoredups
 export PYTHONSTARTUP=$HOME/Applications/cfdlab/bin/python.py
 export COPYFILE_DISABLE=1 # Prevent tar from adding dot files
-export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+#export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
 #------------------------------------------------------------------------------
 # unset since this causes some manpath error when we ssh to linux
 #unset LC_CTYPE
