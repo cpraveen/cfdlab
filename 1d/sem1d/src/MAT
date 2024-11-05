@@ -1,0 +1,2 @@
+      real bm(lt)
+      common/mat/bm

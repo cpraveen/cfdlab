@@ -1,0 +1,93 @@
+\documentclass[12pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\newcommand{\ud}{\textrm{d}}
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\df}[2]{\frac{\partial #1}{\partial #2}}
+
+\title{Spectral element method for 1-d heat equation}
+\author{Praveen C}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+%\section{}
+%\subsection{}
+\begin{eqnarray*}
+u_t &=& u_{xx} \\
+u(t,0) &=& 0 \\
+u(t,1) &=& 0
+\end{eqnarray*}
+Let
+\[
+V = H^1_0(\Omega) = \{ v \in H^1(\Omega) : v(0) = v(1) = 0 \}
+\]
+The weak formulation is
+\[
+\int_\Omega u_t \phi \ud x + \int_\Omega u_x \phi_x \ud x = 0, \qquad \forall \phi \in V
+\]
+Divide domain $\Omega$ into non-overlapping elements
+\[
+\Omega = \bigcup_{e=1}^N \Omega_e, \qquad \Omega_e = [x_e, x_{e+1}]
+\]
+Let $K \ge 1$ and consider the $K+1$ GLL nodes $\xi_i, i=0,\ldots,K$. Let $\ell_i(\xi)$ be the Lagrange polynomials of degree $K$ such that
+\[
+\ell_i(\xi_j) = \delta_{ij}
+\]
+The solution inside element $\Omega_e$ is of the form
+\[
+u(t,x) = \sum_{i=0}^K u_{i}^e(t) \phi_i^e(x), \qquad \phi_i^e(x) = \ell_i(\xi), \qquad x = x_e + \half (\xi+1) \Delta x_e
+\]
+Since the solution must be continuous, we have the constraint
+\[
+u_K^e = u_0^{e+1}, \qquad e=1,2,\ldots,K-1
+\]
+Substituting the finite element solution into the weak formulation
+\[
+\sum_e \int_{\Omega_e} u_t \phi \ud x + \sum_e \int_{\Omega_e} u_x \phi_x \ud x = 0
+\]
+We will approximate the element integrals using $(K+1)$-point GLL quadrature rule.
+\begin{eqnarray*}
+\int_{\Omega_e} u_t \phi_i^e \ud x &=& \sum_{j=0}^K \dot{u}_j^e \int_{\Omega_e} \phi_j^e \phi_i^e \ud x \\
+&=& \half \Delta x_e \sum_{j=0}^K \dot{u}_j^e \int_{\Omega_e} \ell_j \ell_i \ud \xi \\
+&\approx& \half \Delta x_e \sum_{j=0}^K \dot{u}_j^e \sum_{q=0}^K \ell_i(\xi_q) \ell_j(\xi_q) \omega_q \\
+&=& \half \Delta x_e \sum_{j=0}^K \dot{u}_j^e \sum_{q=0}^K \delta_{iq} \delta_{jq} \omega_q \\
+&=& \half \dot{u}_i^e \omega_i \Delta x_e
+\end{eqnarray*}
+
+\[
+\df{u}{x}(t,x) = \frac{2}{\Delta x_e} \sum_{j=0}^K u_j^e(t) \ell_j'(\xi)
+\]
+\begin{eqnarray*}
+R_i^e &=& -\int_{\Omega_e} \df{u}{x} \df{\phi_i^e}{x} \ud x \\
+&=& \int_{-1}^{+1} \df{u}{x} \ell_i' \ud\xi \\
+&\approx& \sum_{q=0}^K \df{u}{x}(\xi_q) \ell_i'(\xi_q) \omega_q
+\end{eqnarray*}
+The set of semi-discrete equations is given by
+\begin{eqnarray*}
+\left[ \half \omega_0 \Delta x_e + \half \omega_K \Delta x_{e-1} \right] \dot{u}_0^e &=& R_0^e + R_K^{e-1} \\
+\half \omega_i \Delta x_e \dot{u}_i^e &=& R_i^e, \qquad i=1,\ldots,K-1\\
+\left[ \half \omega_K \Delta x_e + \half \omega_0 \Delta x_{e+1} \right] \dot{u}_K^e &=& R_K^e + R_0^{e+1}
+\end{eqnarray*}
+Since we have the boundary conditions
+\[
+u_0^1 = u_K^N = 0
+\]
+we do not need equations for these quantities.
+
+The derivatives of the Lagrange polynomials at the node if given by
+\[
+\ell_j'(x_i) = D_{ij} = \frac{w_j}{w_i} \left(\frac{1}{x_i - x_j}\right), \qquad i \ne j
+\]
+where the $w_i$ are the barycentric weights given by
+\[
+w_j = \frac{1}{\prod_{i=0, i\ne j}^K (x_j - x_i)}
+\]
+\end{document}  

@@ -1,0 +1,2 @@
+      real wt(lx), xg(lx), fg(lx), dm(lx,lx)
+      common/quad/wt,xg,fg,dm

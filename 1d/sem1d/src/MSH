@@ -1,0 +1,2 @@
+      real coord(2,lel), dx(lel), xmin, xmax
+      common/msh/coord,dx,xmin,xmax

@@ -1,0 +1,2 @@
+      real v(lt), vold(lt), res(lt), vx(lt), vex(lt)
+      common/var/v,vold,vx,vex

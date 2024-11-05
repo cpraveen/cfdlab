@@ -1,0 +1,2 @@
+      parameter (lx=5, lel=20)
+      parameter (lt=lx*lel)
