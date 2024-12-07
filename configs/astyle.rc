@@ -1,0 +1,31 @@
+--style=bsd
+
+--convert-tabs
+--indent-preproc-block
+--indent-preproc-cond
+--indent-preproc-define
+--indent=spaces=3
+--indent-namespaces
+--min-conditional-indent=0
+--indent-preproc-cond
+--indent-switches
+
+# space b/w "for" and "("
+#--unpad-header
+
+--unpad-paren
+--pad-oper
+--pad-comma
+
+--close-templates
+--keep-one-line-statements
+
+--break-return-type
+--attach-return-type-decl
+
+# write things as 'char *p'
+--align-pointer=type
+--align-reference=type
+
+--suffix=none
+--quiet
