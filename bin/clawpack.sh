@@ -123,7 +123,7 @@ else
 fi
 
 PACKAGES="gfortran ipython ipywidgets jupyterlab matplotlib meson-python \
-          ninja nose 'numpy<2.0' petsc4py pip pkg-config pytest \
+          ninja nose numpy petsc4py pip pkg-config pytest \
           scipy seaborn six spin sympy"
 
 # If gfortran is not found, then install it
