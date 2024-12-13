@@ -18,6 +18,9 @@ sudo pmset -b lowpowermode  1
 sudo pmset -c displaysleep  5
 sudo pmset -b displaysleep  2
 
+sudo pmset -c disksleep     5
+sudo pmset -b disksleep     2
+
 sudo pmset -a womp          0
 sudo pmset -a proximitywake 0
 
