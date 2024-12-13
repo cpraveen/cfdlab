@@ -15,6 +15,9 @@ sudo pmset -a powernap      0
 
 sudo pmset -b lowpowermode  1
 
+sudo pmset -c displaysleep  5
+sudo pmset -b displaysleep  2
+
 sudo pmset -a sleep         1
 sudo pmset -a disablesleep  0
 
