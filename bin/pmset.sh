@@ -1,6 +1,6 @@
 # hibernatemode
-#   3, safe sleep, copy to disk, RAM is on
-#   25, copy to disk, RAM is off, slow to wake, good for battery
+#   3 : copy to disk, RAM is on; fast wake
+#   25: copy to disk, RAM is off; slow to wake, good for battery
 sudo pmset -c hibernatemode 3
 sudo pmset -b hibernatemode 25
 
@@ -11,6 +11,8 @@ sudo pmset -a standbydelay  1800
 # Dont wake for network access
 sudo pmset -a tcpkeepalive  0
 
+# On arm cpus, disabling powernap can be bad, see
+# https://www.bravolt.com/post/why-won-t-my-computer-sleep
 sudo pmset -a powernap      0
 
 sudo pmset -b lowpowermode  1
