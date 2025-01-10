@@ -1,4 +1,4 @@
-CC = c++
+CC = c++ -std=c++11
 TARGET = kahan_sum
 
 ALL: $(TARGET)

@@ -32,6 +32,19 @@ void test()
    cout << "Exact     = " << one + a*n << endl; 
 }
 
+void test2(const vector<double>& v)
+{
+   KahanSum<double> ksum(0.0); // Kahan sum
+   double sum = 0.0;
+   for(auto x : v)
+   {
+      ksum += x;
+      sum  += x;
+   }
+   cout << "      sum = " << sum << endl;
+   cout << "Kahan sum = " << ksum.result() << endl;
+}
+
 int main()
 {
    cout << "Single precision:" << endl;
@@ -39,4 +52,11 @@ int main()
 
    cout << "Double precision:" << endl;
    test<double>();
+
+   vector<double> v1 = {1.0,-1.0,1e-16};
+   vector<double> v2 = {1.0,1e-16,-1.0};
+   vector<double> v3 = {1e-16,1.0,-1.0};
+   test2(v1);
+   test2(v2);
+   test2(v3);
 }
