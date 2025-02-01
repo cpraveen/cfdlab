@@ -22,7 +22,7 @@ sudo pmset -a powernap      0
 sudo pmset -b lowpowermode  1
 
 sudo pmset -c displaysleep  5 # minutes
-sudo pmset -b displaysleep  1 # minutes
+sudo pmset -b displaysleep  2 # minutes
 
 #sudo pmset -c disksleep     10 # minutes
 #sudo pmset -b disksleep     5  # minutes

@@ -118,6 +118,7 @@ export DEAL_II_DIR=$HOME/Applications/deal.II/current/install
 export CGSEM_DIR=$HOME/Work/cgsem
 export CLAW=$HOME/Applications/clawpack
 export BASILISK=$HOME/Applications/basilisk/src
+export TAPENADE_HOME=$HOME/Applications/tapenade/current
 #------------------------------------------------------------------------------
 PATH=$PATH:/Applications/MacVim.app/Contents/bin
 PATH=$PATH:/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin
@@ -130,6 +131,7 @@ PATH=/opt/homebrew/bin:$PATH
 PATH=$GMSH_DIR:$PATH
 PATH=/opt/spack/bin:$PATH
 PATH=$PATH:$BASILISK
+PATH=$PATH:$TAPENADE_HOME/bin
 PATH=$PATH:.
 export PATH
 #------------------------------------------------------------------------------
