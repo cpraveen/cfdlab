@@ -62,6 +62,7 @@ dolink boost
 dolink cmake
 dolink eigen
 dolink ginkgo
+dolink gmake
 dolink gsl
 dolink hdf5
 dolink kokkos
