@@ -32,6 +32,13 @@ dolink()
 
 if [ ! -d "$SPACK_VIEW" ]; then
    echo "Directory $SPACK_VIEW does not exist"
+   echo "Create it and rerun this command."
+   exit
+fi
+
+echo "Everything inside $SPACK_VIEW will be deleted ?"
+read -p "Do you want to continue ? (y/n/ctr-c)" answer
+if [[ "$answer" =~ "y" ]]; then
    exit
 fi
 
