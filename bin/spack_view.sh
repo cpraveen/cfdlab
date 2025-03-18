@@ -37,8 +37,8 @@ if [ ! -d "$SPACK_VIEW" ]; then
 fi
 
 echo "Everything inside $SPACK_VIEW will be deleted ?"
-read -p "Do you want to continue ? (y/n/ctr-c)" answer
-if [[ "$answer" =~ "y" ]]; then
+read -p "Do you want to continue ? (y/n/ctr-c) " answer
+if [[ "$answer" != "y" ]]; then
    exit
 fi
 
