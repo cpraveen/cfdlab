@@ -1,4 +1,9 @@
 packages:
+  #python:
+  #  externals:
+  #  - spec: python@3.10.12
+  #    prefix: /opt/miniforge
+  #    buildable: False
   dealii:
     require: +adol-c +arborx +arpack +assimp +cgal ~examples +ginkgo ~gmsh
              +gsl +hdf5 +kokkos +metis +mpi +muparser ~nanoflann +p4est +petsc
