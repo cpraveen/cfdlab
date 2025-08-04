@@ -52,9 +52,13 @@ autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 setopt no_list_ambiguous
 #------------------------------------------------------------------------------
+# With line separator
 PS1="%B%F{red}$%F{black}%b "
 setopt promptsubst
 PS1=$'%F{253}${(r:$COLUMNS::-:)}'$PS1
+# With different background
+#POSTEDIT=$'\e[0m\e[K'
+#PS1='%F{black}%K{15} %B$%b '
 export PS1
 #------------------------------------------------------------------------------
 alias grep="grep --color"
