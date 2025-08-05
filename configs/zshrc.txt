@@ -107,6 +107,8 @@ alias docker_dealii="docker run -ti -v \$(pwd):/home/dealii/shared -w /home/deal
 alias docker_rm="docker stop \$(docker ps -q -a) && docker rm \$(docker ps -q -a)"
 alias docker_drake="docker run -ti -v \$(pwd):/home/firedrake/shared -w /home/firedrake/shared firedrakeproject/firedrake:latest"
 #------------------------------------------------------------------------------
+export HOMEBREW_DOWNLOAD_CONCURRENCY=auto
+#------------------------------------------------------------------------------
 export BIBINPUTS=.:$HOME/GoogleDrive/Documents/TeX/bibtex
 #------------------------------------------------------------------------------
 export PETSC_DIR=/opt/spack
