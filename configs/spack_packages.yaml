@@ -5,10 +5,10 @@ packages:
   #    prefix: /opt/miniforge
   #    buildable: False
   dealii:
-    require: +adol-c +arborx +arpack +assimp +cgal ~examples +ginkgo ~gmsh
-             +gsl +hdf5 +kokkos +metis +mpi +muparser ~nanoflann +p4est +petsc
-             ~python +scalapack +simplex +slepc +sundials +symengine +threads
-             +trilinos ~vtk ~oce ~opencascade
+    require: +adol-c +arborx +arpack +assimp +cgal ~doc ~examples +ginkgo ~gmsh
+             +gsl +hdf5 ~int64 +metis +mpi +muparser ~nanoflann ~netcdf ~oce 
+             ~opencascade +p4est +petsc ~python +scalapack +simplex +slepc 
+             +sundials +symengine +threads +trilinos ~vtk
   hdf5:
     require: +fortran +cxx +hl
   petsc:
@@ -23,7 +23,7 @@ packages:
   vtk:
     require: +python
   all:
-    providers:
-      mpi: [openmpi]
-      blas: [openblas]
-      lapack: [openblas]
+    providers: # select one for each
+      mpi: [openmpi] or [mpich]
+      blas: [openblas] or [netlib-lapack]
+      lapack: [openblas] or [netlib-lapack]
