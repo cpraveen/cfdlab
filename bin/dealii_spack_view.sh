@@ -129,6 +129,8 @@ $SPACK_VIEW_DIR/bin/cmake  \
 -DDEAL_II_WITH_VTK=OFF  \
 ../
 
-echo "Check detailed.log and CMakeCache.txt"
+echo "Check detailed.log and CMakeCache.txt for paths you dont want to include."
+echo "E.g., if you have miniforge/anaconda, check they are not used."
+echo "Make sure mpicc, mpirun, etc. are present in PATH."
 echo "*** Add this to your profile ***"
 echo "   export DEAL_II_DIR=$DEAL_II_DIR"
