@@ -33,13 +33,7 @@ DEAL_II_DIR=$1
 OS=`uname -s`
 echo "OS is $OS"
 if [ $OS = "Darwin" ]; then
-   LAPACK_LIBRARY=libopenblas.dylib
    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
-elif [ $OS = "Linux" ]; then
-   LAPACK_LIBRARY=libopenblas.so
-else
-   echo "Problem with LAPACK_LIBRARY"
-   exit
 fi
 
 # We dont want to install gmsh with spack since it has too many dependencies.
@@ -55,7 +49,7 @@ if [ -z "$GMSH_DIR" ]; then
    GMSH_DIR=/tmp
 fi
 
-# Select mpich or openmpi
+# Select openmpi or mpich
 OPENMPI=`spack location -i openmpi 2> /dev/null`
 MPICH=`spack location -i mpich 2> /dev/null`
 
@@ -82,15 +76,40 @@ else
    exit
 fi
 
+# Get c/c++/fortran from mpi wrappers
+CC=`$MPI_DIR/bin/mpicc -show   | awk '{print $1}'`
+CXX=`$MPI_DIR/bin/mpic++ -show | awk '{print $1}'`
+FC=`$MPI_DIR/bin/mpif90 -show  | awk '{print $1}'`
+
+# Choose blas/lapack: openblas or netlib-lapack
+OPENBLAS=`spack location -i openblas 2> /dev/null`
+NETLIB=`spack location -i netlib-lapack 2> /dev/null`
+
+if [ $OPENBLAS ]; then
+   BLAS_DIR=$OPENBLAS
+else
+   BLAS_DIR=$NETLIB
+fi
+
+if [ -d "$BLAS_DIR" ]; then
+   echo "BLAS_DIR = " $BLAS_DIR
+else
+   echo "BLAS_DIR not found"
+   exit
+fi
+
+# Create makefile
 `spack location -i cmake`/bin/cmake  \
 -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
 -DCMAKE_FIND_FRAMEWORK=LAST  \
 -DCMAKE_BUILD_TYPE=DebugRelease  \
 -DDEAL_II_COMPONENT_EXAMPLES=ON  \
 -DDEAL_II_COMPILE_EXAMPLES=OFF \
+-DDEAL_II_COMPONENT_DOCUMENTATION=OFF  \
 -DDEAL_II_WITH_LAPACK=ON \
--DLAPACK_INCLUDE_DIRS=`spack location -i openblas`/include  \
--DLAPACK_LIBRARIES=`spack location -i openblas`/lib/${LAPACK_LIBRARY}  \
+-DLAPACK_DIR=$BLAS_DIR  \
+-DBLAS_DIR=$BLAS_DIR  \
+-DDEAL_II_WITH_BOOST=ON \
 -DBOOST_DIR=`spack location -i boost`  \
 -DDEAL_II_WITH_ARBORX=ON \
 -DARBORX_DIR=`spack location -i arborx`  \
@@ -99,9 +118,9 @@ fi
 -DTBB_DIR=`spack location -i intel-tbb`  \
 -DZLIB_DIR=`spack location -i zlib-ng`  \
 -DDEAL_II_WITH_MPI=ON  \
--DCMAKE_C_COMPILER=$MPI_DIR/bin/mpicc  \
--DCMAKE_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
--DCMAKE_Fortran_COMPILER=$MPI_DIR/bin/mpif90  \
+-DCMAKE_C_COMPILER=$CC \
+-DCMAKE_CXX_COMPILER=$CXX \
+-DCMAKE_Fortran_COMPILER=$FC \
 -DMPI_C_COMPILER=$MPI_DIR/bin/mpicc  \
 -DMPI_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
 -DMPI_Fortran_COMPILER=$MPI_DIR/bin/mpif90  \
@@ -127,7 +146,8 @@ fi
 -DDEAL_II_WITH_TRILINOS=ON  \
 -DMETIS_DIR=`spack location -i metis`  \
 -DDEAL_II_WITH_METIS=ON  \
--DDEAL_II_COMPONENT_DOCUMENTATION=OFF  \
+-DMUMPS_DIR=`spack location -i mumps`  \
+-DDEAL_II_WITH_MUMPS=ON  \
 -DARPACK_DIR=`spack location -i arpack-ng`  \
 -DDEAL_II_WITH_ARPACK=ON  \
 -DDEAL_II_ARPACK_WITH_PARPACK=ON  \
@@ -150,8 +170,8 @@ fi
 -DDEAL_II_WITH_TASKFLOW=ON  \
 -DTASKFLOW_DIR=`spack location -i taskflow` \
 -DDEAL_II_WITH_VTK=OFF  \
--DVTK_DIR=/opt/miniforge \
 ../
 
+echo "Check detailed.log and CMakeCache.txt"
 echo "*** Add this to your profile ***"
-echo "export DEAL_II_DIR=$DEAL_II_DIR"
+echo "   export DEAL_II_DIR=$DEAL_II_DIR"

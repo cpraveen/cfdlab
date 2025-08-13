@@ -77,6 +77,7 @@ dolink metis
 dolink mpich
 dolink muparser
 dolink mumps
+dolink netlib-lapack
 dolink netlib-scalapack
 dolink oce
 dolink openblas
