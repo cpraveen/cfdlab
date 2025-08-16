@@ -25,6 +25,9 @@ ACTION=symlink
 dolink()
 {
    $COMMAND $ACTION $SPACK_VIEW $1
+   if [ $? -eq 0 ]; then
+      echo "Linked $1"
+   fi
    # Delete some useless stuff
    rm -f $SPACK_VIEW/include/index.html
    rm -f $SPACK_VIEW/share/info/dir
