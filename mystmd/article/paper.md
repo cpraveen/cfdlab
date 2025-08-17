@@ -20,7 +20,10 @@ numbering:
   headings: true
 exports:
   - format: pdf
-  - template: arxiv_nips
+    template: arxiv_nips
+    output: paper.pdf
+  - format: tex
+    template: arxiv_nips
 math:
   '\re': '\mathbb{R}'
   '\complex': '\mathbb{C}'
