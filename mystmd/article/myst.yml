@@ -1,0 +1,21 @@
+# See docs at: https://mystmd.org/guide/frontmatter
+version: 1
+project:
+  id: 7591814b-c51e-4174-b607-0159ba38333b
+  # title:
+  # description:
+  # keywords: []
+  # authors: []
+  # github:
+  # To autogenerate a Table of Contents, run "myst init --write-toc"
+  toc:
+    - file: paper.md
+  exclude:
+    - README.md
+
+site:
+  template: article-theme
+  options:
+    hide_toc: true
+  #   favicon: favicon.ico
+  #   logo: site_logo.png
