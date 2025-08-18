@@ -15,8 +15,7 @@ PN=`basename "$0"`
 usage () {
    echo >&2 "usage: $PN <deal.II install dir>
 
-   Configure deal.II using dependencies installed via Spack.
-   This requires \"spack location\" to work correctly.
+   Configure deal.II assuming everything is in path.
    example: $PN /home/praveen/Applications/deal.II/install"
 
     exit 1
@@ -50,57 +49,13 @@ if [ -z "$GMSH_DIR" ]; then
    GMSH_DIR=/tmp
 fi
 
-# Select openmpi or mpich
-OPENMPI=`spack location -i openmpi 2> /dev/null`
-MPICH=`spack location -i mpich 2> /dev/null`
-
-if [ $OPENMPI ]; then
-   MPI_DIR=$OPENMPI
-else
-   MPI_DIR=$MPICH
-fi
-
-#read -p "mpich or openmpi ? " MPI
-#if [ $MPI = "mpich" ]; then
-#  MPI_DIR=`spack location -i mpich`
-#elif [ $MPI = "openmpi" ]; then
-#  MPI_DIR=`spack location -i openmpi`
-#else
-#   echo "Unknown MPI specified"
-#   exit
-#fi
-
-if [ -d "$MPI_DIR" ]; then
-   echo "MPI_DIR = " $MPI_DIR
-else
-   echo "MPI_DIR not found"
-   exit
-fi
-
 # Get c/c++/fortran from mpi wrappers
-CC=`$MPI_DIR/bin/mpicc -show   | awk '{print $1}'`
-CXX=`$MPI_DIR/bin/mpic++ -show | awk '{print $1}'`
-FC=`$MPI_DIR/bin/mpif90 -show  | awk '{print $1}'`
-
-# Choose blas/lapack: openblas or netlib-lapack
-OPENBLAS=`spack location -i openblas 2> /dev/null`
-NETLIB=`spack location -i netlib-lapack 2> /dev/null`
-
-if [ $OPENBLAS ]; then
-   BLAS_DIR=$OPENBLAS
-else
-   BLAS_DIR=$NETLIB
-fi
-
-if [ -d "$BLAS_DIR" ]; then
-   echo "BLAS_DIR = " $BLAS_DIR
-else
-   echo "BLAS_DIR not found"
-   exit
-fi
+CC=`mpicc -show   | awk '{print $1}'`
+CXX=`mpic++ -show | awk '{print $1}'`
+FC=`mpif90 -show  | awk '{print $1}'`
 
 # Create makefile
-`spack location -i cmake`/bin/cmake  \
+cmake  \
 -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
 -DCMAKE_FIND_FRAMEWORK=LAST  \
 -DCMAKE_BUILD_TYPE=DebugRelease  \
@@ -108,68 +63,38 @@ fi
 -DDEAL_II_COMPILE_EXAMPLES=OFF \
 -DDEAL_II_COMPONENT_DOCUMENTATION=OFF  \
 -DDEAL_II_WITH_LAPACK=ON \
--DLAPACK_DIR=$BLAS_DIR  \
--DBLAS_DIR=$BLAS_DIR  \
 -DDEAL_II_WITH_BOOST=ON \
--DBOOST_DIR=`spack location -i boost`  \
 -DDEAL_II_WITH_ARBORX=ON \
--DARBORX_DIR=`spack location -i arborx`  \
--DMUPARSER_DIR=`spack location -i muparser`  \
--DUMFPACK_DIR=`spack location -i suite-sparse`  \
--DTBB_DIR=`spack location -i intel-tbb`  \
--DZLIB_DIR=`spack location -i zlib-ng`  \
 -DDEAL_II_WITH_MPI=ON  \
 -DCMAKE_C_COMPILER=$CC \
 -DCMAKE_CXX_COMPILER=$CXX \
 -DCMAKE_Fortran_COMPILER=$FC \
--DMPI_C_COMPILER=$MPI_DIR/bin/mpicc  \
--DMPI_CXX_COMPILER=$MPI_DIR/bin/mpic++  \
--DMPI_Fortran_COMPILER=$MPI_DIR/bin/mpif90  \
+-DMPI_C_COMPILER=mpicc  \
+-DMPI_CXX_COMPILER=mpic++  \
+-DMPI_Fortran_COMPILER=mpif90  \
 -DDEAL_II_CXX_FLAGS="-march=native -mtune=native" \
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
--DGSL_DIR=`spack location -i gsl`  \
 -DDEAL_II_WITH_GSL=ON  \
--DGMP_INCLUDE_DIR=`spack location -i gmp` \
--DGMP_LIBRARIES=`spack location -i gmp` \
--DMPFR_INCLUDE_DIR=`spack location -i mpfr` \
--DMPFR_LIBRARIES=`spack location -i mpfr` \
--DCGAL_DIR=`spack location -i cgal`  \
 -DDEAL_II_WITH_CGAL=ON  \
--DHDF5_DIR=`spack location -i hdf5`  \
 -DDEAL_II_WITH_HDF5=ON  \
--DP4EST_DIR=`spack location -i p4est`  \
 -DDEAL_II_WITH_P4EST=ON  \
--DPETSC_DIR=`spack location -i petsc`  \
 -DDEAL_II_WITH_PETSC=ON  \
--DSLEPC_DIR=`spack location -i slepc`  \
 -DDEAL_II_WITH_SLEPC=ON  \
--DTRILINOS_DIR=`spack location -i trilinos`  \
 -DDEAL_II_WITH_TRILINOS=ON  \
--DMETIS_DIR=`spack location -i metis`  \
 -DDEAL_II_WITH_METIS=ON  \
--DMUMPS_DIR=`spack location -i mumps`  \
 -DDEAL_II_WITH_MUMPS=ON  \
--DARPACK_DIR=`spack location -i arpack-ng`  \
 -DDEAL_II_WITH_ARPACK=ON  \
 -DDEAL_II_ARPACK_WITH_PARPACK=ON  \
--DOPENCASCADE_DIR=`spack location -i oce`  \
 -DDEAL_II_WITH_OPENCASCADE=ON  \
 -DGMSH_DIR=$GMSH_DIR \
 -DDEAL_II_WITH_GMSH=$DEAL_II_WITH_GMSH  \
--DASSIMP_DIR=`spack location -i assimp`  \
 -DDEAL_II_WITH_ASSIMP=ON  \
--DSUNDIALS_DIR=`spack location -i sundials`  \
 -DDEAL_II_WITH_SUNDIALS=ON  \
--DADOLC_DIR=`spack location -i adol-c`  \
 -DDEAL_II_WITH_ADOLC=ON  \
--DSCALAPACK_DIR=`spack location -i netlib-scalapack`  \
 -DDEAL_II_WITH_SCALAPACK=ON  \
 -DDEAL_II_WITH_GINKGO=ON  \
--DGINKGO_DIR=`spack location -i ginkgo`  \
 -DDEAL_II_WITH_SYMENGINE=ON  \
--DSYMENGINE_DIR=`spack location -i symengine`  \
 -DDEAL_II_WITH_TASKFLOW=ON  \
--DTASKFLOW_DIR=`spack location -i taskflow` \
 -DDEAL_II_WITH_VTK=OFF  \
 ../
 

@@ -85,7 +85,7 @@ We see from [](#eq:ode) that we have an ODE.
 
 # This is another section
 
-See this for some tips: https://curvenote.com/docs/publish/authoring-in-myst
+See this for some tips: <https://curvenote.com/docs/publish/authoring-in-myst>
 
 Definition
 : This is a definition.
@@ -102,19 +102,19 @@ This is enumerate.
 1. first item
 1. second item
 
-Create a note, see more here https://mystmd.org/guide/admonitions
+Create a note, see more here <https://mystmd.org/guide/admonitions>
 
 :::{note} Watch out
 This is a note.
 :::
 
-This is an exercise, it does not work in latex/pdf. https://mystmd.org/guide/exercises
+This is an exercise, it does not work in latex/pdf. <https://mystmd.org/guide/exercises>
 
 :::{exercise} Exercise
 This is an exercise.
 :::
 
-Sphinx proof provides may environments, see https://mystmd.org/guide/proofs-and-theorems
+Sphinx proof provides may environments, see <https://mystmd.org/guide/proofs-and-theorems>
 
 :::{prf:remark} Remark
 This is a remark.
@@ -148,9 +148,9 @@ Put a figure
 This is is the figure caption.
 :::
 
-For tabular figures, see https://sphinx-subfigure.readthedocs.io
+For tabular figures, see <https://sphinx-subfigure.readthedocs.io>
 
-Adding table is like this https://mystmd.org/guide/tables
+Adding table is like this <https://mystmd.org/guide/tables>
 
 :::{table} Table caption
 :label: table
