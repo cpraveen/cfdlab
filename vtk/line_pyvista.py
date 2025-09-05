@@ -16,6 +16,7 @@ n_points = 100  # Number of sample points along the line
 sampled = data.sample_over_line(point_a, point_b, n_points)
 print(sampled)
 
+# Plot using matplotlib
 u = sampled.point_data['density']
 x = sampled.point_data['Distance']
 plt.plot(x, u)
@@ -23,6 +24,7 @@ plt.xlabel("Distance along line")
 plt.ylabel("Density")
 plt.title("Matplotlib: Along line x=0.75")
 
+# Plot using pyvista
 data.plot_over_line(point_a, point_b, resolution=n_points, 
                     scalars="density",
                     title="PyVista: Along line x=0.75",
