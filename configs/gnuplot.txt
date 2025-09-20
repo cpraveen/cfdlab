@@ -21,12 +21,16 @@ set linetype 7 lc rgb "#e51e10"     lw 2
 set linetype 8 lc rgb "black"       lw 2
 set linetype cycle 8
 
-set key    font ",16"
-set xtics  font ",16"
-set ytics  font ",16"
-set title  font ",16"
-set xlabel font ",16"
-set ylabel font ",16"
+set key     font "Courier,16"
+set xtics   font "Courier,16"
+set ytics   font "Courier,16"
+set y2tics  font "Courier,16"
+set title   font "Courier,16"
+set xlabel  font "Courier,16"
+set ylabel  font "Courier,16"
+set y2label font "Courier,16"
+
+set term qt font "Times New Roman,16"
 
 # Draw grid lines
 set grid
