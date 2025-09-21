@@ -57,7 +57,7 @@ proc solvePoisson(ref p: [?d] real, const ref b: [d] real)
         poissonKernel(p, pn, b);
         neumannBC(p);
 
-        deltaL1Norm = (+ reduce (abs(p) - abs(pn))) / (+ reduce abs(pn));
+        deltaL1Norm = (+ reduce abs(p - pn)) / (+ reduce abs(pn));
         i += 1;
     }
 
