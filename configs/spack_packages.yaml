@@ -1,3 +1,6 @@
+# Copy this file as $HOME/.spack/packages.yaml and then rum
+#    spack compiler find
+# which will find and add compilers.
 packages:
   dealii:
     require: +adol-c +arborx +arpack +assimp +cgal ~doc ~examples +ginkgo ~gmsh
@@ -17,7 +20,7 @@ packages:
              +slepc +tetgen +triangle
   vtk:
     require: +python
-  # We can use some packages from homebrew on mac.
+  # We can use some packages installed with homebrew on mac.
   # Change the version numbers to what you actually have.
   # You should pin these packages so that brew does not update them.
   # Delete these lines if you are dont want to use them
