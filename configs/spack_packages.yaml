@@ -1,9 +1,4 @@
 packages:
-  #python:
-  #  externals:
-  #  - spec: python@3.10.12
-  #    prefix: /opt/miniforge
-  #    buildable: False
   dealii:
     require: +adol-c +arborx +arpack +assimp +cgal ~doc ~examples +ginkgo ~gmsh
              +gsl +hdf5 ~int64 +kokkos +metis +mpi +muparser ~nanoflann ~netcdf
@@ -22,6 +17,31 @@ packages:
              +slepc +tetgen +triangle
   vtk:
     require: +python
+  # We can use some packages from homebrew on mac.
+  # Change the version numbers to what you actually have.
+  # You should pin these packages so that brew does not update them.
+  # Delete these lines if you are dont want to use them
+  # and instead spack will install them.
+  boost:
+    externals:
+    - spec: boost@1.89.0
+      prefix: /opt/homebrew/Cellar/boost/1.89.0
+  cmake:
+    externals:
+    - spec: cmake@4.1.1
+      prefix: /opt/homebrew/Cellar/cmake/4.1.1
+  openmpi:
+    externals:
+    - spec: openmpi@5.0.8
+      prefix: /opt/homebrew/Cellar/open-mpi/5.0.8
+  python:
+    externals:
+    - spec: python@3.13.7
+      prefix: /opt/homebrew/Cellar/python@3.13/3.13.7
+  vtk:
+    externals:
+    - spec: vtk@9.5.2
+      prefix: /opt/homebrew/Cellar/vtk/9.5.2
   all:
     providers: # select one for each
       mpi: [openmpi] or [mpich]
