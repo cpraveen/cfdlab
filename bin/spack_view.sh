@@ -82,8 +82,8 @@ dolink muparser
 dolink mumps
 dolink netlib-lapack
 dolink netlib-scalapack
-dolink oce
 dolink openblas
+dolink opencascade
 dolink openmpi
 dolink parmetis
 dolink p4est
@@ -95,5 +95,6 @@ dolink symengine
 dolink taskflow
 dolink tbb
 dolink trilinos
+dolink vtk
 dolink zlib
 dolink zlib-ng
