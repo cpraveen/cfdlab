@@ -171,6 +171,7 @@ fi
 -DDEAL_II_WITH_TASKFLOW=ON  \
 -DTASKFLOW_DIR=`spack location -i taskflow` \
 -DDEAL_II_WITH_VTK=OFF  \
+-DVTK_DIR=`spack location -i vtk` \
 ../
 
 echo "Check detailed.log and CMakeCache.txt for paths you dont want to include."
