@@ -1,45 +1,6 @@
-# Pull a debian image
+# See
+#    https://cpraveen.github.io/comp/firedrake
 #
-#    docker pull debian:stable
-#
-# Start it
-#
-#    docker run -it --name debian debian:stable
-#
-# Inside the container, run the following commands to install firedrkae.
-#
-# Subsequently, you can start and attach to this container
-#
-#    docker start debian
-#    docker attach debian
-#
-# Activate the env
-#
-#    . /root/firedrake/bin/activate
-#
-# Add to your .bashrc file and anything else you want
-#
-# export OMP_NUM_THREADS=1
-# export VIRTUAL_ENV_DISABLE_PROMPT=1
-#
-# CREATE AN IMAGE
-#
-# You can create an image out of this container
-#
-#    docker commit debian firedrake
-#
-# Run the image (you may want to share some host folder)
-#
-#    docker run -it --name firedrake -p 8888:8888 \
-#               -v $(pwd):/root/shared -w /root/shared \
-#               firedrake:latest
-#
-# You can start jupyter inside container 
-#
-#    . /root/firedrake/bin/activate
-#    jupyter-lab --ip 0.0.0.0 --port 8888 --no-browser --allow-root
-#
-# and access it from the host at displayed url.
 cd
 apt update
 apt install curl git python3 python3-venv vim
