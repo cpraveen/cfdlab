@@ -6,7 +6,7 @@
 #
 #    docker run -it --name debian debian:stable
 #
-# Inside, run the following commands to install firedrkae.
+# Inside the container, run the following commands to install firedrkae.
 #
 # Subsequently, you can start and attach to this container
 #
@@ -15,7 +15,7 @@
 #
 # Activate the env
 #
-#    cd && . firedrake/bin/activate
+#    . /root/firedrake/bin/activate
 #
 cd
 apt update
