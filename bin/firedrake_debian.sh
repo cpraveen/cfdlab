@@ -17,8 +17,10 @@
 #
 #    . /root/firedrake/bin/activate
 #
-# Add to your .bashrc file
+# Add to your .bashrc file and anything else you want
+#
 # export OMP_NUM_THREADS=1
+# export VIRTUAL_ENV_DISABLE_PROMPT=1
 #
 # CREATE AN IMAGE
 #
@@ -28,14 +30,16 @@
 #
 # Run the image (you may want to share some host folder)
 #
-#    docker run -it --name firedrake -p 8888:8888 firedrake:latest
+#    docker run -it --name firedrake -p 8888:8888 \
+#               -v $(pwd):/root/shared -w /root/shared \
+#               firedrake:latest
 #
 # You can start jupyter inside container 
 #
 #    . /root/firedrake/bin/activate
 #    jupyter-lab --ip 0.0.0.0 --port 8888 --no-browser --allow-root
 #
-# and access it from the host at http://localhost:8888/tree
+# and access it from the host at displayed url.
 cd
 apt update
 apt install curl git python3 python3-venv vim
