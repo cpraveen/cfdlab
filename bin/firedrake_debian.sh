@@ -1,6 +1,8 @@
 # See
 #    https://cpraveen.github.io/comp/firedrake
 #
+# Exit on error
+set -e
 cd
 apt update
 apt install curl git python3 python3-venv vim
@@ -25,3 +27,14 @@ export $(python3 firedrake-configure --show-env)
 pip install --no-binary h5py 'firedrake[check]'
 pip install numpy scipy sympy matplotlib jupyterlab vtk
 firedrake-check
+
+# Do some cleanup
+
+firedrake-clean
+apt autoremove --purge
+apt clean
+rm -rf /var/lib/apt/lists/*
+rm -rf `find /root/petsc -name .git`
+rm -rf /root/petsc/src/docs
+rm -f  /root/petsc/src/**/tutorials/output/*
+rm -f  /root/petsc/src/**/tests/output/*
