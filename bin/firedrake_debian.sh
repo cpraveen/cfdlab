@@ -6,7 +6,7 @@ set -e
 cd
 apt update
 apt install curl git python3 python3-venv vim
-curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/refs/tags/2025.4.2/scripts/firedrake-configure
+curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/refs/tags/2025.4.3/scripts/firedrake-configure
 apt install $(python3 firedrake-configure --show-system-packages)
 git clone --branch $(python3 firedrake-configure --show-petsc-version) https://gitlab.com/petsc/petsc.git
 cd petsc
