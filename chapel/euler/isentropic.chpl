@@ -13,13 +13,13 @@ use IO;
 use StencilDist;
 use Math;
 
-config const nx    = 50,   // number of cells in x direction
-             ny    = 50,   // number of cells in y direction
-             Tf    = 10.0, // Time of simulation
-             cfl   = 0.4,  // cfl number
-             si    = 100,  // iteration interval to save solution
-             M     = 0.5,  // Farfield Mach number of flow
-             alpha = 0.0;  // Angle of advection (in degrees)
+config const nx    = 50,           // number of cells in x direction
+             ny    = 50,           // number of cells in y direction
+             cfl   = 0.45,         // cfl number
+             si    = 100,          // iteration interval to save solution
+             M     = 0.5,          // Farfield Mach number of flow
+             alpha = 45.0,         // Angle of advection (in degrees)
+             Tf    = sqrt(2)*10/M; // Time of simulation
 const xmin = -5.0, xmax = 5.0,
       ymin = -5.0, ymax = 5.0;
 const ark : [1..3] real = (0.0, 3.0/4.0, 1.0/3.0);
@@ -32,27 +32,39 @@ type cType = [1..nvar] real;
 
 // fv weno5 reconstruction, gives left state at interface
 // between u0 and up1
-proc weno5(um2:real, um1:real, u0:real, up1:real, up2:real): real
+proc weno5(Um2:cType, Um1:cType, U0:cType, Up1:cType, Up2:cType): cType
 {
    const eps = 1.0e-6;
    const gamma1=1.0/10.0, gamma2=3.0/5.0, gamma3=3.0/10.0;
+   var U : cType;
 
-   const beta1 = (13.0/12.0)*(um2 - 2.0*um1 + u0)**2 +
-                 (1.0/4.0)*(um2 - 4.0*um1 + 3.0*u0)**2;
-   const beta2 = (13.0/12.0)*(um1 - 2.0*u0 + up1)**2 +
-                 (1.0/4.0)*(um1 - up1)**2;
-   const beta3 = (13.0/12.0)*(u0 - 2.0*up1 + up2)**2 +
-                 (1.0/4.0)*(3.0*u0 - 4.0*up1 + up2)**2;
+   for i in 1..nvar
+   {
+      const um2 = Um2[i];
+      const um1 = Um1[i];
+      const u0  = U0[i];
+      const up1 = Up1[i];
+      const up2 = Up2[i];
 
-   const w1 = gamma1 / (eps+beta1)**2;
-   const w2 = gamma2 / (eps+beta2)**2;
-   const w3 = gamma3 / (eps+beta3)**2;
+      const beta1 = (13.0/12.0)*(um2 - 2.0*um1 + u0)**2 +
+                  (1.0/4.0)*(um2 - 4.0*um1 + 3.0*u0)**2;
+      const beta2 = (13.0/12.0)*(um1 - 2.0*u0 + up1)**2 +
+                  (1.0/4.0)*(um1 - up1)**2;
+      const beta3 = (13.0/12.0)*(u0 - 2.0*up1 + up2)**2 +
+                  (1.0/4.0)*(3.0*u0 - 4.0*up1 + up2)**2;
 
-   const u1 = (1.0/3.0)*um2 - (7.0/6.0)*um1 + (11.0/6.0)*u0;
-   const u2 = -(1.0/6.0)*um1 + (5.0/6.0)*u0 + (1.0/3.0)*up1;
-   const u3 = (1.0/3.0)*u0 + (5.0/6.0)*up1 - (1.0/6.0)*up2;
+      const w1 = gamma1 / (eps+beta1)**2;
+      const w2 = gamma2 / (eps+beta2)**2;
+      const w3 = gamma3 / (eps+beta3)**2;
 
-   return (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
+      const u1 = (1.0/3.0)*um2 - (7.0/6.0)*um1 + (11.0/6.0)*u0;
+      const u2 = -(1.0/6.0)*um1 + (5.0/6.0)*u0 + (1.0/3.0)*up1;
+      const u3 = (1.0/3.0)*u0 + (5.0/6.0)*up1 - (1.0/6.0)*up2;
+
+      U[i] =  (w1 * u1 + w2 * u2 + w3 * u3)/(w1 + w2 + w3);
+   }
+
+   return U;
 }
 
 // Save solution to file
@@ -206,24 +218,16 @@ proc main()
       // x fluxes
       forall (i,j) in Dx
       {
-        var Ul, Ur : cType;
-        for k in 1..nvar
-        {
-           Ul[k] = weno5(U[i-3,j][k],U[i-2,j][k],U[i-1,j][k],U[i,j][k],U[i+1,j][k]);
-           Ur[k] = weno5(U[i+2,j][k],U[i+1,j][k],U[i,j][k],U[i-1,j][k],U[i-2,j][k]);
-        }
+        const Ul = weno5(U[i-3,j],U[i-2,j],U[i-1,j],U[i,j],U[i+1,j]);
+        const Ur = weno5(U[i+2,j],U[i+1,j],U[i,j],U[i-1,j],U[i-2,j]);
         xflux[i,j] = dy * Flux(Ul,Ur,1.0,0.0);
       }
 
       // y fluxes
       forall (i,j) in Dy
       {
-        var Ul, Ur : cType;
-        for k in 1..nvar
-        {
-           Ul[k] = weno5(U[i,j-3][k],U[i,j-2][k],U[i,j-1][k],U[i,j][k],U[i,j+1][k]);
-           Ur[k] = weno5(U[i,j+2][k],U[i,j+1][k],U[i,j][k],U[i,j-1][k],U[i,j-2][k]);
-        }
+        const Ul = weno5(U[i,j-3],U[i,j-2],U[i,j-1],U[i,j],U[i,j+1]);
+        const Ur = weno5(U[i,j+2],U[i,j+1],U[i,j],U[i,j-1],U[i,j-2]);
         yflux[i,j] = dx * Flux(Ul,Ur,0.0,1.0);
       }
 
