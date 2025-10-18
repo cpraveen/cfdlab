@@ -49,7 +49,7 @@ proc weno5(um2:real, um1:real, u0:real, up1:real, up2:real): real
 }
 
 // Save solution to file
-proc savesol(t : real, ref u : [?D] real, c : int) : int
+proc savesol(t : real, u : [?D] real, c : int) : int
 {
   // construct filename with counter c
   if c > 999 then halt("Filename counter too large !!!");

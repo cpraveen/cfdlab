@@ -77,7 +77,7 @@ proc numerical_flux(lx:real, ly:real, vel:[1..2] real,
 }
 
 // Save solution to file
-proc savesol(t : real, ref u : [?D] real, c : int) : int
+proc savesol(t : real, u : [?D] real, c : int) : int
 {
   // construct filename with counter c
   if c > 999 then halt("Filename counter too large !!!");
