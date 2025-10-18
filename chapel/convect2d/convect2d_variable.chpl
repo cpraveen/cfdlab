@@ -77,7 +77,7 @@ proc numerical_flux(lx:real, ly:real, vel:[1..2] real,
 }
 
 // Save solution to file
-proc savesol(t : real, u : [?D] real, c : int) : int
+proc savesol(t : real, ref u : [?D] real, c : int) : int
 {
   // construct filename with counter c
   if c > 999 then halt("Filename counter too large !!!");
@@ -108,12 +108,13 @@ proc main()
 
   const D  = {1..nx, 1..ny},     // nx * ny     cells
         Dx = {1..(nx+1),1..ny},  // (nx+1) * ny vertical faces
-        Dy = {1..nx,1..(ny+1)};  // nx * (ny+1) horizontal faces
+        Dy = {1..nx,1..(ny+1)},  // nx * (ny+1) horizontal faces
+        Dr = {0..nx+1,0..ny+1};  // residual
   param rank = D.rank;
 
   // problem space
   var halo: rank*int = (3,3);
-  const PSpace = D dmapped new stencilDist(D, fluff=halo, periodic=true);
+  const PSpace = stencilDist.createDomain(D, fluff=halo, periodic=true);
 
   var u : [PSpace] real;
 
@@ -141,8 +142,8 @@ proc main()
   }
   dt *= cfl;
 
-  var u0 : [PSpace] real; // old solution
-  var res: [PSpace] real; // residual
+  var u0 : [PSpace] real;        // old solution
+  var res: [Dr]     atomic real; // residual
 
   var t  = 0.0;   // time counter
   var it = 0;     // iteration counter
@@ -162,7 +163,11 @@ proc main()
     // du/dt + res(u) = 0
     for rk in 1..3
     {
-      res = 0.0;
+      forall (i,j) in Dr
+      {
+        res[i,j].write(0.0);
+      }
+
       // x fluxes
       forall (i,j) in Dx
       {
@@ -177,9 +182,10 @@ proc main()
         // compute numerical flux
         var flux : real;
         numerical_flux(1.0, 0.0, vel, ul, ur, flux);
-        res[i-1,j] += flux * dy;
-        res[i,j]   -= flux * dy;
+        res[i-1,j].add(flux * dy);
+        res[i  ,j].sub(flux * dy);
       }
+
       // y fluxes
       forall (i,j) in Dy
       {
@@ -194,10 +200,16 @@ proc main()
         // compute numerical flux
         var flux : real;
         numerical_flux(0.0, 1.0, vel, ul, ur, flux);
-        res[i,j-1] += flux * dx;
-        res[i,j]   -= flux * dx;
+        res[i,j-1].add(flux * dx);
+        res[i,j  ].sub(flux * dx);
       }
-      u = ark[rk] * u0 + brk[rk] * (u - lam * res);
+
+      forall (i,j) in D
+      {
+        var r = res[i,j].read();
+        u[i,j] = ark[rk] * u0[i,j] + brk[rk] * (u[i,j] - lam * r);
+      }
+
       u.updateFluff();
     }
 

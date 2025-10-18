@@ -49,7 +49,7 @@ proc weno5(um2:real, um1:real, u0:real, up1:real, up2:real): real
 }
 
 // Save solution to file
-proc savesol(t : real, u : [?D] real, c : int) : int
+proc savesol(t : real, ref u : [?D] real, c : int) : int
 {
   // construct filename with counter c
   if c > 999 then halt("Filename counter too large !!!");
@@ -80,12 +80,13 @@ proc main()
 
   const D  = {1..nx, 1..ny},
         Dx = {1..(nx+1),1..ny},
-        Dy = {1..nx,1..(ny+1)};
+        Dy = {1..nx,1..(ny+1)},
+        Dr = {0..nx+1,0..ny+1};
   param rank = D.rank;
 
   // problem space
   var halo: rank*int = (3,3);
-  const PSpace = D dmapped new stencilDist(D, fluff=halo, periodic=true);
+  const PSpace = stencilDist.createDomain(D, fluff=halo, periodic=true);
 
   var u : [PSpace] real;
 
@@ -101,8 +102,8 @@ proc main()
   var c  = 0;     // counter to save solution
   c = savesol(0.0, u, c);
 
-  var u0 : [PSpace] real; // old solution
-  var res: [PSpace] real; // residual
+  var u0 : [PSpace] real;        // old solution
+  var res: [Dr]     atomic real; // residual
 
   const umax = sqrt(2.0); // max wave speed used in dt computation
   var dt = cfl * min(dx, dy) / umax;
@@ -123,22 +124,33 @@ proc main()
     // 3-stage RK scheme
     for rk in 1..3
     {
-      res = 0.0;
+      forall (i,j) in Dr
+      {
+        res[i,j].write(0.0);
+      }
+
       // x fluxes
       forall (i,j) in Dx
       {
         const ul = weno5(u[i-3,j],u[i-2,j],u[i-1,j],u[i,j],u[i+1,j]);
-        res[i-1,j] += ul * dy;
-        res[i,j]   -= ul * dy;
+        res[i-1,j].add(ul * dy);
+        res[i  ,j].sub(ul * dy);
       }
+
       // y fluxes
       forall (i,j) in Dy
       {
         const ul = weno5(u[i,j-3],u[i,j-2],u[i,j-1],u[i,j],u[i,j+1]);
-        res[i,j-1] += ul * dx;
-        res[i,j]   -= ul * dx;
+        res[i,j-1].add(ul * dx);
+        res[i,j  ].sub(ul * dx);
       }
-      u = ark[rk] * u0 + brk[rk] * (u - lam * res);
+
+      forall (i,j) in D
+      {
+        var r  = res[i,j].read();
+        u[i,j] = ark[rk] * u0[i,j] + brk[rk] * (u[i,j] - lam * r);
+      }
+
       u.updateFluff();
     }
 
