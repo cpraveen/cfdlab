@@ -27,7 +27,8 @@ const brk : [1..3] real = (1.0, 1.0/4.0, 2.0/3.0);
 const gamma = 1.4;
 const gas_const = 1.0;
 var dx, dy : real;
-type cType = [1..4] real;
+const nvar = 4;
+type cType = [1..nvar] real;
 
 // fv weno5 reconstruction, gives left state at interface
 // between u0 and up1
@@ -120,7 +121,7 @@ proc dt_local(Con : cType) : real
 // Rusanov flux
 proc Flux(Ul : cType, Ur : cType, n1 : real, n2 : real) : cType
 {
-  var U = 0.5*(Ul + Ur);
+  const U = 0.5*(Ul + Ur);
   const lam = maxeigval(U, n1, n2 );
   return avg_flux(Ul,Ur,n1,n2) - 0.5*lam*(Ur-Ul);
 }
@@ -161,9 +162,11 @@ proc main()
   param rank = D.rank;
 
   var halo: rank*int = (3,3);
-  const PSpace = D dmapped new stencilDist(D, fluff=halo, periodic=true);
+  const PSpace = stencilDist.createDomain(D, fluff=halo, periodic=true);
 
-  var U, U0, res : [PSpace] cType;
+  var U, U0 : [PSpace] cType;
+  var xflux : [Dx] cType;
+  var yflux : [Dy] cType;
 
   // Set initial condition
   const beta = 5.0;
@@ -173,10 +176,11 @@ proc main()
           y = ymin + (j-1)*dy + 0.5*dy;
     const r2 = x**2 + y**2;
     var Prim : cType;
-    Prim[1] =  (1.0 - (gamma-1.0)*(beta**2)/(8.0*gamma*pi*pi)*exp(1-r2))**(1.0/(gamma-1.0));
-    Prim[2] =  M*cos(alpha*pi/180.0) - beta/(2.0*pi)*y*exp(0.5*(1.0-r2));
-    Prim[3] =  M*sin(alpha*pi/180.0) + beta/(2.0*pi)*x*exp(0.5*(1.0-r2));
-    Prim[4] =  Prim[1]**gamma;
+    const T = 1.0 - (gamma-1.0)*(beta**2)/(8.0*gamma*pi*pi)*exp(1-r2);
+    Prim[1] = T**(1.0/(gamma-1.0));
+    Prim[2] = M*cos(alpha*pi/180.0) - beta/(2.0*pi)*y*exp(0.5*(1.0-r2));
+    Prim[3] = M*sin(alpha*pi/180.0) + beta/(2.0*pi)*x*exp(0.5*(1.0-r2));
+    Prim[4] = Prim[1]**gamma;
     U[i,j] = prim2con(Prim);
   }
   U.updateFluff();
@@ -199,40 +203,36 @@ proc main()
     // 3-stage RK scheme
     for rk in 1..3
     {
-      forall (i,j) in D
-      {
-         res[i,j] = 0.0;
-      }
-
       // x fluxes
       forall (i,j) in Dx
       {
         var Ul, Ur : cType;
-        for k in 1..4
+        for k in 1..nvar
         {
            Ul[k] = weno5(U[i-3,j][k],U[i-2,j][k],U[i-1,j][k],U[i,j][k],U[i+1,j][k]);
            Ur[k] = weno5(U[i+2,j][k],U[i+1,j][k],U[i,j][k],U[i-1,j][k],U[i-2,j][k]);
         }
-        const flux  = dy * Flux(Ul,Ur,1.0,0.0);
-        res[i-1,j] += flux;
-        res[i,j]   -= flux;
+        xflux[i,j] = dy * Flux(Ul,Ur,1.0,0.0);
       }
 
       // y fluxes
       forall (i,j) in Dy
       {
         var Ul, Ur : cType;
-        for k in 1..4
+        for k in 1..nvar
         {
            Ul[k] = weno5(U[i,j-3][k],U[i,j-2][k],U[i,j-1][k],U[i,j][k],U[i,j+1][k]);
            Ur[k] = weno5(U[i,j+2][k],U[i,j+1][k],U[i,j][k],U[i,j-1][k],U[i,j-2][k]);
         }
-        const flux  = dx * Flux(Ul,Ur,0.0,1.0);
-        res[i,j-1] += flux;
-        res[i,j]   -= flux;
+        yflux[i,j] = dx * Flux(Ul,Ur,0.0,1.0);
       }
 
-      U  = ark[rk]*U0 + brk[rk]*(U - lam*res);
+      forall (i,j) in D
+      {
+         const res = xflux[i+1,j] - xflux[i,j] + yflux[i,j+1] - yflux[i,j];
+         U[i,j]  = ark[rk]*U0[i,j] + brk[rk]*(U[i,j] - lam*res);
+      }
+
       U.updateFluff();
     }
 
