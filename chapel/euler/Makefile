@@ -1,7 +1,7 @@
 CHPL=chpl
 CHPLFLAGS=--fast
 
-TARGETS = isentropic isentropic_coforall
+TARGETS = isentropic_forall isentropic_coforall
 
 all: $(TARGETS)
 
