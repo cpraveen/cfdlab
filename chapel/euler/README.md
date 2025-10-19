@@ -23,8 +23,8 @@ There is danger that different threads may simultaneously modify the same elemen
 Here are timing obtained on M1 macmini.
 
 ```shell
-time ./isentropic
-./isentropic  56.51s user 0.14s system 378% cpu 14.953 total
+time ./isentropic_forall
+./isentropic_forall  56.51s user 0.14s system 378% cpu 14.953 total
 
 time ./isentropic_coforall
 ./isentropic_coforall  70.43s user 0.13s system 396% cpu 17.797 total
