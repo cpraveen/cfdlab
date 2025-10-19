@@ -78,12 +78,15 @@ proc savesol(t : real, U : [?D] cType, c : int) : int
   fw.writeln("TITLE = \"u_t + u_x + u_y = 0\"");
   fw.writeln("VARIABLES = x, y, rho, u, v, p");
   fw.writeln("ZONE STRANDID=1, SOLUTIONTIME=",t,", I=",nx,", J=",ny,", DATAPACKING=POINT");
-  for (j,i) in D
+  for j in D.dim(1)
   {
-    const x = xmin + (i-1)*dx + 0.5*dx,
-          y = ymin + (j-1)*dy + 0.5*dy;
-    const Prim = con2prim(U[i,j]);
-    fw.writeln(x,"  ",y,"  ",Prim[1],"  ",Prim[2],"  ",Prim[3],"  ",Prim[4]);
+    for i in D.dim(0)
+    {
+      const x = xmin + (i-1)*dx + 0.5*dx,
+            y = ymin + (j-1)*dy + 0.5*dy;
+      const Prim = con2prim(U[i,j]);
+      fw.writeln(x,"  ",y,"  ",Prim[1],"  ",Prim[2],"  ",Prim[3],"  ",Prim[4]);
+    }
   }
   fw.close();
   return c+1;
