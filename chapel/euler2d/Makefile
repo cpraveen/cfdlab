@@ -1,7 +1,7 @@
 CHPL=chpl
 CHPLFLAGS=--fast
 
-TARGETS = isentropic_forall isentropic_coforall
+TARGETS = euler_flux euler_res
 
 all: $(TARGETS)
 

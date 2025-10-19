@@ -224,7 +224,7 @@ proc main()
       }
 
       // x fluxes
-      coforall j in 1..ny
+      forall j in 1..ny
       {
         for i in 1..nx+1
         {
@@ -237,7 +237,7 @@ proc main()
       }
 
       // y fluxes
-      coforall i in 1..nx
+      forall i in 1..nx
       {
         for j in 1..ny+1
         {

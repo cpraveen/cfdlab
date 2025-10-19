@@ -1,11 +1,11 @@
 # Solve 2d Euler equations
 
-* `isentropic_forall`: We compute all the fluxes and then update solution. This is needed to avoid race condition.
-* `isentropic_coforall`: We dont store flux, but directly compute residual. To avoid race condition, we use coforall.
+* `euler_flux`: We compute and store all the fluxes and then update solution. This is avoids race condition.
+* `euler_res`: We dont store flux, but directly compute and store residual. To avoid race condition, we use forall only in one direction.
 
-## forall version
+## euler_res version
 
-If we compute `res` in forall version, it would look like this
+If we compute `res` using a single forall, it would look like this
 
 ```c
 forall (i,j) in Dx
@@ -16,18 +16,32 @@ forall (i,j) in Dx
 }
 ```
 
-There is danger that different threads may simultaneously modify the same element of `res`. Hence we compute and store all the fluxes, instead of computing `res`.
+There is danger that different threads may simultaneously modify the same element of `res`. Hence we use forall in only one direction
+
+```c
+forall j in 1..ny
+{
+   for i in 1..nx+1
+   {
+      ...
+      res[i-1,j] += flux;
+      res[i  ,j] -= flux;
+   }
+}
+```
+
+In `i` direction we use a serial for so there is no race condition.
 
 ## Timing
 
 Here are timing obtained on M1 macmini.
 
 ```shell
-time ./isentropic_forall
-./isentropic_forall  56.51s user 0.14s system 378% cpu 14.953 total
+time ./euler_flux
+./euler_flux  55.90s user 0.13s system 378% cpu 14.791 total
 
-time ./isentropic_coforall
-./isentropic_coforall  70.43s user 0.13s system 396% cpu 17.797 total
+time ./euler_res
+./euler_res  58.43s user 0.13s system 373% cpu 15.672 total
 ```
 
-The coforall version is slower. The forall version requires more storage to store all the fluxes.
+The times are somewhat similar, though `euler_flux` seems 1-2 seconds faster. The `euler_flux` version requires more storage to store all the fluxes and this storage increases in 3-D.
