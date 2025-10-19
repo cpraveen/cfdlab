@@ -1,12 +1,12 @@
 CHPL=chpl
 CHPLFLAGS=--fast
 
-TARGETS = isentropic
+TARGETS = isentropic isentropic_coforall
 
 all: $(TARGETS)
 
-$(TARGETS): $(TARGETS).chpl
-	$(CHPL) $(CHPLFLAGS) $(TARGETS).chpl -o $(TARGETS)
+%: %.chpl
+	$(CHPL) $(CHPLFLAGS) $< -o $@
 
 clean:
 	rm -f $(TARGETS)
