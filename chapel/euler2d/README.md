@@ -1,5 +1,7 @@
 # Solve 2d Euler equations
 
+> This will work on shared memory computers, it may not work correctly in distributed systems.
+
 * `euler_flux`: We compute and store all the fluxes and then update the solution. This is avoids race condition as each loop is parallel.
 * `euler_res`: We dont store flux, but directly compute and store residual. To avoid race condition, we use forall only in one direction.
 

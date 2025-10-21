@@ -1,7 +1,7 @@
 # 2d Poisson equation
 
 ## Single locale version
-See https://chapel-lang.org/blog/posts/bns2/
+See https://chapel-lang.org/blog/posts/bns2
 
 ```shell
 chpl nsPoisson.chpl --fast
@@ -11,4 +11,6 @@ open initial.png solution.png
 
 ## Distributed version
 
-See https://chapel-lang.org/blog/posts/bns3/
+See `nsPoissonStencil.chpl` file.
+
+See https://chapel-lang.org/blog/posts/bns3
