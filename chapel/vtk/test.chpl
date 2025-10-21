@@ -22,7 +22,7 @@ proc main()
    var u2 : [D] 2*real;      // array of tuples
    var u3 : [D] [0..1] real; // array of array
 
-   for (i,j) in D
+   forall (i,j) in D
    {
       u1[i,j] = fun1(x[i],y[j]);
       u2[i,j] = fun2(x[i],y[j]);
