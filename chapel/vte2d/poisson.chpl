@@ -1,3 +1,6 @@
+// Solves
+//  -Laplace(u) = rhs
+// u already has boundary values filled in which we do not change.
 module Poisson
 {
 use Math;

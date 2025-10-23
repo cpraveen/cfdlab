@@ -105,7 +105,7 @@ proc main()
    while t < Tf && it < witmax && wres > wtol
    {
       const (res0,res,pit) = poisson(psi, omega, h, ptol, pitmax);
-      writef("stream: res0,res,it      = %10.3er %10.3er %4i\n",res0,res,it);
+      writef("stream: res0,res,it      = %10.3er %10.3er %4i\n",res0,res,pit);
       compute_velocity(psi, u, v);
       boundary(psi, u, v, omega);
       wres = update_vort(dt, psi, u, v, omega);
