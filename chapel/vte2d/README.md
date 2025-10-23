@@ -1,5 +1,7 @@
 # 2d vorticity-streamfunction solver
 
+The method is described in my notes `vte2d.tm`.
+
 ## Test Poisson solver
 
 ```shell

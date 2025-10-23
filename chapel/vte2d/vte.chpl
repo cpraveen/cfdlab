@@ -32,38 +32,24 @@ proc compute_velocity(psi, ref u, ref v)
 //-----------------------------------------------------------------------------
 proc boundary(psi, u, v, ref omega)
 {
-   forall i in 1..n
-   {
-      var u1, u2, u3 : real;
+   const ih2 = 2.0 / h**2;
 
+   forall i in 2..n-1
+   {
       // bottom boundary
-      u1 = u[i,1];
-      u2 = (psi[i,2] - psi[i,1]) / h;
-      u3 = (psi[i,3] - psi[i,2]) / h;
-      omega[i,1] = -(- 8 * u1 + 9 * u2 - u3) / (3*h);
+      omega[i,1] = ih2 * (psi[i,1] - psi[i,2] + h * u[i,1]);
 
       // top boundary
-      u1 = u[i,n];
-      u2 = (psi[i,n] - psi[i,n-1]) / h;
-      u3 = (psi[i,n-1] - psi[i,n-2]) / h;
-      omega[i,n] = -( 8 * u1 - 9 * u2 + u3) / (3*h);
+      omega[i,n] = ih2 * (psi[i,n] - psi[i,n-1] - h * u[i,n]);
    }
 
-   forall j in 1..n
+   forall j in 2..n-1
    {
-      var v1, v2, v3 : real;
-
       // left boundary
-      v1 = v[1,j];
-      v2 = -(psi[2,j] - psi[1,j]) / h;
-      v3 = -(psi[3,j] - psi[2,j]) / h;
-      omega[1,j] = (- 8 * v1 + 9 * v2 - v3) / (3*h);
+      omega[1,j] = ih2 * (psi[1,j] - psi[2,j] - h * v[1,j]);
 
       // right boundary
-      v1 = v[n,j];
-      v2 = -(psi[n,j] - psi[n-1,j]) / h;
-      v3 = -(psi[n-1,j] - psi[n-2,j]) / h;
-      omega[n,j] = ( 8 * v1 - 9 * v2 + v3) / (3*h);
+      omega[n,j] = ih2 * (psi[n,j] - psi[n-1,j] + h * v[n,j]);
    }
 }
 
