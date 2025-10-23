@@ -6,7 +6,9 @@ config const n = 100,
              Re = 10.0,
              Tf = 100.0,
              wtol = 1.0e-4,
-             itmax = 1000;
+             ptol = 1.0e-4,
+             witmax = 1000,
+             pitmax = 1000;
 
 const nu = 1.0/Re;
 const h = 1.0/(n - 1);
@@ -100,9 +102,9 @@ proc main()
    var t = 0.0;
    var it = 0;
    var wres = 1.0e20;
-   while t < Tf && it < itmax && wres > wtol
+   while t < Tf && it < witmax && wres > wtol
    {
-      const (res0,res,pit) = poisson(psi, omega, h);
+      const (res0,res,pit) = poisson(psi, omega, h, ptol, pitmax);
       writef("stream: res0,res,it      = %10.3er %10.3er %4i\n",res0,res,it);
       compute_velocity(psi, u, v);
       boundary(psi, u, v, omega);

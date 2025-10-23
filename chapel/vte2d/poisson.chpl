@@ -21,8 +21,11 @@ proc residual(u : [?D], rhs, h)
 proc poisson(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
 {
    const inner = D.expand(-1);
-
    const r = 2.0/(1.0 + pi * h);
+
+   // Set initial guess to zero
+   u = 0.0;
+
    var res0 = residual(u, rhs, h);
    var res  = res0;
    var it   = 0;
@@ -44,7 +47,6 @@ proc poisson(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
                              + h * h * rhs[i,j]);
          u[i,j] = (1.0 - r) * u[i,j] + r * tmp;
       }
-
 
       res = residual(u, rhs, h);
       it += 1;
