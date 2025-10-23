@@ -35,4 +35,10 @@ proc main()
    const names2 = ["sol1", "sol2"];
    write_vtk(x, y, 0.0, 0, names2, u2, "test2.vtk");
    write_vtk(x, y, 0.0, 0, names2, u3, "test3.vtk");
+
+   // Write in two steps
+   // diff test1.vtk and test4.vtk
+   const filename = "test4.vtk";
+   write_vtk(x, y, 0.0, 0, filename);
+   write_vtk(names1, u1, filename);
 }

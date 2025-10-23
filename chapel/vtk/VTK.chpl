@@ -10,23 +10,18 @@ pragma "return not owned"
 proc type _array._dom do return chpl__domainFromArrayRuntimeType(this);
 
 // Write 2d rectilinear grid format
+// Write only grid
 proc write_vtk(x : [?Dx] real, 
                y : [?Dy] real,
                time : real,
                cycle : int,
-               names : [] string,
-               const ref u : [?D] ?T,
-               filename : string) where D.rank == 2 && 
-                                        Dx.rank == 1 &&
+               filename : string) where Dx.rank == 1 &&
                                         Dy.rank == 1
 {
-   const nx = D.dim(0).size;
-   const ny = D.dim(1).size;
-   assert(nx == x.size, "Size of x is wrong");
-   assert(ny == y.size, "Size of y is wrong");
+   const nx = x.size;
+   const ny = y.size;
 
-   var f  = try! open(filename, ioMode.cw);
-   var fw = try! f.writer();
+   var fw = try! open(filename, ioMode.cw).writer();
 
    try! fw.writeln("# vtk DataFile Version 3.0");
    try! fw.writeln("Cartesian grid");
@@ -51,6 +46,17 @@ proc write_vtk(x : [?Dx] real,
    try! fw.writeln(0.0);
 
    try! fw.writef("POINT_DATA  %i\n", nx * ny);
+   try! fw.close();
+}
+
+// Write 2d rectilinear grid format
+// Write only solution, assumes grid is already written to same filename
+proc write_vtk(names : [] string,
+               const ref u : [?D] ?T,
+               filename : string) where D.rank == 2
+{
+   // Append to this file
+   var fw = try! open(filename, ioMode.a).writer();
 
    if isReal(T) // u is array of reals
    {
@@ -88,6 +94,26 @@ proc write_vtk(x : [?Dx] real,
    }
 
    try! fw.close();
+}
+
+// Write 2d rectilinear grid format
+proc write_vtk(x : [?Dx] real, 
+               y : [?Dy] real,
+               time : real,
+               cycle : int,
+               names : [] string,
+               const ref u : [?D] ?T,
+               filename : string) where D.rank == 2 && 
+                                        Dx.rank == 1 &&
+                                        Dy.rank == 1
+{
+   const nx = D.dim(0).size;
+   const ny = D.dim(1).size;
+   assert(nx == x.size, "Size of x is wrong");
+   assert(ny == y.size, "Size of y is wrong");
+
+   write_vtk(x, y, time, cycle, filename);
+   write_vtk(names, u, filename);
 }
 
 }
