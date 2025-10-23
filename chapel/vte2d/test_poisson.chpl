@@ -2,7 +2,9 @@ use Math;
 use Poisson;
 use VTK;
 
-config const n = 100;
+config const n = 100,
+             rtol = 1.0e-6,
+             itmax = 1000;
 
 const h = 1.0 / (n - 1);
 const D = {1..n, 1..n};
@@ -16,7 +18,7 @@ proc main()
    forall (i,j) in D do
       rhs[i,j] = rhsfun(x[i], x[j]);
 
-   const (res0,res,it) = poisson(u, rhs, h);
+   const (res0,res,it) = poisson(u, rhs, h, rtol, itmax);
    writeln("Initial residual = ", res0);
    writeln("Final   residual = ", res);
    writeln("No. of iterations= ", it);

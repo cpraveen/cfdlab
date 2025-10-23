@@ -29,16 +29,16 @@ proc poisson(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
 
    while res > RTOL * res0 && it < ITMAX
    {
-      forall (i,j) in inner do
-      if (i+j)%2 == 0
+      forall i in inner.dim(0) do
+      forall j in inner.dim(1) by 2 align i
       {
          const tmp = 0.25 * (u[i-1,j] + u[i+1,j] + u[i,j-1] + u[i,j+1] 
                              + h * h * rhs[i,j]);
          u[i,j] = (1.0 - r) * u[i,j] + r * tmp;
       }
 
-      forall (i,j) in inner do
-      if (i+j)%2 == 1
+      forall i in inner.dim(0) do
+      forall j in inner.dim(1) by 2 align i+1
       {
          const tmp = 0.25 * (u[i-1,j] + u[i+1,j] + u[i,j-1] + u[i,j+1] 
                              + h * h * rhs[i,j]);
