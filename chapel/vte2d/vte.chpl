@@ -93,7 +93,7 @@ proc main()
    var psi, omega, u, v : [D] real;
 
    // Velocity at top lid
-   u[..,n] = [i in 1..n] sin(pi * x[i])**2;
+   u[..,n] = 1.0;
 
    const dt = 0.25 * Re * h**2;
 
