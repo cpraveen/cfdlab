@@ -5,7 +5,7 @@ module Poisson
 {
 use Math;
 
-proc residual(u : [?D], rhs, h)
+private proc residual(u : [?D], rhs, h)
 {
    const inner = D.expand(-1);
    var res = 0.0;
