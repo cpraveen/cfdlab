@@ -15,7 +15,7 @@ pmax = psi.max();
 print("psi min/max = ",pmin,pmax)
 assert pmin < 0 and 0 < pmax, "Need pmin < 0 < pmax"
 
-p = pv.Plotter(window_size=(750, 750))
+p = pv.Plotter(window_size=(1024, 1024))
 
 # negative contours
 c1 = linspace(pmin, 0, 20)
@@ -37,5 +37,6 @@ p.show_bounds(all_edges=True,
 
 p.view_xy()
 p.camera.zoom(1.1)
-p.save_graphic("psi.svg")
+p.save_graphic("psi.svg") # pdf, eps, ps, svg
+p.screenshot("psi.png")   # png, jpeg, jpg, bmp, tif, tiff
 p.show()
