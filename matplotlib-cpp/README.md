@@ -12,6 +12,14 @@ Try to compile an example.
 
 ```shell
 g++ basic.cpp -std=c++11 -DWITHOUT_NUMPY \
-    -I /usr/local/Caskroom/miniforge/base/include/python3.9 \
-    -L /usr/local/Caskroom/miniforge/base/lib -lpython3.9
+    -I /opt/homebrew/Caskroom/miniforge/base/include/python3.12 \
+    -L /opt/homebrew/Caskroom/miniforge/base/lib -lpython3.12
+```
+
+or
+
+```shell
+g++ basic.cpp -std=c++11 -DWITHOUT_NUMPY \
+    -I$(python3-config --includes) \
+    -L$(python3-config --prefix)/lib -lpython3.12
 ```
