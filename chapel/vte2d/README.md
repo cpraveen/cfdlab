@@ -5,16 +5,16 @@ The method is described in my notes `vte2d.tm`.
 ## Test Poisson solver
 
 ```shell
-./test_poisson  # shows available command line args
-./test_poisson
+./test_poisson  -h  # shows available command line args
+./test_poisson      # run with default options
 ```
 
 ## Test VTE solver
 
 ```shell
-./vte -h  # shows available command line args
-./vte
-python plot.py
+./vte -h        # shows available command line args
+./vte           # run with default options
+python plot.py  # needs pyvista
 ```
 
 ## Looping over red-black
