@@ -12,13 +12,13 @@ The method is described in my notes `vte2d.tm`.
 ## Test VTE solver
 
 ```shell
-./vte -h        # shows available command line args
-./vte           # run with default options
-python plot.py  # needs pyvista
-python line.py
+./vte -h                   # shows available command line args
+./vte --Re 1000            # run with default options
+python plot.py             # needs pyvista
+python line.py -Re 1000
 ```
 
-Ghia results taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py).
+Ghia et al. results taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py).
 
 ## Looping over red-black
 

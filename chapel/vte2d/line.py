@@ -1,6 +1,14 @@
 import pyvista as pv
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-Re', type=int, help='Reynolds no.', required=True)
+args = parser.parse_args()
+
+Re = { 100: 1, 400: 2, 1000: 3, 3200: 4, 5000: 5, 7500: 6, 10000: 7 }
+col = Re[args.Re]
 
 filename = "sol.vtk"
 data = pv.read(filename)
@@ -29,19 +37,21 @@ x = alongx.point_data['Distance']
 u = alongy.point_data['u']
 y = alongy.point_data['Distance']
 
-plt.figure(figsize=(10,5))
+fig = plt.figure(figsize=(10,5))
 
 plt.subplot(121)
 plt.plot(x, v, label="VTE: v(x,0.5)")
-plt.plot(dv[:,0], dv[:,1], 'o', label="Ghia")
+plt.plot(dv[:,0], dv[:,col], 'o', label="Ghia et al.")
 plt.xlabel("x"); plt.ylabel("v")
 plt.legend()
 
 plt.subplot(122)
 plt.plot(u, y, label="VTE: u(0.5,y)")
-plt.plot(du[:,1], du[:,0], 'o', label="Ghia")
+plt.plot(du[:,col], du[:,0], 'o', label="Ghia et al.")
 plt.xlabel("u"); plt.ylabel("y")
 plt.legend()
+
+fig.suptitle("Lid driven cavity, Re = " + str(args.Re))
 
 plt.savefig("vel.svg")
 plt.show()
