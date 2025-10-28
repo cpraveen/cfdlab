@@ -23,5 +23,5 @@ proc main()
    writeln("Final   residual = ", res);
    writeln("No. of iterations= ", it);
 
-   write_vtk(x, x, 0.0, 0, ["psi"], u, "psi.vtk");
+   write_vtk(x, x, 0.0, 0, "psi", u, "psi.vtk");
 }

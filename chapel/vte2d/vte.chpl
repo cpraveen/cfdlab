@@ -104,8 +104,5 @@ proc main()
    compute_velocity(psi, u, v);
    boundary(psi, u, v, omega);
    const fname = "sol.vtk";
-   write_vtk(x, x, t, it, ["psi"], psi, fname);
-   write_vtk(["omega"], omega, fname);
-   write_vtk(["u"], u, fname);
-   write_vtk(["v"], v, fname);
+   write_vtk(x, x, t, it, ("psi","omega","u","v"), (psi,omega,u,v), fname);
 }
