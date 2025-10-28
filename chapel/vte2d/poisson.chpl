@@ -12,9 +12,9 @@ private proc residual(u : [?D], rhs, h)
    forall (i,j) in inner with (+ reduce res)
    {
          const tmp = (u[i-1,j] - 2.0 * u[i,j] + u[i+1,j] 
-                    + u[i,j-1] - 2.0 * u[i,j] + u[i,j+1]) / (h * h) 
+                    + u[i,j-1] - 2.0 * u[i,j] + u[i,j+1]) / h**2
                     + rhs[i,j];
-         res += tmp * tmp;
+         res += tmp**2;
    }
 
    return sqrt(res/inner.size);

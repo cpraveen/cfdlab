@@ -15,6 +15,7 @@ The method is described in my notes `vte2d.tm`.
 ./vte -h        # shows available command line args
 ./vte           # run with default options
 python plot.py  # needs pyvista
+python line.py
 ```
 
 ## Looping over red-black

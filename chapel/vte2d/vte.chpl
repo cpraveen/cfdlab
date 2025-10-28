@@ -2,12 +2,12 @@ use Math;
 use Poisson;
 use VTK;
 
-config const n = 100,
-             Re = 10.0,
+config const n = 128,
+             Re = 100.0,
              Tf = 100.0,
              wtol = 1.0e-4,
              ptol = 1.0e-4,
-             witmax = 1000,
+             witmax = 10000,
              pitmax = 1000;
 
 const nu = 1.0/Re;
@@ -67,7 +67,7 @@ proc update_vort(dt, psi, u, v, ref omega)
       const wyy = (w[i,j-1] - 2 * w[i,j] + w[i,j+1]) / h**2;
       omega[i,j] = w[i,j] + dt*( - u[i,j] * wx - v[i,j] * wy 
                                  + nu * (wxx + wyy) );
-      wres += (omega[i,j] - w[i,j])**2;
+      wres += ((omega[i,j] - w[i,j])/dt)**2;
    }
 
    return sqrt(wres/inner.size);
@@ -85,9 +85,7 @@ proc main()
 
    const dt = 0.25 * Re * h**2;
 
-   var t = 0.0;
-   var it = 0;
-   var wres = 1.0e20;
+   var t = 0.0, it = 0, wres = 1.0e20;
    while t < Tf && it < witmax && wres > wtol
    {
       const (res0,res,pit) = poisson(psi, omega, h, ptol, pitmax);
@@ -108,4 +106,6 @@ proc main()
    const fname = "sol.vtk";
    write_vtk(x, x, t, it, ["psi"], psi, fname);
    write_vtk(["omega"], omega, fname);
+   write_vtk(["u"], u, fname);
+   write_vtk(["v"], v, fname);
 }
