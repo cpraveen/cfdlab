@@ -43,4 +43,5 @@ plt.plot(du[:,1], du[:,0], 'o', label="Ghia")
 plt.xlabel("u"); plt.ylabel("y")
 plt.legend()
 
+plt.savefig("vel.svg")
 plt.show()

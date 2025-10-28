@@ -18,6 +18,8 @@ python plot.py  # needs pyvista
 python line.py
 ```
 
+Ghia results taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py).
+
 ## Looping over red-black
 
 An alternate way to do the loops is to use a conditional
