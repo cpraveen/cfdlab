@@ -51,22 +51,23 @@ proc write_vtk(x : [?Dx] real,
 
 // Write 2d rectilinear grid format
 // Write only solution, assumes grid is already written to same filename
-proc write_vtk(names : [] string,
+proc write_vtk(names : ?S,
                const ref u : [?D] ?T,
-               filename : string) where D.rank == 2
+               filename : string) where D.rank == 2 &&
+                                        (isString(S) || isTuple(S))
 {
    // Append to this file
    var fw = try! open(filename, ioMode.a).writer();
 
-   if isReal(T) // u is array of reals
+   if isReal(T) && isString(S) // u is array of reals
    {
-      try! fw.writef("SCALARS %s float\n", names[0]);
+      try! fw.writef("SCALARS %s float\n", names);
       try! fw.writef("LOOKUP_TABLE default\n");
       for j in D.dim(1) do
          for i in D.dim(0) do
             try! fw.writeln(u[i,j]);
    }
-   else if isTuple(T) // u is array of tuples
+   else if isTuple(T) && isTuple(S) // u is array of tuples
    {
       const nc = T.size; //u[1,1].size;
       assert(nc == names.size, "Inconsistent size of names");
@@ -79,7 +80,7 @@ proc write_vtk(names : [] string,
                try! fw.writeln(u[i,j][c]);
       }
    }
-   else // u is array of arrays
+   else if isArray(T) && isTuple(S) // u is array of arrays
    {
       const dom1d = T.domain;
       assert(dom1d.size == names.size, "Inconsistent size of names");
@@ -92,6 +93,11 @@ proc write_vtk(names : [] string,
                try! fw.writeln(u[i,j][c]);
       }
    }
+   else
+   {
+      writeln("Unknown type of data");
+      halt();
+   }
 
    try! fw.close();
 }
@@ -101,11 +107,12 @@ proc write_vtk(x : [?Dx] real,
                y : [?Dy] real,
                time : real,
                cycle : int,
-               names : [] string,
+               names : ?S,
                const ref u : [?D] ?T,
                filename : string) where D.rank == 2 && 
                                         Dx.rank == 1 &&
-                                        Dy.rank == 1
+                                        Dy.rank == 1 &&
+                                        (isString(S) || isTuple(S))
 {
    const nx = D.dim(0).size;
    const ny = D.dim(1).size;
@@ -114,6 +121,24 @@ proc write_vtk(x : [?Dx] real,
 
    write_vtk(x, y, time, cycle, filename);
    write_vtk(names, u, filename);
+}
+
+// Tuple of real arrays
+proc write_vtk(x : [] real, 
+               y : [] real,
+               time : real,
+               cycle : int,
+               names : ?S,
+               const ref u : ?T,
+               filename : string) where isTuple(S) && 
+                                        isTuple(T)
+{
+   assert(names.size == u.size, "Mismatch in names,u");
+   write_vtk(x, y, time, cycle, filename);
+
+   const n = names.size;
+   for i in 0..#n do
+      write_vtk(names[i], u[i], filename);
 }
 
 }

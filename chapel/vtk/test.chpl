@@ -29,10 +29,10 @@ proc main()
       u3[i,j] = fun3(x[i],y[j]);
    }
 
-   const names1 = ["sol"];
+   const names1 = "sol";
    write_vtk(x, y, 0.0, 0, names1, u1, "test1.vtk");
 
-   const names2 = ["sol1", "sol2"];
+   const names2 = ("sol1", "sol2");
    write_vtk(x, y, 0.0, 0, names2, u2, "test2.vtk");
    write_vtk(x, y, 0.0, 0, names2, u3, "test3.vtk");
 
@@ -41,4 +41,9 @@ proc main()
    const filename = "test4.vtk";
    write_vtk(x, y, 0.0, 0, filename);
    write_vtk(names1, u1, filename);
+
+   // Tuple of scalar arrays
+   const u4 = u1;
+   write_vtk(x, y, 0.0, 0, ("sol1","sol2"), (u1,u4), "test5.vtk");
+
 }
