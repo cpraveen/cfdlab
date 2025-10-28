@@ -16,6 +16,21 @@ const D = {1..n, 1..n};
 const inner = D.expand(-1);
 
 //-----------------------------------------------------------------------------
+// Compute time step based on convective and viscous
+//-----------------------------------------------------------------------------
+proc time_step(u, v)
+{
+   var dt = 0.25 * Re * h**2;
+   forall ij in D with (min reduce dt)
+   {
+      dt = min(dt, h/(abs(u[ij]) + 1.0e-12));
+      dt = min(dt, h/(abs(v[ij]) + 1.0e-12));
+   }
+
+   return dt;
+}
+
+//-----------------------------------------------------------------------------
 // Compute velocit from stream function
 //-----------------------------------------------------------------------------
 proc compute_velocity(psi, ref u, ref v)
@@ -83,8 +98,6 @@ proc main()
    // Velocity at top lid
    u[..,n] = 1.0;
 
-   const dt = 0.25 * Re * h**2;
-
    var t = 0.0, it = 0, wres = 1.0e20;
    while t < Tf && it < witmax && wres > wtol
    {
@@ -92,6 +105,7 @@ proc main()
       writef("stream: res0,res,it      = %10.3er %10.3er %4i\n",res0,res,pit);
       compute_velocity(psi, u, v);
       boundary(psi, u, v, omega);
+      const dt = time_step(u, v);
       wres = update_vort(dt, psi, u, v, omega);
       t += dt; it += 1;
       const omin = min reduce omega;
