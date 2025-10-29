@@ -3,8 +3,13 @@ from pylab import *
 
 filename = "sol.vtk"
 
+with open(filename,'r') as f:
+    f.readline()
+    problem = f.readline().strip()
+
 reader = pv.get_reader(filename)
 data = reader.read()
+print(data)
 
 scalar = "psi"
 cmap = "coolwarm"
@@ -27,7 +32,7 @@ c2 = linspace(0, pmax, 5)
 contours = data.contour(isosurfaces=c2, scalars=scalar)
 p.add_mesh(contours, color="black", line_width=1.5,cmap=cmap)
 
-p.add_title("Streamlines")
+p.add_title(problem + ", Streamlines")
 p.show_bounds(all_edges=True,
               location="outer",
               xtitle="x",
