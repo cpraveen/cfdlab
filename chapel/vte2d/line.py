@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-Re', type=int, help='Reynolds no.', required=True)
+parser.add_argument("-Re", "--Re", type=int, help="Reynolds no.", required=True)
 args = parser.parse_args()
 
 Re = { 100: 1, 400: 2, 1000: 3, 3200: 4, 5000: 5, 7500: 6, 10000: 7 }
@@ -31,23 +31,23 @@ alongx = data.sample_over_line(p1, p2, resolution=npoints)
 alongy = data.sample_over_line(p3, p4, resolution=npoints)
 
 # Plot using matplotlib
-v = alongx.point_data['v']
-x = alongx.point_data['Distance']
+v = alongx.point_data["v"]
+x = alongx.point_data["Distance"]
 
-u = alongy.point_data['u']
-y = alongy.point_data['Distance']
+u = alongy.point_data["u"]
+y = alongy.point_data["Distance"]
 
 fig = plt.figure(figsize=(10,5))
 
 plt.subplot(121)
 plt.plot(x, v, label="VTE: v(x,0.5)")
-plt.plot(dv[:,0], dv[:,col], 'o', label="Ghia et al.")
+plt.plot(dv[:,0], dv[:,col], "o", label="Ghia et al.")
 plt.xlabel("x"); plt.ylabel("v")
 plt.legend()
 
 plt.subplot(122)
 plt.plot(u, y, label="VTE: u(0.5,y)")
-plt.plot(du[:,col], du[:,0], 'o', label="Ghia et al.")
+plt.plot(du[:,col], du[:,0], "o", label="Ghia et al.")
 plt.xlabel("u"); plt.ylabel("y")
 plt.legend()
 

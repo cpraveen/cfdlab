@@ -3,7 +3,7 @@ from pylab import *
 
 filename = "sol.vtk"
 
-with open(filename,'r') as f:
+with open(filename,"r") as f:
     f.readline()
     problem = f.readline().strip()
 

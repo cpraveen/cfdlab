@@ -7,6 +7,7 @@ The method is described in my notes `vte2d.tm`.
 ```shell
 ./test_poisson  -h  # shows available command line args
 ./test_poisson      # run with default options
+visit -o psi.vtk
 ```
 
 ## Test VTE solver
@@ -15,14 +16,14 @@ The method is described in my notes `vte2d.tm`.
 ./vte -h                   # shows available command line args
 ./vte --n 128 --Re 1000
 python plot.py             # needs pyvista
-python line.py -Re 1000
+python line.py --Re 1000
 ```
 
 Ghia et al. results taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py).
 
 ## Looping over red-black
 
-An alternate way to do the loops is to use a conditional
+An alternate way to do the loops over red and black points in the Poisson solver is to use a conditional,
 
 ```chapel
 forall (i,j) in inner do
