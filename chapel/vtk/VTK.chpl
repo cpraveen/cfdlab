@@ -15,8 +15,9 @@ proc write_vtk(x : [?Dx] real,
                y : [?Dy] real,
                time : real,
                cycle : int,
-               filename : string) where Dx.rank == 1 &&
-                                        Dy.rank == 1
+               filename : string,
+               header = "Data") where Dx.rank == 1 &&
+                                      Dy.rank == 1
 {
    const nx = x.size;
    const ny = y.size;
@@ -24,7 +25,7 @@ proc write_vtk(x : [?Dx] real,
    var fw = try! open(filename, ioMode.cw).writer();
 
    try! fw.writeln("# vtk DataFile Version 3.0");
-   try! fw.writeln("Cartesian grid");
+   try! fw.writeln(header);
    try! fw.writeln("ASCII");
    try! fw.writeln("DATASET RECTILINEAR_GRID");
    try! fw.writeln("FIELD FieldData 2");
@@ -109,17 +110,18 @@ proc write_vtk(x : [?Dx] real,
                cycle : int,
                names : ?S,
                const ref u : [?D] ?T,
-               filename : string) where D.rank == 2 && 
-                                        Dx.rank == 1 &&
-                                        Dy.rank == 1 &&
-                                        (isString(S) || isTuple(S))
+               filename : string,
+               header = "Data") where D.rank == 2 && 
+                                      Dx.rank == 1 &&
+                                      Dy.rank == 1 &&
+                                      (isString(S) || isTuple(S))
 {
    const nx = D.dim(0).size;
    const ny = D.dim(1).size;
    assert(nx == x.size, "Size of x is wrong");
    assert(ny == y.size, "Size of y is wrong");
 
-   write_vtk(x, y, time, cycle, filename);
+   write_vtk(x, y, time, cycle, filename, header);
    write_vtk(names, u, filename);
 }
 
@@ -130,11 +132,12 @@ proc write_vtk(x : [] real,
                cycle : int,
                names : ?S,
                const ref u : ?T,
-               filename : string) where isTuple(S) && 
-                                        isTuple(T)
+               filename : string,
+               header = "Data") where isTuple(S) && 
+                                      isTuple(T)
 {
    assert(names.size == u.size, "Mismatch in names,u");
-   write_vtk(x, y, time, cycle, filename);
+   write_vtk(x, y, time, cycle, filename, header);
 
    const n = names.size;
    for i in 0..#n do
