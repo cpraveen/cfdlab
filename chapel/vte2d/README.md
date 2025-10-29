@@ -13,7 +13,7 @@ The method is described in my notes `vte2d.tm`.
 
 ```shell
 ./vte -h                   # shows available command line args
-./vte --Re 1000            # run with default options
+./vte --n 128 --Re 1000
 python plot.py             # needs pyvista
 python line.py -Re 1000
 ```
