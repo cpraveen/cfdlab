@@ -7,7 +7,7 @@ config const n = 128,
              Tf = 100.0,
              wtol = 1.0e-4,
              ptol = 1.0e-4,
-             witmax = 10000,
+             witmax = 50000,
              pitmax = 1000;
 
 const nu = 1.0/Re;
@@ -16,15 +16,14 @@ const D = {1..n, 1..n};
 const inner = D.expand(-1);
 
 //-----------------------------------------------------------------------------
-// Compute time step based on convective and viscous
+// Compute time step based on Fourier stability
 //-----------------------------------------------------------------------------
 proc time_step(u, v)
 {
-   var dt = 0.25 * Re * h**2;
+   var dt = 0.25 * h**2 / nu;
    forall ij in D with (min reduce dt)
    {
-      dt = min(dt, h/(abs(u[ij]) + 1.0e-12));
-      dt = min(dt, h/(abs(v[ij]) + 1.0e-12));
+      dt = min(dt, 2.0 * nu /(u[ij]**2 + v[ij]**2 + 1.0e-12));
    }
 
    return dt;
