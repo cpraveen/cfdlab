@@ -22,14 +22,12 @@ assert pmin < 0 and 0 < pmax, "Need pmin < 0 < pmax"
 
 p = pv.Plotter(window_size=(1024, 1024))
 
-# negative contours
-c1 = linspace(pmin, 0, 20)
-contours = data.contour(isosurfaces=c1, scalars=scalar)
-p.add_mesh(contours, color="black", line_width=1.5,cmap=cmap)
+# Contour levels of streamfunction from Ghia paper
+cvals = [-1e-10, -1e-7, -1e-5, -1e-4, -0.01, -0.03, -0.05, -0.07, -0.09, \
+         -0.1, -0.11, -0.115, -0.1175, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 2.5e-4, \
+         5e-4, 1e-3, 1.5e-3, 3e-3]
 
-# positive contours, these show corner vortices
-c2 = linspace(0, pmax, 5)
-contours = data.contour(isosurfaces=c2, scalars=scalar)
+contours = data.contour(isosurfaces=cvals, scalars=scalar)
 p.add_mesh(contours, color="black", line_width=1.5,cmap=cmap)
 
 p.add_title(problem + ", Streamlines")

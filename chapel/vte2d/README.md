@@ -15,11 +15,11 @@ visit -o psi.vtk
 ```shell
 ./vte -h                   # shows available command line args
 ./vte --n 128 --Re 1000
-python plot.py             # needs pyvista
-python line.py --Re 1000
+python stream.py           # plot streamlines, needs pyvista
+python vel.py --Re 1000    # compare velocity with Ghia
 ```
 
-Ghia et al. results taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py).
+[Ghia et al.](https://doi.org/10.1016/0021-9991(82)90058-4) results were taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py).
 
 ## Looping over red-black
 
