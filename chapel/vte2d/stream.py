@@ -40,6 +40,6 @@ p.show_bounds(all_edges=True,
 
 p.view_xy()
 p.camera.zoom(1.1)
-p.save_graphic("psi.svg") # pdf, eps, ps, svg
-p.screenshot("psi.png")   # png, jpeg, jpg, bmp, tif, tiff
+p.save_graphic("stream.svg") # pdf, eps, ps, svg
+p.screenshot("stream.png")   # png, jpeg, jpg, bmp, tif, tiff
 p.show()

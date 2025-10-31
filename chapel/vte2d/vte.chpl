@@ -1,4 +1,5 @@
 use Math;
+use StencilDist;
 use Poisson;
 use VTK;
 
@@ -12,7 +13,7 @@ config const n = 128,
 
 const nu = 1.0/Re;
 const h = 1.0/(n - 1);
-const D = {1..n, 1..n};
+const D = stencilDist.createDomain({1..n, 1..n}, fluff=(1,1));
 const inner = D.expand(-1);
 
 //-----------------------------------------------------------------------------
@@ -39,6 +40,9 @@ proc compute_velocity(psi, ref u, ref v)
       u[i,j] =  (psi[i,j+1] - psi[i,j-1]) / (2*h);
       v[i,j] = -(psi[i+1,j] - psi[i-1,j]) / (2*h);
    }
+
+   u.updateFluff();
+   v.updateFluff();
 }
 
 //-----------------------------------------------------------------------------
@@ -83,6 +87,8 @@ proc update_vort(dt, psi, u, v, ref omega)
                                  + nu * (wxx + wyy) );
       wres += ((omega[i,j] - w[i,j])/dt)**2;
    }
+
+   omega.updateFluff();
 
    return sqrt(wres/inner.size);
 }

@@ -5,9 +5,9 @@ The method is described in my notes `vte2d.tm`.
 ## Test Poisson solver
 
 ```shell
-./test_poisson  -h  # shows available command line args
-./test_poisson      # run with default options
-visit -o psi.vtk
+./test_poisson  -h    # shows available command line args
+./test_poisson        # run with default options
+visit -o poisson.vtk  # see the solution
 ```
 
 ## Test VTE solver
@@ -19,7 +19,12 @@ python stream.py           # plot streamlines, needs pyvista
 python vel.py --Re 1000    # compare velocity with Ghia
 ```
 
-[Ghia et al.](https://doi.org/10.1016/0021-9991(82)90058-4) results were taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py).
+[Ghia et al.](https://doi.org/10.1016/0021-9991(82)90058-4) results were taken from [here](https://github.com/CliMA/Oceananigans.jl/blob/main/validation/lid_driven_cavity/plot_lid_driven_cavity.py). The figures show the streamlines for Re=1000 and comparison of velocity profile along center line of the domain.
+
+<p align="center">
+<img src="output/stream_Re1000.svg" width=512>
+<img src="output/vel_Re1000.svg">
+</p>
 
 ## Looping over red-black
 
@@ -40,3 +45,7 @@ if (i+j)%2 == 1 // black points
 ```
 
 But my timing tests seem to show this is bit slower.
+
+## Running on multiple locales
+
+I have not tested this but the code should work on multiple locales, except for the solution output functions in the VTK module which are serial.
