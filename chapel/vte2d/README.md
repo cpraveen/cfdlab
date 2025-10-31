@@ -49,3 +49,9 @@ But my timing tests seem to show this is bit slower.
 ## Running on multiple locales
 
 I have not tested this but the code should work on multiple locales, except for the solution output functions in the VTK module which are serial.
+
+If you want to run with a single locale, then there is no need to use `stencilDist` as we dont use any ghost points in this code. You can declare a normal domain instead
+
+```chapel
+const D = {1..n, 1..n};
+```

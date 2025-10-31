@@ -3,13 +3,13 @@ use StencilDist;
 use Poisson;
 use VTK;
 
-config const n = 128,
-             Re = 100.0,
-             Tf = 100.0,
-             wtol = 1.0e-4,
-             ptol = 1.0e-4,
-             witmax = 50000,
-             pitmax = 1000;
+config const n = 128,         // n x n grid
+             Re = 100.0,      // Reynolds number
+             Tf = 100.0,      // final time
+             wtol = 1.0e-4,   // tolerance for vorticity equation
+             ptol = 1.0e-4,   // tolerance for poisson equation
+             witmax = 50000,  // max vorticity time steps
+             pitmax = 1000;   // max poisson iterations
 
 const nu = 1.0/Re;
 const h = 1.0/(n - 1);
