@@ -28,23 +28,21 @@ python vel.py --Re 1000    # compare velocity with Ghia
 
 ## Looping over red-black
 
-An alternate way to do the loops over red and black points in the Poisson solver is to use a conditional,
+An alternate way to do the loops over red and black points in the Poisson solver is,
 
 ```chapel
-forall (i,j) in inner do
-if (i+j)%2 == 0 // red points
+forall i in inner.dim(0) do
+forall j in inner.dim(1) by 2 align i
 {
     // apply SOR
 }
 
-forall (i,j) in inner do
-if (i+j)%2 == 1 // black points
+forall i in inner.dim(0) do
+forall j in inner.dim(1) by 2 align i+1
 {
     // apply SOR
 }
 ```
-
-But my timing tests seem to show this is bit slower.
 
 ## Running on multiple locales
 
@@ -55,3 +53,5 @@ If you want to run with a single locale, then there is no need to use `stencilDi
 ```chapel
 const D = {1..n, 1..n};
 ```
+
+and remove calls to `updateFluff()` function.

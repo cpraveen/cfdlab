@@ -5,6 +5,7 @@ module Poisson
 {
 use Math;
 
+// Compute residual of Poisson equation
 private proc residual(u : [?D], rhs, h)
 {
    const inner = D.expand(-1);
@@ -29,22 +30,21 @@ proc sor(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
    // Set initial guess to zero
    u = 0.0;
 
-   var res0 = residual(u, rhs, h);
-   var res  = res0;
-   var it   = 0;
+   const res0 = residual(u, rhs, h);
+   var res = res0, it = 0;
 
    while res > RTOL * res0 && it < ITMAX
    {
-      forall i in inner.dim(0) do
-      forall j in inner.dim(1) by 2 align i
+      forall (i,j) in inner do
+      if (i+j)%2 == 0
       {
          const tmp = 0.25 * (u[i-1,j] + u[i+1,j] + u[i,j-1] + u[i,j+1] 
                              + h * h * rhs[i,j]);
          u[i,j] = (1.0 - r) * u[i,j] + r * tmp;
       }
 
-      forall i in inner.dim(0) do
-      forall j in inner.dim(1) by 2 align i+1
+      forall (i,j) in inner do
+      if (i+j)%2 == 1
       {
          const tmp = 0.25 * (u[i-1,j] + u[i+1,j] + u[i,j-1] + u[i,j+1] 
                              + h * h * rhs[i,j]);
