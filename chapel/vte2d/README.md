@@ -12,9 +12,21 @@ visit -o poisson.vtk  # see the solution
 
 ## Test VTE solver
 
+See available options
+
 ```shell
-./vte -h                   # shows available command line args
-./vte --n 128 --Re 1000
+./vte -h
+```
+
+Run the code
+
+```shell
+./vte --n 128 --Re 1000 > log.txt &
+```
+
+See the solution
+
+```shell
 python stream.py           # plot streamlines, needs pyvista
 python vel.py --Re 1000    # compare velocity with Ghia
 ```
