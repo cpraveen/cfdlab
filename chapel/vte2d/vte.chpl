@@ -123,6 +123,6 @@ proc main()
    compute_velocity(psi, u, v);
    boundary(psi, u, v, omega);
    const fname = "sol.vtk";
-   write_vtk(x, x, t, it, ("psi","omega","u","v"), (psi,omega,u,v), fname,
-             "Re = " + Re:int:string);
+   write_vtk(x, x, ("psi","omega","u","v"), (psi,omega,u,v), fname,
+             t, it, "Re = " + Re:int:string);
 }

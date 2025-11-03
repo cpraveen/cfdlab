@@ -13,9 +13,9 @@ proc type _array._dom do return chpl__domainFromArrayRuntimeType(this);
 // Write only grid
 proc write_vtk(x : [?Dx] real, 
                y : [?Dy] real,
-               time : real,
-               cycle : int,
                filename : string,
+               time = 0.0,
+               cycle = 0,
                header = "Data") where Dx.rank == 1 &&
                                       Dy.rank == 1
 {
@@ -106,11 +106,11 @@ proc write_vtk(names : ?S,
 // Write 2d rectilinear grid format
 proc write_vtk(x : [?Dx] real, 
                y : [?Dy] real,
-               time : real,
-               cycle : int,
                names : ?S,
                const ref u : [?D] ?T,
                filename : string,
+               time = 0.0,
+               cycle = 0,
                header = "Data") where D.rank == 2 && 
                                       Dx.rank == 1 &&
                                       Dy.rank == 1 &&
@@ -121,23 +121,23 @@ proc write_vtk(x : [?Dx] real,
    assert(nx == x.size, "Size of x is wrong");
    assert(ny == y.size, "Size of y is wrong");
 
-   write_vtk(x, y, time, cycle, filename, header);
+   write_vtk(x, y, filename, time, cycle, header);
    write_vtk(names, u, filename);
 }
 
 // Tuple of real arrays
 proc write_vtk(x : [] real, 
                y : [] real,
-               time : real,
-               cycle : int,
                names : ?S,
                const ref u : ?T,
                filename : string,
+               time = 0.0,
+               cycle = 0,
                header = "Data") where isTuple(S) && 
                                       isTuple(T)
 {
    assert(names.size == u.size, "Mismatch in names,u");
-   write_vtk(x, y, time, cycle, filename, header);
+   write_vtk(x, y, filename, time, cycle, header);
 
    const n = names.size;
    for i in 0..#n do
