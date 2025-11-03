@@ -106,7 +106,7 @@ proc main()
    var t = 0.0, it = 0, wres = 1.0e20;
    while t < Tf && it < witmax && wres > wtol
    {
-      const (res0,res,pit) = poisson(psi, omega, h, ptol, pitmax);
+      const (res0,res,pit) = sor(psi, omega, h, ptol, pitmax);
       writef("stream: res0,res,it      = %10.3er %10.3er %4i\n",res0,res,pit);
       compute_velocity(psi, u, v);
       boundary(psi, u, v, omega);
@@ -119,7 +119,7 @@ proc main()
               it,t,wres,omin,omax);
    }
 
-   const (res0,res,pit) = poisson(psi, omega, h);
+   const (res0,res,pit) = sor(psi, omega, h);
    compute_velocity(psi, u, v);
    boundary(psi, u, v, omega);
    const fname = "sol.vtk";

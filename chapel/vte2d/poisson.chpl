@@ -21,7 +21,7 @@ private proc residual(u : [?D], rhs, h)
 }
 
 // red-black gauss-seidel
-proc poisson(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
+proc sor(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
 {
    const inner = D.expand(-1);
    const r = 2.0/(1.0 + pi * h);

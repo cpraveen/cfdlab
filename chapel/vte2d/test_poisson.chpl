@@ -23,7 +23,7 @@ proc main()
    forall (i,j) in D do
       rhs[i,j] = rhsfun(x[i], x[j]);
 
-   const (res0,res,it) = poisson(u, rhs, h, rtol, itmax);
+   const (res0,res,it) = sor(u, rhs, h, rtol, itmax);
    writeln("Initial residual = ", res0);
    writeln("Final   residual = ", res);
    writeln("No. of iterations= ", it);
