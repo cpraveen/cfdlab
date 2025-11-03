@@ -62,7 +62,7 @@ proc sor(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
       writeln("Error: no convergence in stream function");
       writeln("Error: increase RTOL and/or ITMAX");
       writef("res0, res, iter = %er %er %i\n", res0, res, it);
-      exit();
+      halt();
    }
 
    return (res0, res, it);
