@@ -9,8 +9,10 @@ pragma "no copy return"
 pragma "return not owned"
 proc type _array._dom do return chpl__domainFromArrayRuntimeType(this);
 
+//-----------------------------------------------------------------------------
 // Write 2d rectilinear grid format
 // Write only grid
+//-----------------------------------------------------------------------------
 proc write_vtk(x : [?Dx] real, 
                y : [?Dy] real,
                filename : string,
@@ -50,8 +52,10 @@ proc write_vtk(x : [?Dx] real,
    try! fw.close();
 }
 
+//-----------------------------------------------------------------------------
 // Write 2d rectilinear grid format
 // Write only solution, assumes grid is already written to same filename
+//-----------------------------------------------------------------------------
 proc write_vtk(names : ?S,
                const ref u : [?D] ?T,
                filename : string) where D.rank == 2 &&
@@ -103,7 +107,9 @@ proc write_vtk(names : ?S,
    try! fw.close();
 }
 
+//-----------------------------------------------------------------------------
 // Write 2d rectilinear grid format
+//-----------------------------------------------------------------------------
 proc write_vtk(x : [?Dx] real, 
                y : [?Dy] real,
                names : ?S,
@@ -125,7 +131,9 @@ proc write_vtk(x : [?Dx] real,
    write_vtk(names, u, filename);
 }
 
+//-----------------------------------------------------------------------------
 // Tuple of real arrays
+//-----------------------------------------------------------------------------
 proc write_vtk(x : [] real, 
                y : [] real,
                names : ?S,

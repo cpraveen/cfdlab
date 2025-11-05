@@ -1,6 +1,6 @@
 # 2d vorticity-streamfunction solver
 
-The method is described in my notes `vte2d.tm`.
+The method is described in my notes `vte2d.tm`. There is a Julia version [here](https://github.com/cpraveen/numpde/tree/master/vte2d) but it may not be as good as the Chapel version.
 
 ## Test Poisson solver
 
