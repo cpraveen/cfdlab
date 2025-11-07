@@ -1,5 +1,5 @@
 CHPL = chpl
-CFLAGS = --fast
+CFLAGS = --fast --ccflags -march=native
 
 TARGET = test_poisson vte
 
