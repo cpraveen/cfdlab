@@ -99,6 +99,7 @@ alias feynman="ssh -Y praveen@158.144.181.10 -p 2273"
 alias sdf="ssh pc@otaku.freeshell.org"
 alias freeshell="ssh pc@otaku.freeshell.org"
 alias cchpc19="ssh  -p 4748 -tt c.praveen_052@gwssh.tifr.res.in ssh -p 22 -tt c.praveen_052@cchpc19.tifr.res.in"
+alias texstudio="/Applications/texstudio-*.app/Contents/MacOS/texstudio --master --start-always"
 
 alias docker_fenics="docker run -ti -v \$(pwd):/home/fenics/shared -w /home/fenics/shared  quay.io/fenicsproject/stable:latest"
 alias docker_dolfinx="docker run -ti -v \$(pwd):/home/fenics/shared -w /home/fenics/shared  dolfinx/dolfinx:stable"
