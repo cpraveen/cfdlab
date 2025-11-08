@@ -5,7 +5,7 @@ packages:
   dealii:
     require: +adol-c +arborx +arpack +assimp +cgal ~doc ~examples +ginkgo ~gmsh
              +gsl +hdf5 ~int64 +kokkos +metis +mpi +muparser ~nanoflann ~netcdf
-             ~oce ~opencascade +p4est +petsc ~python +scalapack +simplex +slepc 
+             ~opencascade +p4est +petsc ~python +scalapack +simplex +slepc 
              +sundials +symengine +threads +trilinos ~vtk
   hdf5:
     require: +fortran +cxx +hl
