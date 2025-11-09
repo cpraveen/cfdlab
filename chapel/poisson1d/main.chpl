@@ -36,7 +36,7 @@ proc main()
 
    if method == "mg"
    {
-      assert(N % 2**levels == 0);
+      assert(N % 2**levels == 0, "N must be divisible by 2^levels");
       multigrid(v, f, h, rtol, niter, nsmooth, levels);
    }
    else
