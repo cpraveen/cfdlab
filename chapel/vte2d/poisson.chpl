@@ -25,7 +25,7 @@ private proc residual(u : [?D], rhs, h)
 proc sor(ref u : [?D], rhs, h, RTOL=1.0e-6, ITMAX=1000)
 {
    const inner = D.expand(-1);
-   const r = 2.0/(1.0 + pi * h);
+   const r = 2.0/(1.0 + sin(pi * h));
 
    // Set initial guess to zero
    u = 0.0;
