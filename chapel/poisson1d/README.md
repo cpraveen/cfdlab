@@ -21,3 +21,5 @@ Plot the solution in gnuplot
 ```gnuplot
 gnuplot> p 'sol.txt' t 'Numerical' w p, x + sin(2*pi*x) t 'Exact' w l
 ```
+
+For best multigrid speed use `N = 2^n` and `levels = n-1`.
