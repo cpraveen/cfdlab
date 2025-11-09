@@ -14,6 +14,9 @@ config const N       = 128,     // grid of N+1 points
 const xmin = 0.0;
 const xmax = 1.0;
 
+proc exact(x) do return x + sin(2*pi*x);
+proc rhs(x) do return (2*pi)**2 * sin(2*pi*x);
+
 //------------------------------------------------------------------------------
 proc main()
 {
@@ -24,12 +27,12 @@ proc main()
    forall i in D
    {
       x[i] = xmin + (i-1)*h;
-      f[i] = 4 * pi * pi * sin(2 * pi * x[i]); // rhs function
+      f[i] = rhs(x[i]);
    }
 
    // Initial v must have correct bc filled in
-   // Exact = x + sin(2*pi*x)
-   v[N+1] = 1.0;
+   v[1]   = exact(xmin);
+   v[N+1] = exact(xmax);
 
    if method == "mg"
    {
