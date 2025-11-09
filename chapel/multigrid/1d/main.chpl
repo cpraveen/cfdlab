@@ -17,12 +17,11 @@ const xmax = 1.0;
 //------------------------------------------------------------------------------
 proc residual(v : [?D] real,
               f : [D] real,
-              L : int,
+              h : real,
               ref r : [D] real)
 {
    const n = D.dim(0).size;
    const inner = D.expand(-1);
-   const h = 2**(L-1) * (xmax - xmin) / N;
 
    // Due to dirichlet bc
    r[1] = 0.0;
@@ -41,15 +40,14 @@ proc residual(v : [?D] real,
 //------------------------------------------------------------------------------
 // Weighted jacobi iterations
 //------------------------------------------------------------------------------
-proc wjacobi(ref v : [?D], f, L)
+proc wjacobi(ref v : [?D], f, h, niter)
 {
    const inner = D.expand(-1);
-   const h = 2**(L-1) * (xmax - xmin) / N;
    const w = 2.0/3.0;
 
    var vold : [D] real;
 
-   for it in 1..nsmooth
+   for it in 1..niter
    {
       vold = v;
       forall i in inner
@@ -101,14 +99,17 @@ proc  prolongate(v2h : [?D2h],
 //------------------------------------------------------------------------------
 proc vcycle(ref vh : [?Dh], 
             fh : [Dh], 
+            h : real,
+            nsmooth : int,
+            levels : int,
             Lh : int) : real
 {
-   wjacobi(vh, fh, Lh);
+   wjacobi(vh, fh, h, nsmooth);
    var rh : [Dh] real;
 
    if Lh != levels // not on coarsest grid
    {
-      residual(vh, fh, Lh, rh);
+      residual(vh, fh, h, rh);
 
       const nh = Dh.dim(0).size;
       const n2h = (nh + 1) / 2 : int;
@@ -117,16 +118,44 @@ proc vcycle(ref vh : [?Dh],
       restrictfw(rh, f2h);
 
       var e2h : [D2h] real;
-      const r2hnorm = vcycle(e2h, f2h, Lh+1);
+      const r2hnorm = vcycle(e2h, f2h, 2*h, nsmooth, levels, Lh+1);
 
       var eh : [Dh] real;
       prolongate(e2h, eh);
       vh += eh;
    }
    
-   wjacobi(vh, fh, Lh);
-   const rhnorm = residual(vh, fh, Lh, rh);
+   wjacobi(vh, fh, h, nsmooth);
+   const rhnorm = residual(vh, fh, h, rh);
    return rhnorm;
+}
+
+//------------------------------------------------------------------------------
+// v should have boundary values filled in.
+//------------------------------------------------------------------------------
+proc multigrid(ref v : [?D], f, h, niter, nsmooth, levels)
+{
+   var r : [D] real;
+
+   // Initial v = 0, this gives norm(f)
+   const inner = D.expand(-1);
+   var fnorm = 0.0;
+   forall i in inner with (+ reduce fnorm) do
+      fnorm += f[i]**2;
+   fnorm = sqrt(fnorm / inner.size);
+
+   var it = 0;
+   var rnorm = residual(v, f, h, r);
+
+   while rnorm > rtol * fnorm && it < niter
+   {
+      const rnorm_new = vcycle(v, f, h, nsmooth, levels, 1);
+      const conv = rnorm_new / rnorm;
+      rnorm = rnorm_new;
+      it += 1;
+      writef("it, rnorm, conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
+   }
+
 }
 
 //------------------------------------------------------------------------------
@@ -144,24 +173,11 @@ proc main()
       f[i] = 4 * pi * pi * sin(2 * pi * x[i]); // rhs function
    }
 
-   // Initial v = 0, this gives norm(f)
-   const fnorm = residual(v, f, 1, r);
-
    // Initial v must have correct bc filled in
    // Exact = x + sin(2*pi*x)
    v[N+1] = 1.0;
 
-   var it = 0;
-   var rnorm = residual(v, f, 1, r);
-
-   while rnorm > rtol * fnorm && it < niter
-   {
-      const rnorm_new = vcycle(v, f, 1);
-      const conv = rnorm_new / rnorm;
-      rnorm = rnorm_new;
-      it += 1;
-      writef("it, rnorm, conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
-   }
+   multigrid(v, f, h, niter, nsmooth, levels);
 
    const filename = "sol.txt";
    var fw = open(filename, ioMode.cw).writer(locking=false);
