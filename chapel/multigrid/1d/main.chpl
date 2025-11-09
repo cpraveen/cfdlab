@@ -1,0 +1,157 @@
+// Solve -u'' = f
+
+use Math;
+use IO;
+
+config const N     = 128,     // grid of N+1 points
+             lmax  = 6,       // number of levels in V-cycle
+             tol   = 1.0e-6,  // relative tolerance for vcycle
+             nviter= 50,      // max number of v-cycles
+             njiter= 2;       // number of jacobi iterations
+
+const xmin = 0.0;
+const xmax = 1.0;
+
+//------------------------------------------------------------------------------
+proc residual(v : [?D] real,
+              f : [D] real,
+              L : int,
+              ref r : [D] real)
+{
+   const n = D.dim(0).size;
+   const inner = D.expand(-1);
+   const h = 2**(L-1) * (xmax - xmin) / N;
+
+   r[1] = 0.0;
+   r[n] = 0.0;
+
+   var rnorm = 0.0;
+   forall i in inner with (+ reduce rnorm)
+   {
+      r[i] = f[i] + (v[i-1] - 2.0 * v[i] + v[i+1]) / h**2;
+      rnorm += r[i]**2;
+   }
+
+   return sqrt(rnorm/inner.size);
+}
+
+//------------------------------------------------------------------------------
+proc wjacobi(ref v : [?D], f, L)
+{
+   const inner = D.expand(-1);
+   const h = 2**(L-1) * (xmax - xmin) / N;
+   const w = 2.0/3.0;
+
+   var vold : [D] real;
+
+   for it in 1..njiter
+   {
+      vold = v;
+      forall i in inner
+      {
+         v[i] = 0.5 * (vold[i-1] + vold[i+1] + h**2 * f[i]);
+         v[i] = (1.0-w) * v[i] + w * vold[i];
+      }
+   }
+
+}
+
+//------------------------------------------------------------------------------
+proc restrictfw(vh : [?Dh], 
+                Lh : int, 
+                ref v2h : [?D2h])
+{
+   // odd indices in D2h: inject
+   forall i in D2h by 2 align 1
+   {
+      v2h[i] = vh[2*i-1];
+   }
+
+   // even indices in D2h: average
+   forall i in D2h by 2 align 2
+   {
+      const j = 2 * i - 1;
+      v2h[i] = 0.25 * (vh[j-1] + 2 * vh[j] + vh[j+1]);
+   }
+}
+
+//------------------------------------------------------------------------------
+proc  prolongate(v2h : [?D2h], 
+                 L2h : int, 
+                 ref vh : [?Dh])
+{
+   // Injection for odd indices in Dh: 1,3,5,...
+   forall i in D2h do
+      vh[2*i-1] = v2h[i];
+
+   // Average for even indices in Dh: 2,4,6,...
+   forall i in Dh by 2 align 2 do
+      vh[i] = 0.5 * (vh[i-1] + vh[i+1]);
+}
+
+//------------------------------------------------------------------------------
+// See Briggs et al., page 40
+//------------------------------------------------------------------------------
+proc vcycle(ref vh : [?Dh], 
+            fh : [Dh], 
+            Lh : int) : real
+{
+   wjacobi(vh, fh, Lh);
+   var rh : [Dh] real;
+
+   if Lh != lmax // not on coarsest grid
+   {
+      residual(vh, fh, Lh, rh);
+
+      const nh = Dh.dim(0).size;
+      const n2h = (nh + 1) / 2 : int;
+      const D2h = {1..n2h};
+      var f2h : [D2h] real;
+      restrictfw(rh, Lh, f2h);
+
+      var e2h : [D2h] real;
+      const r2hnorm = vcycle(e2h, f2h, Lh+1);
+
+      var eh : [Dh] real;
+      prolongate(e2h, Lh+1, eh);
+      vh += eh;
+   }
+   
+   wjacobi(vh, fh, Lh);
+   const rhnorm = residual(vh, fh, Lh, rh);
+   return rhnorm;
+}
+
+//------------------------------------------------------------------------------
+proc main()
+{
+   const h = (xmax - xmin) / N;
+   const D = {1..N+1};
+
+   var x, v, f, vnew, r : [D] real;
+   forall i in D
+   {
+      x[i] = xmin + (i-1)*h;
+      f[i] = 4 * pi * pi * sin(2 * pi * x[i]); // rhs function
+   }
+
+   const rnorm0 = residual(v, f, 1, r);
+
+   var rnorm = rnorm0, it = 0;
+   while rnorm > tol * rnorm0 && it < nviter
+   {
+      const rnorm_new = vcycle(v, f, 1);
+      const conv = rnorm_new / rnorm;
+      rnorm = rnorm_new;
+      it += 1;
+      writef("it, rnorm, conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
+   }
+
+   const filename = "sol.txt";
+   var fw = open(filename, ioMode.cw).writer(locking=false);
+   for i in D
+   {
+      fw.writef("%14.8er %14.8er\n", x[i], v[i]);
+   }
+   fw.close();
+}
