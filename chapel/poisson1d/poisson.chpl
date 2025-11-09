@@ -40,11 +40,11 @@ proc wjacobi(ref v : [?D], f, h, niter)
    const inner = D.expand(-1);
    const w = 2.0/3.0;
 
-   var vold : [D] real;
+   var vold = v;
 
    for it in 1..niter
-   {
-      vold = v;
+   {      
+      vold <=> v;
       forall i in inner
       {
          v[i] = 0.5 * (vold[i-1] + vold[i+1] + h**2 * f[i]);
@@ -151,7 +151,7 @@ proc multigrid(ref v : [?D], f, h, rtol, niter, nsmooth, levels)
       const conv = rnorm_new / rnorm;
       rnorm = rnorm_new;
       it += 1;
-      writef("it, rnorm, conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
+      writef("it,rnorm,conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
    }
 
    if rnorm > rtol * fnorm
@@ -198,7 +198,7 @@ proc sor(ref v : [?D], f, h, rtol, niter)
       const conv = rnorm_new / rnorm;
       rnorm = rnorm_new;
       it += 1;
-      writef("it, rnorm, conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
+      writef("it,rnorm,conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
    }
 
    if rnorm > rtol * fnorm
