@@ -3,6 +3,8 @@
 module Poisson
 {
 
+use Math;
+
 //------------------------------------------------------------------------------
 // Computes residual norm
 //------------------------------------------------------------------------------
@@ -127,22 +129,22 @@ proc vcycle(ref vh : [?Dh],
 }
 
 //------------------------------------------------------------------------------
+// v-cycle multigrid
 // v should have boundary values filled in.
 //------------------------------------------------------------------------------
 proc multigrid(ref v : [?D], f, h, rtol, niter, nsmooth, levels)
 {
-   var r : [D] real;
-
-   // Initial v = 0, this gives norm(f)
    const inner = D.expand(-1);
+
    var fnorm = 0.0;
    forall i in inner with (+ reduce fnorm) do
       fnorm += f[i]**2;
    fnorm = sqrt(fnorm / inner.size);
 
-   var it = 0;
+   var r : [D] real;
    var rnorm = residual(v, f, h, r);
 
+   var it = 0;
    while rnorm > rtol * fnorm && it < niter
    {
       const rnorm_new = vcycle(v, f, h, nsmooth, levels, 1);
@@ -150,6 +152,59 @@ proc multigrid(ref v : [?D], f, h, rtol, niter, nsmooth, levels)
       rnorm = rnorm_new;
       it += 1;
       writef("it, rnorm, conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
+   }
+
+   if rnorm > rtol * fnorm
+   {
+      writeln("Specified tolerance not achieved !!!");
+      writeln("Increase niter and rerun");
+   }
+
+}
+
+//------------------------------------------------------------------------------
+// Red-black SOR
+// v should have boundary values filled in.
+//------------------------------------------------------------------------------
+proc sor(ref v : [?D], f, h, rtol, niter)
+{
+   const omg = 2.0 / (1.0 + sin(pi*h));
+   const inner = D.expand(-1);
+
+   var fnorm = 0.0;
+   forall i in inner with (+ reduce fnorm) do
+      fnorm += f[i]**2;
+   fnorm = sqrt(fnorm / inner.size);
+
+   var r : [D] real;
+   var rnorm = residual(v, f, h, r);
+
+   var it = 0;
+   while rnorm > rtol * fnorm && it < niter
+   {
+      forall i in inner by 2 align 1
+      {
+         const tmp = 0.5 * (v[i-1] + v[i+1] + h**2 * f[i]);
+         v[i] = (1.0 - omg) * v[i] + omg * tmp;
+      }
+
+      forall i in inner by 2 align 2
+      {
+         const tmp = 0.5 * (v[i-1] + v[i+1] + h**2 * f[i]);
+         v[i] = (1.0 - omg) * v[i] + omg * tmp;
+      }
+
+      const rnorm_new = residual(v, f, h, r);
+      const conv = rnorm_new / rnorm;
+      rnorm = rnorm_new;
+      it += 1;
+      writef("it, rnorm, conv = %4i %12.4er %12.4er\n", it, rnorm, conv);
+   }
+
+   if rnorm > rtol * fnorm
+   {
+      writeln("Specified tolerance not achieved !!!");
+      writeln("Increase niter and rerun");
    }
 
 }

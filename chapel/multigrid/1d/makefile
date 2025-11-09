@@ -1,5 +1,5 @@
 CHPL = chpl
-FLAGS = --fast --ccflags -march=native
+FLAGS = --fast --ccflags -march=native --warnings
 
 TARGETS = main
 
