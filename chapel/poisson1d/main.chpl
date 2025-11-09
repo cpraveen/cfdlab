@@ -5,7 +5,7 @@ use IO;
 use Poisson;
 
 config const N       = 128,     // grid of N+1 points
-             levels  = 6,       // number of levels in V-cycle
+             levels  = 7,       // number of levels in V-cycle
              rtol    = 1.0e-6,  // relative tolerance for vcycle
              niter   = 5000,    // max number of v-cycles
              nsmooth = 2,       // number of jacobi iterations
