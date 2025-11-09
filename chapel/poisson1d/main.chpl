@@ -23,7 +23,7 @@ proc main()
    const h = (xmax - xmin) / N;
    const D = {1..N+1};
 
-   var x, v, f, vnew, r : [D] real;
+   var x, v, f : [D] real;
    forall i in D
    {
       x[i] = xmin + (i-1)*h;
