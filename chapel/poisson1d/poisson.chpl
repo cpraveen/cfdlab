@@ -48,7 +48,7 @@ proc wjacobi(ref v : [?D], f, h, niter)
       forall i in inner
       {
          v[i] = 0.5 * (vold[i-1] + vold[i+1] + h**2 * f[i]);
-         v[i] = (1.0-w) * v[i] + w * vold[i];
+         v[i] = (1.0-w) * vold[i] + w * v[i];
       }
    }
 
