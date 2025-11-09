@@ -3,15 +3,17 @@
 use Math;
 use IO;
 
-config const N     = 128,     // grid of N+1 points
-             lmax  = 6,       // number of levels in V-cycle
-             tol   = 1.0e-6,  // relative tolerance for vcycle
-             nviter= 50,      // max number of v-cycles
-             njiter= 2;       // number of jacobi iterations
+config const N       = 128,     // grid of N+1 points
+             levels  = 6,       // number of levels in V-cycle
+             rtol    = 1.0e-6,  // relative tolerance for vcycle
+             niter   = 50,      // max number of v-cycles
+             nsmooth = 2;       // number of jacobi iterations
 
 const xmin = 0.0;
 const xmax = 1.0;
 
+//------------------------------------------------------------------------------
+// Computes residual norm
 //------------------------------------------------------------------------------
 proc residual(v : [?D] real,
               f : [D] real,
@@ -22,6 +24,7 @@ proc residual(v : [?D] real,
    const inner = D.expand(-1);
    const h = 2**(L-1) * (xmax - xmin) / N;
 
+   // Due to dirichlet bc
    r[1] = 0.0;
    r[n] = 0.0;
 
@@ -36,6 +39,8 @@ proc residual(v : [?D] real,
 }
 
 //------------------------------------------------------------------------------
+// Weighted jacobi iterations
+//------------------------------------------------------------------------------
 proc wjacobi(ref v : [?D], f, L)
 {
    const inner = D.expand(-1);
@@ -44,7 +49,7 @@ proc wjacobi(ref v : [?D], f, L)
 
    var vold : [D] real;
 
-   for it in 1..njiter
+   for it in 1..nsmooth
    {
       vold = v;
       forall i in inner
@@ -57,8 +62,9 @@ proc wjacobi(ref v : [?D], f, L)
 }
 
 //------------------------------------------------------------------------------
+// vh --> v2h
+//------------------------------------------------------------------------------
 proc restrictfw(vh : [?Dh], 
-                Lh : int, 
                 ref v2h : [?D2h])
 {
    // odd indices in D2h: inject
@@ -76,8 +82,9 @@ proc restrictfw(vh : [?Dh],
 }
 
 //------------------------------------------------------------------------------
+// v2h --> vh
+//------------------------------------------------------------------------------
 proc  prolongate(v2h : [?D2h], 
-                 L2h : int, 
                  ref vh : [?Dh])
 {
    // Injection for odd indices in Dh: 1,3,5,...
@@ -99,7 +106,7 @@ proc vcycle(ref vh : [?Dh],
    wjacobi(vh, fh, Lh);
    var rh : [Dh] real;
 
-   if Lh != lmax // not on coarsest grid
+   if Lh != levels // not on coarsest grid
    {
       residual(vh, fh, Lh, rh);
 
@@ -107,13 +114,13 @@ proc vcycle(ref vh : [?Dh],
       const n2h = (nh + 1) / 2 : int;
       const D2h = {1..n2h};
       var f2h : [D2h] real;
-      restrictfw(rh, Lh, f2h);
+      restrictfw(rh, f2h);
 
       var e2h : [D2h] real;
       const r2hnorm = vcycle(e2h, f2h, Lh+1);
 
       var eh : [Dh] real;
-      prolongate(e2h, Lh+1, eh);
+      prolongate(e2h, eh);
       vh += eh;
    }
    
@@ -125,6 +132,8 @@ proc vcycle(ref vh : [?Dh],
 //------------------------------------------------------------------------------
 proc main()
 {
+   assert(N % 2**levels == 0);
+
    const h = (xmax - xmin) / N;
    const D = {1..N+1};
 
@@ -135,10 +144,17 @@ proc main()
       f[i] = 4 * pi * pi * sin(2 * pi * x[i]); // rhs function
    }
 
-   const rnorm0 = residual(v, f, 1, r);
+   // Initial v = 0, this gives norm(f)
+   const fnorm = residual(v, f, 1, r);
 
-   var rnorm = rnorm0, it = 0;
-   while rnorm > tol * rnorm0 && it < nviter
+   // Initial v must have correct bc filled in
+   // Exact = x + sin(2*pi*x)
+   v[N+1] = 1.0;
+
+   var it = 0;
+   var rnorm = residual(v, f, 1, r);
+
+   while rnorm > rtol * fnorm && it < niter
    {
       const rnorm_new = vcycle(v, f, 1);
       const conv = rnorm_new / rnorm;
