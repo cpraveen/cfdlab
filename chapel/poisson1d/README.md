@@ -16,10 +16,10 @@ with Dirichlet bc. There are two methods available SOR and v-cycle multigrid.
 ./main --N 256 --method sor
 ```
 
-Plot the solution in gnuplot
+Plot the numerical and exact solution in gnuplot
 
 ```gnuplot
 gnuplot> p 'sol.txt' t 'Numerical' w p, x + sin(2*pi*x) t 'Exact' w l
 ```
 
-For best multigrid speed use `N = 2^n` and `levels = n`.
+For best multigrid convergence, use `N = 2^n` and `levels = n`. This leads to 3 points at coarsest level and only one unknown, in which case the coarse solve, even with Jacobi, is exact. 
