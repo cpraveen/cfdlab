@@ -1,13 +1,25 @@
 # See
 #    https://cpraveen.github.io/comp/firedrake
 #
+#
 # Exit on error
 set -e
+
+# Need to specify clawpack version to install
+if [ $# -eq 0 ]; then
+    echo "Firedrake version is not supplied"
+    echo "Example: run this script like this"
+    echo "   bash ./firedrake_debian.sh 2025.10.2"
+    exit
+fi
+
+TAG=$1
+
 rm -rf /root/.cache
 apt update
 apt install curl git python3 python3-venv vim
 cd /root
-curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/refs/tags/2025.4.3/scripts/firedrake-configure
+curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/refs/tags/$TAG/scripts/firedrake-configure
 apt install $(python3 firedrake-configure --show-system-packages)
 git clone --branch $(python3 firedrake-configure --show-petsc-version) https://gitlab.com/petsc/petsc.git
 cd petsc
