@@ -61,14 +61,14 @@ private
 proc restrictfw(vh : [?Dh], 
                 ref v2h : [?D2h])
 {
-   // odd indices in D2h: inject
-   forall i in D2h by 2 align 1
-   {
-      v2h[i] = vh[2*i-1];
-   }
+   const I2h = D2h.expand(-1);
+   const nh  = Dh.dim(0).size;
+   const n2h = D2h.dim(0).size;
 
-   // even indices in D2h: average
-   forall i in D2h by 2 align 2
+   v2h[1]   = vh[1];
+   v2h[n2h] = vh[nh];
+
+   forall i in I2h
    {
       const j = 2 * i - 1;
       v2h[i] = 0.25 * (vh[j-1] + 2 * vh[j] + vh[j+1]);
