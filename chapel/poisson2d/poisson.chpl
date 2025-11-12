@@ -1,12 +1,40 @@
 module Poisson
 {
 
+use Math;
+
 //------------------------------------------------------------------------------
 record MGData
 {
    const D : domain(2);
    const dx, dy : real;
    var v, f, r : [D] real;
+}
+
+//------------------------------------------------------------------------------
+private proc residual(v : [?D], f, ref r, dx, dy)
+{
+   const inner = D.expand(-1);
+   const rdx2 = 1.0/dx**2;
+   const rdy2 = 1.0/dy**2;
+   const nx = D.dim(0).last,
+         ny = D.dim(1).last;
+
+   r[0 , ..] = 0.0;
+   r[nx, ..] = 0.0;
+   r[.., 0 ] = 0.0;
+   r[.., ny] = 0.0;
+
+   var rnorm = 0.0;
+   forall (i,j) in inner with (+ reduce rnorm)
+   {
+      r[i,j] =   rdx2 * (v[i-1,j] - 2 * v[i,j] + v[i+1,j]) 
+               + rdy2 * (v[i,j-1] - 2 * v[i,j] + v[i,j+1]) 
+               + f[i,j];
+      rnorm += r[i,j]**2;
+   }
+
+   return sqrt(rnorm/inner.size);
 }
 
 //------------------------------------------------------------------------------
@@ -165,7 +193,7 @@ proc multigrid(ref v : [?D], f, dx, dy, levels, rtol, niter, nsmooth)
    data[1].v = v;
    data[1].f = f;
 
-   const inner = {1..nx-1,1..ny-1};
+   const inner = D.expand(-1);
    var fnorm = + reduce [ij in inner] f[ij]**2;
    fnorm = sqrt(fnorm/inner.size);
 
@@ -181,6 +209,53 @@ proc multigrid(ref v : [?D], f, dx, dy, levels, rtol, niter, nsmooth)
    }
 
    v = data[1].v;
+}
+
+//------------------------------------------------------------------------------
+// Red-black Gauss-Seidel
+//------------------------------------------------------------------------------
+proc sor(ref v : [?D], f, dx, dy, rtol, niter)
+{
+   const rdx2  = 1.0/dx**2, 
+         rdy2  = 1.0/dy**2,
+         invf  = 1.0/(2.0/dx**2 + 2.0/dy**2),
+         h     = min(dx,dy),
+         omg   = 2.0/(1.0 + sin(pi*h)),
+         inner = D.expand(-1);
+
+   var fnorm = + reduce [ij in inner] f[ij]**2;
+   fnorm = sqrt(fnorm/inner.size);
+
+   var r : [D] real;
+   var rnorm = residual(v, f, r, dx, dy);
+   var it = 0;
+   while rnorm > rtol * fnorm && it < niter
+   {
+      forall (i,j) in inner do
+      if (i+j)%2 == 0
+      {
+         const tmp = invf * (  rdx2*(v[i-1,j] + v[i+1,j]) 
+                             + rdy2*(v[i,j-1] + v[i,j+1]) 
+                             + f[i,j]);
+         v[i,j] = (1.0-omg) * v[i,j] + omg * tmp;
+      }
+
+      forall (i,j) in inner do
+      if (i+j)%2 == 1
+      {
+         const tmp = invf * (  rdx2*(v[i-1,j] + v[i+1,j]) 
+                             + rdy2*(v[i,j-1] + v[i,j+1]) 
+                             + f[i,j]);
+         v[i,j] = (1.0-omg) * v[i,j] + omg * tmp;
+      }
+
+      const rnorm_new = residual(v, f, r, dx, dy);
+      const rate = rnorm_new / rnorm;
+      rnorm = rnorm_new;
+      it += 1;
+      writef("it,rnorm,rate = %5i %12.4er %12.4er\n",it,rnorm,rate);
+   }
+
 }
 
 }

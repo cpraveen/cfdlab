@@ -7,7 +7,8 @@ config const nx     = 128,
              levels = 7,
              rtol   = 1.0e-6,
              niter  = 1000,
-             nsmooth = 2;
+             nsmooth = 2,
+             method  = "mg";
 
 const Dx = 0..nx;
 const Dy = 0..ny;
@@ -31,6 +32,10 @@ proc main()
    forall (i,j) in D.expand(-1) do
       f[i,j] = rhs(x[i], y[j]);
 
-   multigrid(v, f, dx, dy, levels, rtol, niter, nsmooth);
+   if method == "mg" then
+      multigrid(v, f, dx, dy, levels, rtol, niter, nsmooth);
+   else
+      sor(v, f, dx, dy, rtol, niter);
+
    write_vtk(x,y,"sol",v,"sol.vtk");
 }
