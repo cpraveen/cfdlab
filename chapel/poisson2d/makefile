@@ -1,6 +1,6 @@
 CHPL = chpl
 FLAGS = --fast --ccflags -march=native --warnings
-VTK = $(HOME)/Applications/cfdlab/chapel/vtk/VTK.chpl
+VTK = ../vtk/VTK.chpl
 
 TARGETS = main
 

@@ -21,17 +21,13 @@ proc rhs(x,y) do return 2 * (2*pi)**2 * sin(2*pi*x) * sin(2*pi*y);
 
 proc main()
 {
-   var x : [Dx] real;
-   var y : [Dy] real;
+   // Make 1d grids
+   const x = [i in Dx] xmin + i*dx;
+   const y = [j in Dy] ymin + j*dy;
+
    var v, f : [D] real;
 
-   // Make 1d grids
-   forall i in Dx do
-      x[i] = xmin + i*dx;
-   forall j in Dy do
-      y[j] = ymin + j*dy;
-
-   // Set rhs
+   // Set rhs, only inner points needed
    forall (i,j) in D.expand(-1) do
       f[i,j] = rhs(x[i], y[j]);
 
