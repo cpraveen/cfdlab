@@ -33,7 +33,7 @@ proc main()
       f[i,j] = rhs(x[i], y[j]);
 
    if method == "mg" then
-      multigrid(v, f, dx, dy, levels, rtol, niter, nsmooth);
+      multigrid(v, f, dx, dy, rtol, niter, levels, nsmooth);
    else
       sor(v, f, dx, dy, rtol, niter);
 

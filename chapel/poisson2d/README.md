@@ -1,6 +1,6 @@
 # Solve 2d Poisson equation
 
-Uses V-cycle multigrid. It requires the VTK writer, see the makefile to set the path.
+The code has red-black SOR and V-cycle multigrid. It requires the VTK writer, see the `makefile` to set the path.
 
 Compile the code
 
@@ -8,7 +8,7 @@ Compile the code
 make
 ```
 
-Run the code
+Run the code with multigrid (default)
 
 ```shell
 ./main --nx 128 --ny 128 --levels 7
@@ -22,4 +22,11 @@ Increase grid size
 python ./plot.py
 ```
 
-For best convergence rate, choose `nx = ny = 2^levels`.
+For best multigrid convergence rate, choose `nx = ny = 2^levels`.
+
+Try with SOR
+
+```shell
+./main --nx 256 --ny 256 --method sor
+python ./plot.py
+```

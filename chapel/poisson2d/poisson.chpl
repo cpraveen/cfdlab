@@ -77,7 +77,7 @@ private proc wjacobi(ref data, niter)
          dy    = data.dy,
          rdx2  = 1.0/dx**2, 
          rdy2  = 1.0/dy**2,
-         invf  = 1.0/(2.0/dx**2 + 2.0/dy**2),
+         rf    = 1.0/(2.0/dx**2 + 2.0/dy**2),
          inner = data.D.expand(-1);
 
    ref v = data.v;
@@ -89,9 +89,9 @@ private proc wjacobi(ref data, niter)
       vold <=> v;
       forall (i,j) in inner
       {
-         v[i,j] = invf * (  rdx2*(vold[i-1,j] + vold[i+1,j]) 
-                          + rdy2*(vold[i,j-1] + vold[i,j+1]) 
-                          + f[i,j]);
+         v[i,j] = rf * (  rdx2*(vold[i-1,j] + vold[i+1,j]) 
+                        + rdy2*(vold[i,j-1] + vold[i,j+1]) 
+                        + f[i,j]);
          v[i,j] = (1.0-omg) * vold[i,j] + omg * v[i,j];
       }
    }
@@ -166,7 +166,7 @@ private proc vcycle(ref data, nsmooth, L) : real
 //------------------------------------------------------------------------------
 // Domain D must be of the form {0..nx, 0..ny}
 //------------------------------------------------------------------------------
-proc multigrid(ref v : [?D], f, dx, dy, levels, rtol, niter, nsmooth)
+proc multigrid(ref v : [?D], f, dx, dy, rtol, niter, levels, nsmooth)
 {
    assert(D.dim(0).first == 0 &&
           D.dim(1).first == 0,
@@ -218,7 +218,7 @@ proc sor(ref v : [?D], f, dx, dy, rtol, niter)
 {
    const rdx2  = 1.0/dx**2, 
          rdy2  = 1.0/dy**2,
-         invf  = 1.0/(2.0/dx**2 + 2.0/dy**2),
+         rf    = 1.0/(2.0/dx**2 + 2.0/dy**2),
          h     = min(dx,dy),
          omg   = 2.0/(1.0 + sin(pi*h)),
          inner = D.expand(-1);
@@ -234,18 +234,18 @@ proc sor(ref v : [?D], f, dx, dy, rtol, niter)
       forall (i,j) in inner do
       if (i+j)%2 == 0
       {
-         const tmp = invf * (  rdx2*(v[i-1,j] + v[i+1,j]) 
-                             + rdy2*(v[i,j-1] + v[i,j+1]) 
-                             + f[i,j]);
+         const tmp = rf * (  rdx2*(v[i-1,j] + v[i+1,j]) 
+                           + rdy2*(v[i,j-1] + v[i,j+1]) 
+                           + f[i,j]);
          v[i,j] = (1.0-omg) * v[i,j] + omg * tmp;
       }
 
       forall (i,j) in inner do
       if (i+j)%2 == 1
       {
-         const tmp = invf * (  rdx2*(v[i-1,j] + v[i+1,j]) 
-                             + rdy2*(v[i,j-1] + v[i,j+1]) 
-                             + f[i,j]);
+         const tmp = rf * (  rdx2*(v[i-1,j] + v[i+1,j]) 
+                           + rdy2*(v[i,j-1] + v[i,j+1]) 
+                           + f[i,j]);
          v[i,j] = (1.0-omg) * v[i,j] + omg * tmp;
       }
 
