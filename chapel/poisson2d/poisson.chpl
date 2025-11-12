@@ -40,31 +40,14 @@ private proc residual(v : [?D], f, ref r, dx, dy)
 //------------------------------------------------------------------------------
 private proc residual(ref data)
 {
-   const inner = data.D.expand(-1);
-   const rdx2 = 1.0/data.dx**2;
-   const rdy2 = 1.0/data.dy**2;
-   const nx = data.D.dim(0).last,
-         ny = data.D.dim(1).last;
+   const dx = data.dx;
+   const dy = data.dy;
 
    ref v = data.v;
    ref f = data.f;
    ref r = data.r;
 
-   r[0 , ..] = 0.0;
-   r[nx, ..] = 0.0;
-   r[.., 0 ] = 0.0;
-   r[.., ny] = 0.0;
-
-   var rnorm = 0.0;
-   forall (i,j) in inner with (+ reduce rnorm)
-   {
-      r[i,j] =   rdx2 * (v[i-1,j] - 2 * v[i,j] + v[i+1,j]) 
-               + rdy2 * (v[i,j-1] - 2 * v[i,j] + v[i,j+1]) 
-               + f[i,j];
-      rnorm += r[i,j]**2;
-   }
-
-   return sqrt(rnorm/inner.size);
+   return residual(v, f, r, dx, dy);
 }
 
 //------------------------------------------------------------------------------
@@ -178,6 +161,7 @@ proc multigrid(ref v : [?D], f, dx, dy, rtol, niter, levels, nsmooth)
    assert(nx % 2**levels == 0 &&
           ny % 2**levels == 0, "nx, ny must be divisible by 2^levels");
 
+   // Build multigrid hierarchy
    var NX, NY : [1..levels] int;
    var DX, DY : [1..levels] real;
    for l in 1..levels
