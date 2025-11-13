@@ -130,6 +130,7 @@ export TAPENADE_HOME=$HOME/Applications/tapenade/current
 PATH=$PATH:/Applications/MacVim.app/Contents/bin
 PATH=$PATH:/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin
 PATH=$PATH:/Applications/VisIt.app/Contents/Resources/bin
+PATH=$PATH:/Applications/LibreOffice\ Vanilla.app/Contents/MacOS
 PATH=$PATH:`ls -d /Applications/ParaView*`/Contents/MacOS
 PATH=$PATH:/Applications/Gmsh.app/Contents/MacOS
 PATH=$PATH:$HOME/Applications/cfdlab/bin
