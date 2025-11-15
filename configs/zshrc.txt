@@ -21,7 +21,13 @@ gitup()
    fi 
    git push
 }
-
+#------------------------------------------------------------------------------
+texstudio()
+{
+   /Applications/texstudio-*.app/Contents/MacOS/texstudio \
+      --master --start-always $@ > /dev/null 2>&1 &
+}
+#------------------------------------------------------------------------------
 # Git branch in prompt.
 parse_git_branch() {
    behind=`git status uno 2> /dev/null | grep behind`
