@@ -1,5 +1,12 @@
 # 2d Euler solution using WENO5 finite volume
 
+> NOTE: When running big programs, pipe stdout to a file, since writing to screen can be slow. So you should do something like
+
+```shell
+mpirun ... > log.txt 2>&1 &
+tail -f log.txt
+```
+
 ## SSPRK version (ssprk.c, finite volume WENO)
 This code solves 2d Euler equations on Cartesian mesh for the isentropic vortex problem using WENO5 finite volume method with periodic boundary conditions.
 

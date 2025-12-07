@@ -11,7 +11,7 @@ with periodic boundary conditions. To run this code, do
 ```shell
 make
 rm -f sol*.plt
-mpirun -np 4 ./convect
+mpirun -np 4 ./convect > log.txt
 sh ./merge.sh
 ```
 
@@ -27,7 +27,7 @@ You can specify the grid size as a command line argument, below we specify a 100
 
 ```shell
 rm -f sol*.plt
-mpirun -np 4 ./convect -da_grid_x 100 -da_grid_y 100
+mpirun -np 4 ./convect -da_grid_x 100 -da_grid_y 100 > log.txt
 sh ./merge.sh
 visit -o sol*.plt
 ```
