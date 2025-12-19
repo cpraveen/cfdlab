@@ -17,7 +17,7 @@ TAG=$1
 
 rm -rf /root/.cache
 apt update
-apt install curl git python3 python3-venv vim
+apt install wget curl git python3 python3-venv vim
 cd /root
 curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/refs/tags/$TAG/scripts/firedrake-configure
 apt install $(python3 firedrake-configure --show-system-packages)
