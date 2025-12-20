@@ -51,3 +51,4 @@ rm -rf `find /root/petsc -name .git`
 rm -rf /root/petsc/src/docs
 rm -f  /root/petsc/src/**/tutorials/output/*
 rm -f  /root/petsc/src/**/tests/output/*
+rm -rf /root/.cache
