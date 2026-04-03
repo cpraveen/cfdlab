@@ -20,17 +20,20 @@ const xv = [i in 1..n] xmin + (i-1.0)*dx; // vertices
 
 const D = stencilDist.createDomain({1..n}, fluff=(1,), periodic=true);
 
+//-----------------------------------------------------------------------------
 proc initial_condition(x)
 {
    return sin(2*pi*x);
 }
 
+//-----------------------------------------------------------------------------
 proc compute_dt(u : real) : real
 {
    const a = jacobian(u);
    return cfl * dx / (abs(a) + 1.0e-16);
 }
 
+//-----------------------------------------------------------------------------
 // vertex = [i]
 //         [i-1]--(i-1)--[i]--(i)--[i+1]
 proc rhsv1(uc, uv, ref Rv)
@@ -53,6 +56,7 @@ proc rhsv1(uc, uv, ref Rv)
    }
 }
 
+//-----------------------------------------------------------------------------
 proc rhsc(uv, ref Rc)
 {
    forall i in D
@@ -63,6 +67,7 @@ proc rhsc(uv, ref Rc)
    }
 }
 
+//-----------------------------------------------------------------------------
 proc output(x, u, filename)
 {
    var fw = open(filename, ioMode.cw).writer(locking=false);
@@ -73,6 +78,7 @@ proc output(x, u, filename)
    fw.close();
 }
 
+//-----------------------------------------------------------------------------
 proc main()
 {
    var uc,  uv  : [D] real;
@@ -109,9 +115,6 @@ proc main()
 
       for rk in 1..3
       {
-         Rc = 0.0;
-         Rv = 0.0;
-
          rhsv1(uc, uv, Rv);
          rhsc(uv, Rc);
 
