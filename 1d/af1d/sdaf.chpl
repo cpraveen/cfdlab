@@ -28,6 +28,8 @@ proc ic1(x)
 }
 
 //-----------------------------------------------------------------------------
+// Square hat
+//-----------------------------------------------------------------------------
 proc ic2(x)
 {
    if abs(x-0.5) < 0.25
@@ -41,12 +43,42 @@ proc ic2(x)
 }
 
 //-----------------------------------------------------------------------------
+// Square hat, continuous, spread over one dx
+//-----------------------------------------------------------------------------
+proc ic3(x)
+{
+   const w = 0.25, xm = 0.5;
+   const u1 = 1.0, u2 = -0.5;
+
+   if abs(x-xm) < w
+   {
+      return u1;
+   }
+   else if x > xm + w + dx || x < xm - (w + dx)
+   {
+      return u2;
+   }
+   else if x >= xm + w // in [xm+w, xm+w+dx]
+   {
+      const f = (x - (xm + w))/dx;
+      return (1-f)*u1 + f*u2;
+   }
+   else // in [xm-w-dx,xm-w]
+   {
+      const f = (x - (xm - w - dx))/dx;
+      return (1-f)*u2 + f*u1;
+   }
+}
+
+//-----------------------------------------------------------------------------
 proc initial_condition(x)
 {
    if ic == 1 then
       return ic1(x);
-   else
+   else if ic == 2 then
       return ic2(x);
+   else
+      return ic3(x);
 }
 
 //-----------------------------------------------------------------------------
@@ -177,7 +209,7 @@ proc main()
          forall i in D
          {
             uc[i] = ark[rk] * uc0[i] + brk[rk] * (uc[i] - dt * Rc[i]);
-            uv[i] = ark[rk] * uv0[i] + brk[rk] * (uv[i] - dt  * Rv[i]);
+            uv[i] = ark[rk] * uv0[i] + brk[rk] * (uv[i] - dt * Rv[i]);
          }
          uc.updateFluff();
          uv.updateFluff();
