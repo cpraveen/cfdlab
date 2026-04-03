@@ -4,7 +4,7 @@ module PDE
 
 proc flux(u)
 {
-   return u;
+   return jacobian(u) * u;
 }
 
 proc jacobian(u)

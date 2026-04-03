@@ -10,7 +10,8 @@ const brk : [1..3] real = (1.0, 1.0/4.0, 2.0/3.0);
 config const n    = 100,
              Tf   = 1.0,
              cfl  = 0.25,
-             diff = 1;
+             diff = 1,
+             ic   = 1;
 
 const xmin = 0.0;
 const xmax = 1.0;
@@ -21,16 +22,38 @@ const xv = [i in 1..n] xmin + (i-1.0)*dx; // vertices
 const D = stencilDist.createDomain({1..n}, fluff=(1,), periodic=true);
 
 //-----------------------------------------------------------------------------
-proc initial_condition(x)
+proc ic1(x)
 {
    return sin(2*pi*x);
 }
 
 //-----------------------------------------------------------------------------
+proc ic2(x)
+{
+   if abs(x-0.5) < 0.25
+   {
+      return 1.0;
+   }
+   else
+   {
+      return -0.5;
+   }
+}
+
+//-----------------------------------------------------------------------------
+proc initial_condition(x)
+{
+   if ic == 1 then
+      return ic1(x);
+   else
+      return ic2(x);
+}
+
+//-----------------------------------------------------------------------------
 proc compute_dt(u : real) : real
 {
-   const a = jacobian(u);
-   return cfl * dx / (abs(a) + 1.0e-16);
+   const J = jacobian(u);
+   return cfl * dx / (abs(J) + 1.0e-16);
 }
 
 //-----------------------------------------------------------------------------
@@ -40,9 +63,9 @@ proc rhsv1(uc, uv, ref Rv)
 {
    forall i in D
    {
-      const a = jacobian(uv[i]);
+      const J = jacobian(uv[i]);
       var ux : real;
-      if a > 0.0
+      if J > 0.0
       {
          // backward difference
          ux = (2.0 * uv[i-1] - 6.0 * uc[i-1] + 4.0 * uv[i]) / dx;
@@ -52,7 +75,36 @@ proc rhsv1(uc, uv, ref Rv)
          // forward difference
          ux = (-4.0 * uv[i] + 6.0 * uc[i] - 2.0 * uv[i+1]) / dx ;
       }
-      Rv[i] = a * ux;
+      Rv[i] = J * ux;
+   }
+}
+
+//-----------------------------------------------------------------------------
+// vertex = [i]
+//         [i-1]--(i-1)--[i]--(i)--[i+1]
+proc rhsv2(uc, uv, ref Rv)
+{
+   const a = 1.0/3.0, b = -2.0, c = 1.0, d = 2.0/3.0;
+
+   forall i in D
+   {
+      const J = jacobian(uv[i]);
+      var ux : real;
+      if J > 0.0
+      {
+         // backward difference
+         const uim1 = (6.0 * uc[i-1] - uv[i-1] - uv[i]) / 4.0;
+         const ui   = (6.0 * uc[i]   - uv[i+1] - uv[i]) / 4.0;
+         ux = (a * uv[i-1] + b * uim1 + c * uv[i] + d * ui) / dx;
+      }
+      else
+      {
+         // forward difference
+         const uim1 = (6.0 * uc[i-1] - uv[i-1] - uv[i]) / 4.0;
+         const ui   = (6.0 * uc[i]   - uv[i+1] - uv[i]) / 4.0;
+         ux = -(d * uim1 + c * uv[i] + b * ui + a * uv[i+1]) / dx;
+      }
+      Rv[i] = J * ux;
    }
 }
 
@@ -115,7 +167,11 @@ proc main()
 
       for rk in 1..3
       {
-         rhsv1(uc, uv, Rv);
+         if diff == 1 then
+            rhsv1(uc, uv, Rv);
+         else
+            rhsv2(uc, uv, Rv);
+
          rhsc(uv, Rc);
 
          forall i in D
@@ -127,7 +183,7 @@ proc main()
          uv.updateFluff();
       }
       t = t + dt;
-      writeln("t, dt = ", t, dt);
+      writeln("t, dt = ", t, " ", dt);
    }
 
    output(xc, uc, "uc.txt");
