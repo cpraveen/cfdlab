@@ -89,6 +89,18 @@ proc compute_dt(u : real) : real
 }
 
 //-----------------------------------------------------------------------------
+proc fplus(J, u)
+{
+   return 0.5 * (flux(u) + J * u);
+}
+
+//-----------------------------------------------------------------------------
+proc fminus(J, u)
+{
+   return 0.5 * (flux(u) - J * u);
+}
+
+//-----------------------------------------------------------------------------
 // RHS at vertices; uses one sided derivative
 // vertex = [i]
 //         [i-1]--(i-1)--[i]--(i)--[i+1]
@@ -143,6 +155,40 @@ proc rhsv2(uc, uv, ref Rv)
    }
 }
 
+//-----------------------------------------------------------------------------
+// RHS at vertices; flux vector splitting
+// vertex = [i]
+//         [i-1]--(i-1)--[i]--(i)--[i+1]
+//-----------------------------------------------------------------------------
+proc rhsv3(uc, uv, ref Rv)
+{
+   forall i in D
+   {
+      // cell center values
+      const uim1 = (6.0 * uc[i-1] - uv[i-1] - uv[i]) / 4.0;
+      const ui   = (6.0 * uc[i]   - uv[i+1] - uv[i]) / 4.0;
+
+      const J1 = jacobian(uv[i-1]);
+      const J2 = jacobian(uim1);
+      const J3 = jacobian(uv[i]);
+      const J4 = jacobian(ui);
+      const J5 = jacobian(uv[i+1]);
+      const J  = max(abs(J1), abs(J2), abs(J3), abs(J4), abs(J5));
+
+      const fp1 = fplus(J, uv[i-1]);
+      const fp2 = fplus(J, uim1);
+      const fp3 = fplus(J, uv[i]);
+
+      const fm1 = fminus(J, uv[i]);
+      const fm2 = fminus(J, ui);
+      const fm3 = fminus(J, uv[i+1]);
+
+      const fpx = (       fp1 - 4.0 * fp2 + 3.0 * fp3) / dx;
+      const fmx = (-3.0 * fm1 + 4.0 * fm2 -       fm3) / dx;
+
+      Rv[i] = fpx + fmx;
+   }
+}
 //-----------------------------------------------------------------------------
 // RHS at cell centers
 //-----------------------------------------------------------------------------
@@ -206,8 +252,10 @@ proc main()
       {
          if diff == 1 then
             rhsv1(uc, uv, Rv);
-         else
+         else if diff == 2 then
             rhsv2(uc, uv, Rv);
+         else
+            rhsv3(uc, uv, Rv);
 
          rhsc(uv, Rc);
 
