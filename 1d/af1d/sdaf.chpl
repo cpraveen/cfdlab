@@ -89,8 +89,10 @@ proc compute_dt(u : real) : real
 }
 
 //-----------------------------------------------------------------------------
+// RHS at vertices; uses one sided derivative
 // vertex = [i]
 //         [i-1]--(i-1)--[i]--(i)--[i+1]
+//-----------------------------------------------------------------------------
 proc rhsv1(uc, uv, ref Rv)
 {
    forall i in D
@@ -112,8 +114,10 @@ proc rhsv1(uc, uv, ref Rv)
 }
 
 //-----------------------------------------------------------------------------
+// RHS at vertices; uses stencil with one downwind bias
 // vertex = [i]
 //         [i-1]--(i-1)--[i]--(i)--[i+1]
+//-----------------------------------------------------------------------------
 proc rhsv2(uc, uv, ref Rv)
 {
    const a = 1.0/3.0, b = -2.0, c = 1.0, d = 2.0/3.0;
@@ -121,25 +125,26 @@ proc rhsv2(uc, uv, ref Rv)
    forall i in D
    {
       const J = jacobian(uv[i]);
+      // cell center values
+      const uim1 = (6.0 * uc[i-1] - uv[i-1] - uv[i]) / 4.0;
+      const ui   = (6.0 * uc[i]   - uv[i+1] - uv[i]) / 4.0;
       var ux : real;
       if J > 0.0
       {
          // backward difference
-         const uim1 = (6.0 * uc[i-1] - uv[i-1] - uv[i]) / 4.0;
-         const ui   = (6.0 * uc[i]   - uv[i+1] - uv[i]) / 4.0;
          ux = (a * uv[i-1] + b * uim1 + c * uv[i] + d * ui) / dx;
       }
       else
       {
          // forward difference
-         const uim1 = (6.0 * uc[i-1] - uv[i-1] - uv[i]) / 4.0;
-         const ui   = (6.0 * uc[i]   - uv[i+1] - uv[i]) / 4.0;
          ux = -(d * uim1 + c * uv[i] + b * ui + a * uv[i+1]) / dx;
       }
       Rv[i] = J * ux;
    }
 }
 
+//-----------------------------------------------------------------------------
+// RHS at cell centers
 //-----------------------------------------------------------------------------
 proc rhsc(uv, ref Rc)
 {
