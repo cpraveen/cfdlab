@@ -129,15 +129,20 @@ int main()
    int n2 = 20;
    int n3 = 30;
 
+   // 1d array
    double* a;
    Allocate(a, n1);
 
+   // 2d array
    double** b;
    Allocate(b, n1, n2);
 
+   // 3d array
    double*** c;
    Allocate(c, n1, n2, n3);
 
+   // You must deallocate, otherwise memory will build up.
+   // And you need to remember the size of each array.
    Deallocate(a, n1);
    Deallocate(b, n1, n2);
    Deallocate(c, n1, n2, n3);
