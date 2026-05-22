@@ -14,8 +14,8 @@ config const n    = 100,
              ic   = 1,
              jac  = 0;
 
-const xmin = 0.0;
-const xmax = 1.0;
+const xmin = -1.0;
+const xmax =  1.0;
 const dx = (xmax - xmin)/n;
 const xc = [i in 1..n] xmin + (i-0.5)*dx; // cell centers
 const xv = [i in 1..n] xmin + (i-1.0)*dx; // vertices
@@ -33,23 +33,24 @@ proc ic1(x)
 //-----------------------------------------------------------------------------
 proc ic2(x)
 {
-   if abs(x-0.5) < 0.25
+   if abs(x) < 0.2
    {
-      return 1.0;
+      return 2.0;
    }
    else
    {
-      return -0.5;
+      return -1.0;
    }
 }
 
 //-----------------------------------------------------------------------------
-// Square hat, continuous, spread over one dx
+// Square hat
+// same as above but continuous, spread over one dx
 //-----------------------------------------------------------------------------
 proc ic3(x)
 {
-   const w = 0.25, xm = 0.5;
-   const u1 = 1.0, u2 = -0.5;
+   const w = 0.2, xm = 0.0;
+   const u1 = 2.0, u2 = -1.0;
 
    if abs(x-xm) < w
    {
