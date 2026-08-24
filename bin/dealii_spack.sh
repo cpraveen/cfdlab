@@ -82,12 +82,15 @@ CC=`$MPI_DIR/bin/mpicc -show   | awk '{print $1}'`
 CXX=`$MPI_DIR/bin/mpic++ -show | awk '{print $1}'`
 FC=`$MPI_DIR/bin/mpif90 -show  | awk '{print $1}'`
 
-# Choose blas/lapack: openblas or netlib-lapack
+# Choose blas/lapack: openblas or veclibfort or netlib-lapack
 OPENBLAS=`spack location -i openblas 2> /dev/null`
+VECLIBFORT=`spack location -i veclibfort 2> /dev/null`
 NETLIB=`spack location -i netlib-lapack 2> /dev/null`
 
 if [ $OPENBLAS ]; then
    BLAS_DIR=$OPENBLAS
+elif [ $VECLIBFORT ]; then
+   BLAS_DIR=$VECLIBFORT
 else
    BLAS_DIR=$NETLIB
 fi
