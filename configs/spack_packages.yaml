@@ -49,6 +49,5 @@ packages:
     providers: # select one for each
       mpi: [openmpi] or [mpich]
       # netlib-lapack is the reference implementation and not the best option.
-      # veclibfort should be used on Macs only.
-      blas: [openblas] or [netlib-lapack] or [veclibfort]
-      lapack: [openblas] or [netlib-lapack] or [veclibfort]
+      blas: [openblas] or [netlib-lapack]
+      lapack: [openblas] or [netlib-lapack]
