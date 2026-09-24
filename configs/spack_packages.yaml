@@ -9,6 +9,8 @@ packages:
              +sundials +symengine +taskflow +threads +trilinos ~vtk
   hdf5:
     require: +fortran +cxx +hl
+  gmsh:
+    require: ~fltk ~med ~mmg
   petsc:
     require: +mumps +scalapack +suite-sparse +superlu-dist +p4est +ptscotch
   cgns:

@@ -40,6 +40,7 @@ fi
 # We dont want to install gmsh with spack since it has too many dependencies.
 # We want to use externally installed gmsh, so check here.
 DEAL_II_WITH_GMSH=ON
+GMSH_DIR=`spack location -i gmsh`
 if [ -z "$GMSH_DIR" ]; then
    echo "GMSH_DIR is not set"
    read -p "Do you want to continue (y/n) ? " CONT
