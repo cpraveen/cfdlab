@@ -12,7 +12,8 @@ packages:
   gmsh:
     require: ~fltk ~med ~mmg
   petsc:
-    require: +mumps +scalapack +suite-sparse +superlu-dist +p4est +ptscotch
+    require: +hypre +mumps +scalapack +suite-sparse +superlu-dist +p4est 
+             +ptscotch
   cgns:
     require: +fortran
   trilinos:
