@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: $(basename "$0") <site> <repo>" >&2
+  echo "  site: codeberg | github | sourcehut | bitbucket" >&2
+  echo "  repo: repository name (e.g. my-project)" >&2
+  exit 1
+}
+
+[ "$#" -eq 2 ] || usage
+
+SITE="$1"
+REPO="$2"
+
+case "$SITE" in
+  codeberg)
+    URL="git@codeberg.org:cpraveen/${REPO}"
+    ;;
+  github)
+    URL="git@github.com:cpraveen/${REPO}"
+    ;;
+  bitbucket)
+    URL="git@bitbucket.org:cpraveen/${REPO}"
+    ;;
+  sourcehut)
+    URL="https://git.sr.ht/~cpraveen/${REPO}"
+    ;;
+  *)
+    echo "Error: unknown site '${SITE}'" >&2
+    exit 1
+    ;;
+esac
+
+echo "Cloning ${URL} ..."
+git clone "${URL}"
