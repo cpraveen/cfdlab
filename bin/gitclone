@@ -21,7 +21,7 @@ case "$SITE" in
     URL="git@github.com:cpraveen/${REPO}"
     ;;
   bitbucket)
-    URL="git@bitbucket.org:cpraveen/${REPO}"
+    URL="git@ssh.bitbucket.org:cpraveen/${REPO}"
     ;;
   sourcehut)
     URL="https://git.sr.ht/~cpraveen/${REPO}"
