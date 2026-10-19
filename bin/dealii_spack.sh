@@ -103,6 +103,26 @@ else
    exit
 fi
 
+# CGAL: CGAL_DIR must point to the directory that contains CGALConfig.cmake,
+# not to the install prefix. Spack installs it under lib/cmake/CGAL or
+# lib64/cmake/CGAL depending on the platform.
+CGAL_DIR=`spack location -i cgal`
+if [ -d "$CGAL_DIR/lib64/cmake/CGAL" ]; then
+   CGAL_CONFIG_DIR="$CGAL_DIR/lib64/cmake/CGAL"
+elif [ -d "$CGAL_DIR/lib/cmake/CGAL" ]; then
+   CGAL_CONFIG_DIR="$CGAL_DIR/lib/cmake/CGAL"
+else
+   echo "Could not find CGALConfig.cmake under $CGAL_DIR"
+   exit
+fi
+echo "CGAL_CONFIG_DIR = " $CGAL_CONFIG_DIR
+
+# CGAL's config needs GMP and MPFR to be discoverable.
+GMP_DIR=`spack location -i gmp`
+MPFR_DIR=`spack location -i mpfr`
+echo "GMP_DIR = " $GMP_DIR
+echo "MPFR_DIR = " $MPFR_DIR
+
 # Create makefile
 `spack location -i cmake`/bin/cmake  \
 -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
@@ -134,12 +154,9 @@ fi
 -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
 -DGSL_DIR=`spack location -i gsl`  \
 -DDEAL_II_WITH_GSL=ON  \
--DGMP_INCLUDE_DIR=`spack location -i gmp` \
--DGMP_LIBRARIES=`spack location -i gmp` \
--DMPFR_INCLUDE_DIR=`spack location -i mpfr` \
--DMPFR_LIBRARIES=`spack location -i mpfr` \
--DCGAL_DIR=`spack location -i cgal`  \
--DDEAL_II_WITH_CGAL=ON  \
+-DCGAL_DIR=$CGAL_CONFIG_DIR  \
+-DCMAKE_PREFIX_PATH="$CGAL_DIR;$GMP_DIR;$MPFR_DIR"  \
+-DDEAL_II_WITH_CGAL=ON   \
 -DHDF5_DIR=`spack location -i hdf5`  \
 -DDEAL_II_WITH_HDF5=ON  \
 -DP4EST_DIR=`spack location -i p4est`  \
@@ -158,7 +175,7 @@ fi
 -DDEAL_II_WITH_ARPACK=ON  \
 -DDEAL_II_ARPACK_WITH_PARPACK=ON  \
 -DOPENCASCADE_DIR=`spack location -i oce`  \
--DDEAL_II_WITH_OPENCASCADE=ON  \
+-DDEAL_II_WITH_OPENCASCADE=OFF  \
 -DGMSH_DIR=$GMSH_DIR \
 -DDEAL_II_WITH_GMSH=$DEAL_II_WITH_GMSH  \
 -DASSIMP_DIR=`spack location -i assimp`  \
