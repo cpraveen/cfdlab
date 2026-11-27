@@ -1,0 +1,5 @@
+name = "fplotlib-demo"
+version = "0.1.0"
+
+[dependencies]
+fplotlib = { git = "https://github.com/fortran-lang/fplotlib" }
